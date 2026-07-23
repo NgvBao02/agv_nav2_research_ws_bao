@@ -166,3 +166,6 @@ ros2 run adaptive_pivot_g2_benchmark execution_matrix -- \
 Tài liệu Nav2 chính thức: [danh sách plugin](https://docs.nav2.org/plugins/),
 [Smac Planner](https://docs.nav2.org/configuration/packages/configuring-smac-planner.html)
 và [hướng dẫn chọn thuật toán](https://docs.nav2.org/setup_guides/algorithm/select_algorithm.html).
+
+Bộ ba layout sát ứng dụng nhà kho hơn, cùng kết quả planner và chạy xe, được
+tách riêng trong [WAREHOUSE_MAPS.md](WAREHOUSE_MAPS.md).

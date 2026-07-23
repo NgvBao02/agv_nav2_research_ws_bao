@@ -160,7 +160,9 @@ def generate_launch_description():
                 description=(
                     'Matched Gazebo SDF and Nav2 map basename: '
                     'research_warehouse, open_arena, narrow_aisles, or '
-                    'office_maze'
+                    'office_maze; warehouse layouts: '
+                    'warehouse_long_aisles, warehouse_cross_aisles, or '
+                    'warehouse_dispatch'
                 ),
             ),
             DeclareLaunchArgument('rviz', default_value='true'),

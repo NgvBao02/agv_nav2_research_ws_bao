@@ -1,0 +1,353 @@
+<?xml version='1.0' encoding='utf-8'?>
+<sdf version="1.9">
+  <world name="warehouse_dispatch">
+    <physics name="research_physics" type="ode">
+      <max_step_size>0.003</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+    </physics>
+    <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics" />
+    <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands" />
+    <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster" />
+    <plugin filename="gz-sim-imu-system" name="gz::sim::systems::Imu" />
+    <plugin filename="gz-sim-sensors-system" name="gz::sim::systems::Sensors">
+      <render_engine>ogre2</render_engine>
+    </plugin>
+    <scene>
+      <ambient>0.8 0.8 0.8 1</ambient>
+      <background>0.18 0.22 0.28 1</background>
+      <shadows>false</shadows>
+      <grid>true</grid>
+    </scene>
+    <light name="sun" type="directional">
+      <pose>0 0 10 0 0 0</pose>
+      <diffuse>0.9 0.9 0.9 1</diffuse>
+      <specular>0.2 0.2 0.2 1</specular>
+      <direction>-0.5 0.2 -1.0</direction>
+    </light>
+    <model name="warehouse_dispatch_layout">
+      <static>true</static>
+      <link name="layout_link">
+        <collision name="floor_collision">
+          <pose>0 0 -0.025 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>12.0 8.0 0.05</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="floor_visual">
+          <pose>0 0 -0.025 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>12.0 8.0 0.05</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.72 0.72 0.72 1</ambient>
+            <diffuse>0.72 0.72 0.72 1</diffuse>
+          </material>
+        </visual>
+        <collision name="boundary_north">
+          <pose>0.0 3.95 0.5 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>12.0 0.1 1.0</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="boundary_north_visual">
+          <pose>0.0 3.95 0.5 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>12.0 0.1 1.0</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.85 0.85 0.88 1</ambient>
+            <diffuse>0.85 0.85 0.88 1</diffuse>
+          </material>
+        </visual>
+        <collision name="boundary_south">
+          <pose>0.0 -3.95 0.5 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>12.0 0.1 1.0</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="boundary_south_visual">
+          <pose>0.0 -3.95 0.5 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>12.0 0.1 1.0</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.85 0.85 0.88 1</ambient>
+            <diffuse>0.85 0.85 0.88 1</diffuse>
+          </material>
+        </visual>
+        <collision name="boundary_west">
+          <pose>-5.95 0.0 0.5 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.1 8.0 1.0</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="boundary_west_visual">
+          <pose>-5.95 0.0 0.5 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.1 8.0 1.0</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.85 0.85 0.88 1</ambient>
+            <diffuse>0.85 0.85 0.88 1</diffuse>
+          </material>
+        </visual>
+        <collision name="boundary_east">
+          <pose>5.95 0.0 0.5 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.1 8.0 1.0</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="boundary_east_visual">
+          <pose>5.95 0.0 0.5 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.1 8.0 1.0</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.85 0.85 0.88 1</ambient>
+            <diffuse>0.85 0.85 0.88 1</diffuse>
+          </material>
+        </visual>
+        <collision name="storage_rack_a">
+          <pose>-4.4 1.0 0.6 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.6 4.6 1.2</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="storage_rack_a_visual">
+          <pose>-4.4 1.0 0.6 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.6 4.6 1.2</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.16 0.36 0.72 1</ambient>
+            <diffuse>0.16 0.36 0.72 1</diffuse>
+          </material>
+        </visual>
+        <collision name="storage_rack_b">
+          <pose>-2.5 1.0 0.6 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.6 4.6 1.2</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="storage_rack_b_visual">
+          <pose>-2.5 1.0 0.6 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.6 4.6 1.2</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.16 0.36 0.72 1</ambient>
+            <diffuse>0.16 0.36 0.72 1</diffuse>
+          </material>
+        </visual>
+        <collision name="storage_rack_c">
+          <pose>-0.6 1.0 0.6 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.6 4.6 1.2</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="storage_rack_c_visual">
+          <pose>-0.6 1.0 0.6 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.6 4.6 1.2</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.16 0.36 0.72 1</ambient>
+            <diffuse>0.16 0.36 0.72 1</diffuse>
+          </material>
+        </visual>
+        <collision name="inbound_pallet_a">
+          <pose>-4.0 -2.6 0.35 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.8 0.6 0.7</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="inbound_pallet_a_visual">
+          <pose>-4.0 -2.6 0.35 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.8 0.6 0.7</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.55 0.28 0.08 1</ambient>
+            <diffuse>0.55 0.28 0.08 1</diffuse>
+          </material>
+        </visual>
+        <collision name="inbound_pallet_b">
+          <pose>-2.2 -2.5 0.35 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.9 0.7 0.7</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="inbound_pallet_b_visual">
+          <pose>-2.2 -2.5 0.35 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.9 0.7 0.7</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.55 0.28 0.08 1</ambient>
+            <diffuse>0.55 0.28 0.08 1</diffuse>
+          </material>
+        </visual>
+        <collision name="inbound_pallet_c">
+          <pose>-0.2 -2.6 0.35 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.8 0.6 0.7</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="inbound_pallet_c_visual">
+          <pose>-0.2 -2.6 0.35 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.8 0.6 0.7</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.55 0.28 0.08 1</ambient>
+            <diffuse>0.55 0.28 0.08 1</diffuse>
+          </material>
+        </visual>
+        <collision name="staging_rack_north">
+          <pose>1.5 1.8 0.6 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>2.2 0.6 1.2</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="staging_rack_north_visual">
+          <pose>1.5 1.8 0.6 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>2.2 0.6 1.2</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.16 0.36 0.72 1</ambient>
+            <diffuse>0.16 0.36 0.72 1</diffuse>
+          </material>
+        </visual>
+        <collision name="staging_rack_south">
+          <pose>1.8 -0.2 0.6 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>2.6 0.6 1.2</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="staging_rack_south_visual">
+          <pose>1.8 -0.2 0.6 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>2.6 0.6 1.2</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.16 0.36 0.72 1</ambient>
+            <diffuse>0.16 0.36 0.72 1</diffuse>
+          </material>
+        </visual>
+        <collision name="outbound_pallet_a">
+          <pose>4.1 2.5 0.4 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.9 0.9 0.8</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="outbound_pallet_a_visual">
+          <pose>4.1 2.5 0.4 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.9 0.9 0.8</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.72 0.38 0.10 1</ambient>
+            <diffuse>0.72 0.38 0.10 1</diffuse>
+          </material>
+        </visual>
+        <collision name="outbound_pallet_b">
+          <pose>4.5 -1.7 0.4 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>1.0 0.8 0.8</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="outbound_pallet_b_visual">
+          <pose>4.5 -1.7 0.4 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>1.0 0.8 0.8</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.72 0.38 0.10 1</ambient>
+            <diffuse>0.72 0.38 0.10 1</diffuse>
+          </material>
+        </visual>
+        <collision name="dock_divider">
+          <pose>3.2 -2.9 0.3 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.15 1.2 0.6</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="dock_divider_visual">
+          <pose>3.2 -2.9 0.3 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.15 1.2 0.6</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.55 0.55 0.58 1</ambient>
+            <diffuse>0.55 0.55 0.58 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+  </world>
+</sdf>

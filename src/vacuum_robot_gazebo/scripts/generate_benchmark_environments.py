@@ -143,6 +143,101 @@ ENVIRONMENTS = {
             ('east_partition_detour', (0.0, -3.0), (5.0, 0.5)),
         ),
     ),
+    'warehouse_long_aisles': Environment(
+        description=(
+            'Four full-length parallel storage racks with narrow picking '
+            'aisles and transfer corridors at both rack ends.'
+        ),
+        obstacles=(
+            Box('rack_a', -3.0, 0.0, 0.6, 5.4),
+            Box('rack_b', -1.0, 0.0, 0.6, 5.4),
+            Box('rack_c', 1.0, 0.0, 0.6, 5.4),
+            Box('rack_d', 3.0, 0.0, 0.6, 5.4),
+        ),
+        scenarios=(
+            ('west_service_lane', (-4.5, -3.25), (-4.5, 3.25)),
+            ('picking_aisle_a', (-2.0, -2.4), (-2.0, 2.4)),
+            ('picking_aisle_b', (0.0, -2.4), (0.0, 2.4)),
+            ('picking_aisle_c', (2.0, -2.4), (2.0, 2.4)),
+            ('east_service_lane', (4.5, 3.25), (4.5, -3.25)),
+            ('south_transfer_corridor', (-5.0, -3.3), (5.0, -3.3)),
+            ('north_transfer_corridor', (-5.0, 3.3), (5.0, 3.3)),
+            ('diagonal_replenishment', (-4.5, -2.4), (4.5, 2.4)),
+        ),
+    ),
+    'warehouse_cross_aisles': Environment(
+        description=(
+            'Split pallet racks forming five longitudinal aisles connected '
+            'by a wide central cross-aisle.'
+        ),
+        obstacles=(
+            Box('rack_a_south', -3.0, -2.4, 0.6, 2.2),
+            Box('rack_a_north', -3.0, 2.4, 0.6, 2.2),
+            Box('rack_b_south', -1.0, -2.4, 0.6, 2.2),
+            Box('rack_b_north', -1.0, 2.4, 0.6, 2.2),
+            Box('rack_c_south', 1.0, -2.4, 0.6, 2.2),
+            Box('rack_c_north', 1.0, 2.4, 0.6, 2.2),
+            Box('rack_d_south', 3.0, -2.4, 0.6, 2.2),
+            Box('rack_d_north', 3.0, 2.4, 0.6, 2.2),
+        ),
+        scenarios=(
+            ('central_cross_west_east', (-5.0, 0.0), (5.0, 0.0)),
+            ('central_cross_east_west', (5.0, 0.0), (-5.0, 0.0)),
+            ('west_service_lane', (-4.5, -3.0), (-4.5, 3.0)),
+            ('picking_aisle_a', (-2.0, -3.0), (-2.0, 3.0)),
+            ('picking_aisle_b', (0.0, 3.0), (0.0, -3.0)),
+            ('picking_aisle_c', (2.0, -3.0), (2.0, 3.0)),
+            ('east_service_lane', (4.5, 3.0), (4.5, -3.0)),
+            ('cross_aisle_transfer', (-2.0, -2.8), (2.0, 2.8)),
+        ),
+    ),
+    'warehouse_dispatch': Environment(
+        description=(
+            'Mixed warehouse with storage racks, pallet staging, outbound '
+            'loads, and an open dispatch lane.'
+        ),
+        obstacles=(
+            Box('storage_rack_a', -4.4, 1.0, 0.6, 4.6),
+            Box('storage_rack_b', -2.5, 1.0, 0.6, 4.6),
+            Box('storage_rack_c', -0.6, 1.0, 0.6, 4.6),
+            Box(
+                'inbound_pallet_a', -4.0, -2.6, 0.8, 0.6, 0.7,
+                '0.55 0.28 0.08 1',
+            ),
+            Box(
+                'inbound_pallet_b', -2.2, -2.5, 0.9, 0.7, 0.7,
+                '0.55 0.28 0.08 1',
+            ),
+            Box(
+                'inbound_pallet_c', -0.2, -2.6, 0.8, 0.6, 0.7,
+                '0.55 0.28 0.08 1',
+            ),
+            Box('staging_rack_north', 1.5, 1.8, 2.2, 0.6),
+            Box('staging_rack_south', 1.8, -0.2, 2.6, 0.6),
+            Box(
+                'outbound_pallet_a', 4.1, 2.5, 0.9, 0.9, 0.8,
+                '0.72 0.38 0.10 1',
+            ),
+            Box(
+                'outbound_pallet_b', 4.5, -1.7, 1.0, 0.8, 0.8,
+                '0.72 0.38 0.10 1',
+            ),
+            Box(
+                'dock_divider', 3.2, -2.9, 0.15, 1.2, 0.6,
+                '0.55 0.55 0.58 1',
+            ),
+        ),
+        scenarios=(
+            ('storage_aisle_a', (-3.45, -1.0), (-3.45, 3.1)),
+            ('storage_aisle_b', (-1.55, -1.0), (-1.55, 3.1)),
+            ('storage_to_dispatch', (-3.45, 2.8), (5.0, 0.8)),
+            ('receiving_to_storage', (5.0, -3.0), (-3.45, 0.0)),
+            ('inbound_pallet_slalom', (-5.0, -2.5), (1.0, -2.5)),
+            ('dispatch_lane_south_north', (3.8, -3.3), (5.0, 3.2)),
+            ('inbound_to_staging', (5.0, -3.0), (2.8, 0.8)),
+            ('full_replenishment', (-5.2, 3.2), (5.0, -2.8)),
+        ),
+    ),
 }
 
 

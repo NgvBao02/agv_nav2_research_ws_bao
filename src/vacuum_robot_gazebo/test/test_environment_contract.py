@@ -13,7 +13,14 @@ import yaml
 
 PACKAGE_ROOT = Path(__file__).resolve().parents[1]
 BENCHMARK_ROOT = PACKAGE_ROOT.parent / 'adaptive_pivot_g2_benchmark'
-GENERATED_ENVIRONMENTS = ('open_arena', 'narrow_aisles', 'office_maze')
+GENERATED_ENVIRONMENTS = (
+    'open_arena',
+    'narrow_aisles',
+    'office_maze',
+    'warehouse_long_aisles',
+    'warehouse_cross_aisles',
+    'warehouse_dispatch',
+)
 ALL_ENVIRONMENTS = ('research_warehouse', *GENERATED_ENVIRONMENTS)
 PLANNER_TYPES = {
     'NavFnAStar': 'nav2_navfn_planner::NavfnPlanner',
@@ -56,7 +63,7 @@ def test_generated_environment_files_are_current():
         generated = generator.generate(
             temporary_gazebo, temporary_benchmark
         )
-        assert len(generated) == 12
+        assert len(generated) == 4 * len(GENERATED_ENVIRONMENTS)
         for temporary_path in generated:
             if temporary_path.is_relative_to(temporary_gazebo):
                 relative = temporary_path.relative_to(temporary_gazebo)

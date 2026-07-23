@@ -18,16 +18,17 @@ luồng nghiên cứu chính chạy hoàn toàn trong ROS 2.
   adaptive hybrid; xuất CSV/JSON, metric full-footprint, và chạy ma trận vòng
   kín bằng cùng một controller.
 - `vacuum_robot_gazebo`: robot vi sai hai bánh dùng mesh CAD 440 × 340 mm,
-  bốn cặp world/map Gazebo–Nav2 đồng nhất, bridge Gazebo–ROS, Nav2 và RViz2.
-  Cấu hình cảm biến mô phỏng đã bám theo RPLIDAR A1M8 và BNO055 của xe dự kiến.
+  bảy cặp world/map Gazebo–Nav2 đồng nhất, trong đó có ba layout chuyên cho nhà
+  kho, bridge Gazebo–ROS, Nav2 và RViz2. Cấu hình cảm biến mô phỏng đã bám theo
+  RPLIDAR A1M8 và BNO055 của xe dự kiến.
 - `matlab/pivot_g2`: bản lưu source thử ý tưởng cũ, không nằm trong đường chạy.
 
 Raw và năm smoother đã qua regression sinh path. Ma trận vòng kín hiện yêu cầu
 cả Nav2 action lẫn ground truth đạt đích; nó cũng dừng Gazebo server tách rời
 sau mỗi trial. Kết quả hiện tại đủ cho pilot study nhưng chưa đủ để khẳng định
-thống kê: ba map mới đã có smoke test planner/smoother, còn ma trận vòng kín
-nhiều lần lặp mới chỉ có một scenario trên `open_arena`. Xem kết luận trung thực
-và lộ trình còn lại trong
+thống kê: sáu map sinh tự động đã có smoke test planner/smoother, ba map kho đã
+có thêm smoke test vòng kín, còn ma trận nhiều lần lặp mới chỉ có một scenario
+trên `open_arena`. Xem kết luận trung thực và lộ trình còn lại trong
 [RESEARCH_STATUS_20260723.md](docs/RESEARCH_STATUS_20260723.md).
 
 ## Chạy nhanh
@@ -40,13 +41,14 @@ source install/setup.bash
 ros2 launch vacuum_robot_gazebo simulation.launch.py execute:=false
 ```
 
-Chọn một trong bốn map (`research_warehouse`, `open_arena`, `narrow_aisles`,
-`office_maze`) và một trong năm planner:
+Chọn một trong bảy map. Ba map sát bài toán kho nhất là
+`warehouse_long_aisles`, `warehouse_cross_aisles` và `warehouse_dispatch`:
 
 ```bash
 ros2 launch vacuum_robot_gazebo simulation.launch.py \
-  environment:=narrow_aisles planner_id:=Smac2D \
-  execute:=true execute_method:=adaptive_hybrid
+  environment:=warehouse_long_aisles planner_id:=ThetaStar \
+  execute:=true execute_method:=adaptive_hybrid \
+  x_pose:=-2.0 y_pose:=-2.4 yaw:=1.5708
 ```
 
 ## Kiểm tra URDF riêng
@@ -151,4 +153,5 @@ colcon test-result --verbose
 - [Kế hoạch thực nghiệm đến REV-ECIT 2026](docs/EXPERIMENT_PLAN.md)
 - [Trạng thái nghiên cứu, số liệu pilot và hướng bài báo](docs/RESEARCH_STATUS_20260723.md)
 - [So sánh 5 planner và 3 map Gazebo mới](docs/PLANNER_MAP_BENCHMARK.md)
+- [Bộ map nhà kho, scenario và kết quả smoke test](docs/WAREHOUSE_MAPS.md)
 - [Kiểm toán source MATLAB lưu trữ](docs/MATLAB_SOURCE_AUDIT.md)

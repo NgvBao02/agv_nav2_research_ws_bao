@@ -1,0 +1,60 @@
+environment: warehouse_dispatch
+description: Mixed warehouse with storage racks, pallet staging, outbound loads, and
+  an open dispatch lane.
+scenarios:
+- name: storage_aisle_a
+  start:
+  - -3.45
+  - -1.0
+  goal:
+  - -3.45
+  - 3.1
+- name: storage_aisle_b
+  start:
+  - -1.55
+  - -1.0
+  goal:
+  - -1.55
+  - 3.1
+- name: storage_to_dispatch
+  start:
+  - -3.45
+  - 2.8
+  goal:
+  - 5.0
+  - 0.8
+- name: receiving_to_storage
+  start:
+  - 5.0
+  - -3.0
+  goal:
+  - -3.45
+  - 0.0
+- name: inbound_pallet_slalom
+  start:
+  - -5.0
+  - -2.5
+  goal:
+  - 1.0
+  - -2.5
+- name: dispatch_lane_south_north
+  start:
+  - 3.8
+  - -3.3
+  goal:
+  - 5.0
+  - 3.2
+- name: inbound_to_staging
+  start:
+  - 5.0
+  - -3.0
+  goal:
+  - 2.8
+  - 0.8
+- name: full_replenishment
+  start:
+  - -5.2
+  - 3.2
+  goal:
+  - 5.0
+  - -2.8

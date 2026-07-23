@@ -1,0 +1,60 @@
+environment: warehouse_long_aisles
+description: Four full-length parallel storage racks with narrow picking aisles and
+  transfer corridors at both rack ends.
+scenarios:
+- name: west_service_lane
+  start:
+  - -4.5
+  - -3.25
+  goal:
+  - -4.5
+  - 3.25
+- name: picking_aisle_a
+  start:
+  - -2.0
+  - -2.4
+  goal:
+  - -2.0
+  - 2.4
+- name: picking_aisle_b
+  start:
+  - 0.0
+  - -2.4
+  goal:
+  - 0.0
+  - 2.4
+- name: picking_aisle_c
+  start:
+  - 2.0
+  - -2.4
+  goal:
+  - 2.0
+  - 2.4
+- name: east_service_lane
+  start:
+  - 4.5
+  - 3.25
+  goal:
+  - 4.5
+  - -3.25
+- name: south_transfer_corridor
+  start:
+  - -5.0
+  - -3.3
+  goal:
+  - 5.0
+  - -3.3
+- name: north_transfer_corridor
+  start:
+  - -5.0
+  - 3.3
+  goal:
+  - 5.0
+  - 3.3
+- name: diagonal_replenishment
+  start:
+  - -4.5
+  - -2.4
+  goal:
+  - 4.5
+  - 2.4

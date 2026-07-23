@@ -50,6 +50,12 @@ và narrow aisles đạt 240/240 phép planner–smoother; office maze đạt 22
 giữ nguyên các failure có ý nghĩa ở cửa hẹp. Cả năm planner cũng đạt ground
 truth goal trong smoke test vòng kín `short_open_diagonal`.
 
+Ba môi trường kho chuyên biệt `warehouse_long_aisles`,
+`warehouse_cross_aisles` và `warehouse_dispatch` bổ sung thêm 24 scenario. Cả
+ba đạt 240/240 phép planner–smoother. Một lượt Theta* + Adaptive Hybrid trên mỗi
+map cũng đạt đích theo ground truth, không có can thiệp từ collision monitor.
+Chi tiết nằm trong `WAREHOUSE_MAPS.md`.
+
 Office maze dẫn tới hai sửa lỗi:
 
 1. Constrained Smoother không còn downsample factor 2 vì đoạn NavFn A–B–A có

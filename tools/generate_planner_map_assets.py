@@ -18,6 +18,11 @@ ASSETS = ROOT / 'docs' / 'planner_map_assets'
 FONT_REGULAR = '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf'
 FONT_BOLD = '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf'
 ENVIRONMENTS = ('open_arena', 'narrow_aisles', 'office_maze')
+WAREHOUSE_ENVIRONMENTS = (
+    'warehouse_long_aisles',
+    'warehouse_cross_aisles',
+    'warehouse_dispatch',
+)
 PLANNERS = (
     'NavFnAStar',
     'NavFnDijkstra',
@@ -36,6 +41,9 @@ ENVIRONMENT_LABELS = {
     'open_arena': 'Open arena',
     'narrow_aisles': 'Narrow aisles',
     'office_maze': 'Office maze',
+    'warehouse_long_aisles': 'Kho kệ dọc',
+    'warehouse_cross_aisles': 'Kho có lối cắt ngang',
+    'warehouse_dispatch': 'Kho và khu xuất nhập',
 }
 COLORS = {
     'NavFnAStar': '#d1495b',
@@ -74,7 +82,7 @@ def _map_pixel(point, width, height):
     )
 
 
-def environment_overview():
+def _environment_overview(environments, title, output_name):
     panel_width = 570
     panel_height = 380
     image = Image.new('RGB', (1840, 720), 'white')
@@ -82,10 +90,10 @@ def environment_overview():
     centered_text(
         draw,
         (0, 15, image.width, 80),
-        'BA MÔI TRƯỜNG GAZEBO / NAV2 ĐỒNG NHẤT HÌNH HỌC',
+        title,
         font(37, True),
     )
-    for environment_index, environment in enumerate(ENVIRONMENTS):
+    for environment_index, environment in enumerate(environments):
         left = 55 + environment_index * 600
         top = 125
         map_image = Image.open(
@@ -163,7 +171,23 @@ def environment_overview():
         font(24),
         fill='#333333',
     )
-    image.save(ASSETS / 'environment_overview.png')
+    image.save(ASSETS / output_name)
+
+
+def environment_overview():
+    _environment_overview(
+        ENVIRONMENTS,
+        'BA MÔI TRƯỜNG GAZEBO / NAV2 ĐỒNG NHẤT HÌNH HỌC',
+        'environment_overview.png',
+    )
+
+
+def warehouse_environment_overview():
+    _environment_overview(
+        WAREHOUSE_ENVIRONMENTS,
+        'BA MÔI TRƯỜNG NHÀ KHO GAZEBO / NAV2',
+        'warehouse_environment_overview.png',
+    )
 
 
 def _raw_metrics():
@@ -360,6 +384,7 @@ def planner_pilot_comparison():
 def main():
     ASSETS.mkdir(parents=True, exist_ok=True)
     environment_overview()
+    warehouse_environment_overview()
     planner_pilot_comparison()
     for path in sorted(ASSETS.glob('*.png')):
         print(path)
