@@ -78,12 +78,25 @@ PlannerSelectorPanel::PlannerSelectorPanel(QWidget * parent)
   status_label_ = new QLabel("Đang chờ node so sánh đường...", this);
   status_label_->setWordWrap(true);
 
+  auto * smoother_title = new QLabel("SO SÁNH TRƯỚC / SAU SMOOTH", this);
+  smoother_title->setFont(title_font);
+  smoother_toggle_button_ = new QPushButton(this);
+  smoother_toggle_button_->setCheckable(true);
+  smoother_status_label_ = new QLabel(
+    "Đang chờ trạng thái smoother...", this);
+  smoother_status_label_->setWordWrap(true);
+  setSmoothersEnabled(true);
+
   auto * layout = new QVBoxLayout;
   layout->addWidget(title);
   layout->addWidget(help);
   layout->addWidget(planner_combo_);
   layout->addWidget(apply_button_);
   layout->addWidget(status_label_);
+  layout->addSpacing(12);
+  layout->addWidget(smoother_title);
+  layout->addWidget(smoother_toggle_button_);
+  layout->addWidget(smoother_status_label_);
   layout->addStretch();
   setLayout(layout);
 
@@ -95,6 +108,9 @@ PlannerSelectorPanel::PlannerSelectorPanel(QWidget * parent)
     QOverload<int>::of(&QComboBox::currentIndexChanged),
     this,
     [this](int) {Q_EMIT configChanged();});
+  connect(
+    smoother_toggle_button_, &QPushButton::clicked,
+    this, &PlannerSelectorPanel::toggleSmoothers);
 }
 
 void PlannerSelectorPanel::onInitialize()
@@ -104,6 +120,7 @@ void PlannerSelectorPanel::onInitialize()
   if (!abstraction) {
     status_label_->setText("Lỗi: RViz không cung cấp ROS node.");
     apply_button_->setEnabled(false);
+    smoother_toggle_button_->setEnabled(false);
     return;
   }
 
@@ -118,6 +135,19 @@ void PlannerSelectorPanel::onInitialize()
     [this](std_msgs::msg::String::SharedPtr message) {
       updateActivePlanner(std::move(message));
     });
+  smoother_toggle_publisher_ =
+    node_->create_publisher<std_msgs::msg::Bool>(
+    "/research/smoothers_enabled", selection_qos);
+  smoother_status_subscription_ =
+    node_->create_subscription<std_msgs::msg::Bool>(
+    "/research/smoothers_active",
+    status_qos,
+    [this](std_msgs::msg::Bool::SharedPtr message) {
+      updateSmoothersActive(std::move(message));
+    });
+  std_msgs::msg::Bool initial_smoother_state;
+  initial_smoother_state.data = smoothers_enabled_;
+  smoother_toggle_publisher_->publish(initial_smoother_state);
 }
 
 void PlannerSelectorPanel::applySelection()
@@ -140,6 +170,25 @@ void PlannerSelectorPanel::applySelection()
     .arg(planner_id));
 }
 
+void PlannerSelectorPanel::toggleSmoothers()
+{
+  if (!smoother_toggle_publisher_) {
+    smoother_status_label_->setText(
+      "Nút smoother chưa kết nối ROS.");
+    setSmoothersEnabled(smoothers_enabled_);
+    return;
+  }
+
+  const bool requested = smoother_toggle_button_->isChecked();
+  std_msgs::msg::Bool message;
+  message.data = requested;
+  smoother_toggle_publisher_->publish(message);
+  smoother_status_label_->setText(
+    requested ?
+    "Đã yêu cầu bật smoother. Đang chờ xác nhận..." :
+    "Đã yêu cầu tắt smoother. Đang chờ xác nhận...");
+}
+
 void PlannerSelectorPanel::updateActivePlanner(
   const std_msgs::msg::String::SharedPtr message)
 {
@@ -154,6 +203,22 @@ void PlannerSelectorPanel::updateActivePlanner(
     Qt::QueuedConnection);
 }
 
+void PlannerSelectorPanel::updateSmoothersActive(
+  const std_msgs::msg::Bool::SharedPtr message)
+{
+  const bool enabled = message->data;
+  QMetaObject::invokeMethod(
+    this,
+    [this, enabled]() {
+      setSmoothersEnabled(enabled);
+      smoother_status_label_->setText(
+        enabled ?
+        "Đang hiển thị RAW và các đường sau smooth." :
+        "Chỉ hiển thị đường RAW màu đỏ (trước smooth).");
+    },
+    Qt::QueuedConnection);
+}
+
 void PlannerSelectorPanel::setComboPlanner(const QString & planner_id)
 {
   for (int index = 0; index < planner_combo_->count(); ++index) {
@@ -164,12 +229,36 @@ void PlannerSelectorPanel::setComboPlanner(const QString & planner_id)
   }
 }
 
+void PlannerSelectorPanel::setSmoothersEnabled(bool enabled)
+{
+  smoothers_enabled_ = enabled;
+  smoother_toggle_button_->setChecked(enabled);
+  if (enabled) {
+    smoother_toggle_button_->setText(
+      "Smoother: BẬT — nhấn để chỉ xem RAW");
+    smoother_toggle_button_->setStyleSheet(
+      "QPushButton { background-color: #2e7d32; color: white; "
+      "font-weight: bold; padding: 6px; }");
+  } else {
+    smoother_toggle_button_->setText(
+      "Smoother: TẮT — nhấn để hiện đường smooth");
+    smoother_toggle_button_->setStyleSheet(
+      "QPushButton { background-color: #b45309; color: white; "
+      "font-weight: bold; padding: 6px; }");
+  }
+  Q_EMIT configChanged();
+}
+
 void PlannerSelectorPanel::load(const rviz_common::Config & config)
 {
   rviz_common::Panel::load(config);
   QString planner_id;
   if (config.mapGetString("Selected Planner", &planner_id)) {
     setComboPlanner(planner_id);
+  }
+  bool smoothers_enabled = true;
+  if (config.mapGetBool("Smoothers Enabled", &smoothers_enabled)) {
+    setSmoothersEnabled(smoothers_enabled);
   }
 }
 
@@ -178,6 +267,7 @@ void PlannerSelectorPanel::save(rviz_common::Config config) const
   rviz_common::Panel::save(config);
   config.mapSetValue(
     "Selected Planner", planner_combo_->currentData().toString());
+  config.mapSetValue("Smoothers Enabled", smoothers_enabled_);
 }
 
 }  // namespace adaptive_pivot_g2_rviz

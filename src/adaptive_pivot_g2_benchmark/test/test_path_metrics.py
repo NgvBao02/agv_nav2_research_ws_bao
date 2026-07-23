@@ -1,6 +1,8 @@
 import math
+import os
 import subprocess
 import sys
+import time
 import unittest
 
 from adaptive_pivot_g2_benchmark.batch_benchmark import calculate_path_deviation
@@ -13,6 +15,7 @@ from adaptive_pivot_g2_benchmark.compare_paths import (
     calculate_tracking_metrics,
     condition_trajectory_for_metrics,
     normalize_planner_id,
+    PathComparisonNode,
     PLANNER_IDS,
     resample_polyline,
 )
@@ -27,6 +30,15 @@ from adaptive_pivot_g2_benchmark.path_contract import (
 )
 from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import OccupancyGrid, Path
+import rclpy
+from rclpy.executors import SingleThreadedExecutor
+from rclpy.qos import (
+    DurabilityPolicy,
+    HistoryPolicy,
+    QoSProfile,
+    ReliabilityPolicy,
+)
+from std_msgs.msg import Bool
 
 
 class TestPathMetrics(unittest.TestCase):
@@ -133,6 +145,82 @@ class TestPathMetrics(unittest.TestCase):
         with self.assertRaises(ValueError):
             normalize_planner_id('thetastar')
         self.assertEqual(normalize_planner_id('  Smac2D  '), 'Smac2D')
+
+    def test_smoother_toggle_clears_paths_and_reports_state(self):
+        previous_domain = os.environ.get('ROS_DOMAIN_ID')
+        os.environ['ROS_DOMAIN_ID'] = str(100 + os.getpid() % 100)
+        rclpy.init()
+        comparison = PathComparisonNode()
+        probe = rclpy.create_node('smoother_toggle_contract_test')
+        executor = SingleThreadedExecutor()
+        executor.add_node(comparison)
+        executor.add_node(probe)
+        latched_qos = QoSProfile(
+            history=HistoryPolicy.KEEP_LAST,
+            depth=1,
+            reliability=ReliabilityPolicy.RELIABLE,
+            durability=DurabilityPolicy.TRANSIENT_LOCAL,
+        )
+        states = []
+        cleared_methods = set()
+        probe.create_subscription(
+            Bool,
+            '/research/smoothers_active',
+            lambda message: states.append(message.data),
+            latched_qos,
+        )
+        for method in comparison.SMOOTHERS:
+            probe.create_subscription(
+                Path,
+                f'/research/path/{method}',
+                lambda message, selected=method: (
+                    cleared_methods.add(selected)
+                    if not message.poses else None
+                ),
+                latched_qos,
+            )
+        toggle = probe.create_publisher(
+            Bool, '/research/smoothers_enabled', latched_qos
+        )
+
+        def spin_until(predicate, timeout=3.0):
+            deadline = time.monotonic() + timeout
+            while time.monotonic() < deadline:
+                executor.spin_once(timeout_sec=0.05)
+                if predicate():
+                    return True
+            return False
+
+        try:
+            self.assertTrue(spin_until(lambda: states and states[-1]))
+            message = Bool()
+            message.data = False
+            toggle.publish(message)
+            self.assertTrue(
+                spin_until(
+                    lambda: states
+                    and states[-1] is False
+                    and cleared_methods == set(comparison.SMOOTHERS)
+                )
+            )
+            self.assertIsNone(comparison._raw_path)
+            self.assertEqual(comparison._pending_smoothers, [])
+
+            message.data = True
+            toggle.publish(message)
+            self.assertTrue(spin_until(lambda: states and states[-1]))
+            self.assertEqual(cleared_methods, set(comparison.SMOOTHERS))
+        finally:
+            executor.remove_node(probe)
+            executor.remove_node(comparison)
+            probe.destroy_node()
+            comparison.destroy_node()
+            executor.shutdown()
+            rclpy.shutdown()
+            if previous_domain is None:
+                os.environ.pop('ROS_DOMAIN_ID', None)
+            else:
+                os.environ['ROS_DOMAIN_ID'] = previous_domain
 
     def test_footprint_clearance_uses_robot_boundary_not_only_center(self):
         occupancy_grid = OccupancyGrid()

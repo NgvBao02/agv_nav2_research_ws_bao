@@ -100,6 +100,13 @@ planner đã chọn; năm đường smoother cũng được tính lại từ raw
 trạng thái trong panel chỉ báo thành công sau khi node so sánh phản hồi trên
 `/research/planner_active`.
 
+Ngay dưới ô chọn planner có nút màu xanh
+**Smoother: BẬT — nhấn để chỉ xem RAW**:
+
+- nhấn một lần để chuyển sang màu cam và chỉ giữ đường RAW màu đỏ;
+- nhấn lại để tạo và hiện lại cả năm đường smoother từ đúng RAW hiện tại,
+  không gọi planner lần nữa.
+
 Để xe bám đường đề xuất ngay từ lúc launch:
 
 ```bash

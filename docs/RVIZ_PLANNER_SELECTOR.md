@@ -2,9 +2,9 @@
 
 ## Mục đích
 
-Panel **Selector** cho phép đổi global planner mà không cần tắt Gazebo, sửa
-YAML hay mở terminal thứ hai. Năm lựa chọn khớp chính xác với plugin ID đã nạp
-trong Nav2:
+Panel **Selector** cho phép đổi global planner và bật/tắt toàn bộ smoother mà
+không cần tắt Gazebo, sửa YAML hay mở terminal thứ hai. Năm lựa chọn khớp chính
+xác với plugin ID đã nạp trong Nav2:
 
 | Tên trong panel | Plugin ID | Nhóm thuật toán |
 |---|---|---|
@@ -45,6 +45,17 @@ Sau khi Nav2 chuyển sang trạng thái active:
 của planner đang hiển thị trong dòng **Planner đang hoạt động**. Các màu vàng,
 cyan, xanh lá, magenta và xanh lam là năm smoother cùng nhận raw path mới đó.
 
+Để so sánh trước và sau smooth:
+
+1. nhấn nút xanh **Smoother: BẬT — nhấn để chỉ xem RAW**;
+2. nút chuyển sang màu cam và RViz chỉ còn đường RAW màu đỏ;
+3. nhấn nút màu cam để bật lại cả năm đường smoother.
+
+Khi tắt, runner hủy lượt smoothing đang chạy và publish path rỗng lên cả năm
+topic smoother, nhưng không xóa RAW. Khi bật, runner dùng lại chính RAW đang
+hiển thị; planner không bị gọi lại nên so sánh trước/sau không bị thay đổi đầu
+vào.
+
 Giữ `execute:=false` khi chỉ so sánh hình học. Nếu dùng `execute:=true`, sau
 khi raw path và các smoother được tạo xong, robot sẽ bám phương pháp được chọn
 bởi `execute_method`.
@@ -53,20 +64,21 @@ bởi `execute_method`.
 
 ```text
 RViz panel
-    │  std_msgs/String: planner ID
-    ▼
-/planner_selector  ──► compare_paths ──► ComputePathToPose(planner_id)
-                           │
-                           ├──► /research/planner_active
-                           ├──► /research/path/raw
-                           └──► /research/metrics
+    ├── std_msgs/String ──► /planner_selector
+    └── std_msgs/Bool ───► /research/smoothers_enabled
+                                  │
+                                  ▼
+                            compare_paths
+                                  │
+                    ┌─────────────┼──────────────────┐
+                    ▼             ▼                  ▼
+             ComputePathToPose  SmoothPath   topic trạng thái/path
 ```
 
-Hai topic chọn và xác nhận dùng QoS `reliable + transient_local`. Vì vậy panel
-mở sau runner vẫn nhận planner hiện hành, còn runner khởi động lại vẫn nhận lựa
-chọn cuối của panel. Runner chỉ chấp nhận đúng năm ID trong bảng; chuỗi rỗng,
-khác chữ hoa/thường hoặc ID không tồn tại đều bị từ chối và planner cũ được
-giữ nguyên.
+Các topic chọn và xác nhận dùng QoS `reliable + transient_local`. Vì vậy panel
+mở sau runner vẫn nhận planner và trạng thái smoother hiện hành. Runner chỉ
+chấp nhận đúng năm planner ID trong bảng; chuỗi rỗng, khác chữ hoa/thường hoặc
+ID không tồn tại đều bị từ chối và planner cũ được giữ nguyên.
 
 Mỗi lần nhấn nút, kể cả chọn lại cùng planner, runner:
 
@@ -85,6 +97,9 @@ ros2 topic pub --once --qos-durability transient_local \
 
 ros2 topic echo --once --qos-durability transient_local \
   /research/planner_active
+
+ros2 topic pub --once --qos-durability transient_local \
+  /research/smoothers_enabled std_msgs/msg/Bool "{data: false}"
 ```
 
 ## Nếu panel không xuất hiện
@@ -123,6 +138,10 @@ export QT_IM_MODULE=none
 - smoke test trên `warehouse_long_aisles`: Theta* tạo raw path 4,80 m, đổi sang
   Smac2D tự tạo generation mới cũng dài 4,80 m; ID giả `GridBased` bị từ chối
   và active planner vẫn là Smac2D.
+- toggle test trên `warehouse_cross_aisles/cross_aisle_transfer`: RAW Theta*
+  dài 7,548 m với 138 pose vẫn được giữ nguyên; tắt smoother xóa đủ năm output,
+  bật lại sinh đủ năm output từ RAW cũ mà không tăng planner generation; chuỗi
+  bấm nhanh tắt–bật–tắt không làm callback cũ xuất hiện lại.
 
 Đoạn 4,80 m là một lối đi thẳng nên hai planner cho cùng độ dài; mục tiêu của
 smoke test này là xác nhận đúng luồng đổi planner. Để đánh giá khác biệt thuật

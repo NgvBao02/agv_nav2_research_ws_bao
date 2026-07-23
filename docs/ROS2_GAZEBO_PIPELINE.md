@@ -66,6 +66,8 @@ Gazebo world + 2-wheel differential robot
 | `/research/goal_pose` | Goal dành cho runner so sánh |
 | `/planner_selector` | Planner ID do panel RViz2 gửi |
 | `/research/planner_active` | Planner ID đã được runner chấp nhận |
+| `/research/smoothers_enabled` | Bật/tắt tính và hiển thị các đường smoother |
+| `/research/smoothers_active` | Trạng thái smoother đã được runner xác nhận |
 | `/research/path/raw` | Raw path của global planner đang chọn |
 | `/research/path/simple` | Nav2 Simple Smoother |
 | `/research/path/savitzky_golay` | Nav2 Savitzky–Golay |

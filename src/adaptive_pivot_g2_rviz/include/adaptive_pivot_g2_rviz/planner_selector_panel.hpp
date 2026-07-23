@@ -21,6 +21,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "rviz_common/panel.hpp"
+#include "std_msgs/msg/bool.hpp"
 #include "std_msgs/msg/string.hpp"
 
 class QComboBox;
@@ -43,18 +44,27 @@ public:
 
 private Q_SLOTS:
   void applySelection();
+  void toggleSmoothers();
 
 private:
   void updateActivePlanner(const std_msgs::msg::String::SharedPtr message);
+  void updateSmoothersActive(const std_msgs::msg::Bool::SharedPtr message);
   void setComboPlanner(const QString & planner_id);
+  void setSmoothersEnabled(bool enabled);
 
   QComboBox * planner_combo_{nullptr};
   QPushButton * apply_button_{nullptr};
   QLabel * status_label_{nullptr};
+  QPushButton * smoother_toggle_button_{nullptr};
+  QLabel * smoother_status_label_{nullptr};
+  bool smoothers_enabled_{true};
 
   rclcpp::Node::SharedPtr node_;
   rclcpp::Publisher<std_msgs::msg::String>::SharedPtr selection_publisher_;
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr status_subscription_;
+  rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr smoother_toggle_publisher_;
+  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr
+    smoother_status_subscription_;
 };
 
 }  // namespace adaptive_pivot_g2_rviz
