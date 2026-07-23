@@ -1,0 +1,52 @@
+# Source-of-truth profile for the future physical robot. Values marked null
+# must be measured or read from the exact purchased hardware before the base
+# driver is implemented.
+robot:
+  body_length_m: 0.44
+  body_width_m: 0.34
+  wheel_diameter_m: 0.085
+  wheel_part_width_m: 0.0424
+  wheel_tread_width_m: 0.0300
+  # Distance between the two rolling-tread center planes. This CAD-derived
+  # value must still be calibrated with repeated rotate-in-place trials.
+  wheel_separation_m: 0.2548
+
+drive:
+  motor_model: GA25_encoder
+  nominal_output_rpm: 130.0
+  theoretical_no_load_linear_speed_mps: 0.5786
+  motor_supply_voltage_v: null
+  motor_driver_model: null
+  controller_board: null
+  control_rate_hz: 50.0
+  command_timeout_s: 0.25
+  encoder:
+    location: null             # Physical encoder location is still unknown
+    pulses_per_revolution: null
+    gearbox_ratio: null
+    quadrature_decode: null    # x1, x2, or x4
+    encoder_ticks_per_rev: 1320.0
+    radians_per_tick: 0.0047599889
+    metres_per_tick: 0.0002022995269
+
+lidar:
+  model: RPLIDAR_A1M8
+  ros_package: sllidar_ros2
+  serial_port: /dev/rplidar
+  serial_baudrate: 115200
+  frame_id: laser
+  topic: /scan
+  mount_xyz_from_base_link_m: [0.0, 0.0, 0.10892]
+  inverted: false
+  angle_compensate: true
+  scan_mode: Sensitivity
+
+imu:
+  model: BNO055
+  transport: null             # i2c or uart
+  device: null
+  frame_id: imu_link
+  topic: /imu/data
+  mount_xyz_from_base_link_m: [0.0, 0.0, -0.0128]
+  update_rate_hz: 100.0
+  fuse_absolute_yaw_initially: false

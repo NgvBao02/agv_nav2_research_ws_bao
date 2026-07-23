@@ -1,0 +1,41 @@
+// Copyright 2026 Adaptive Pivot-G2 Research Team
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#ifndef ADAPTIVE_PIVOT_G2_CONTROLLER__MANEUVER_PATH_HPP_
+#define ADAPTIVE_PIVOT_G2_CONTROLLER__MANEUVER_PATH_HPP_
+
+#include <vector>
+
+#include "geometry_msgs/msg/pose_stamped.hpp"
+#include "nav_msgs/msg/path.hpp"
+
+namespace adaptive_pivot_g2_controller
+{
+
+struct ManeuverSegment
+{
+  nav_msgs::msg::Path path;
+  bool ends_with_pivot{false};
+  geometry_msgs::msg::PoseStamped pivot_target;
+};
+
+/// Split a path at duplicate-position poses whose headings encode a pivot.
+std::vector<ManeuverSegment> split_path_at_pivots(
+  const nav_msgs::msg::Path & path,
+  double duplicate_position_tolerance,
+  double minimum_pivot_angle);
+
+}  // namespace adaptive_pivot_g2_controller
+
+#endif  // ADAPTIVE_PIVOT_G2_CONTROLLER__MANEUVER_PATH_HPP_

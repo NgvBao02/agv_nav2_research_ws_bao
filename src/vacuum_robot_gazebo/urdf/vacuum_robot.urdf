@@ -1,0 +1,117 @@
+<?xml version="1.0"?>
+<robot name="vacuum_robot">
+  <material name="silver"><color rgba="0.72 0.74 0.78 1.0"/></material>
+  <material name="black_rubber"><color rgba="0.04 0.04 0.04 1.0"/></material>
+
+  <!-- base_link is centred on the differential axle at z = wheel radius. -->
+  <link name="base_link">
+    <!-- Physics inertia lives in model.sdf. Keeping inertia off the URDF root
+         avoids KDL's unsupported-root-inertia warning in state publisher. -->
+    <visual>
+      <origin xyz="-0.035315 0.200943 -0.211698" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://vacuum_robot_gazebo/models/vacuum_robot/meshes/base_link.stl"
+          scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision name="lower_center_collision">
+      <origin xyz="0 0 0.0675" rpy="0 0 0"/>
+      <geometry><box size="0.44 0.20 0.10"/></geometry>
+    </collision>
+    <collision name="front_cross_collision">
+      <origin xyz="0.16 0 0.0675" rpy="0 0 0"/>
+      <geometry><box size="0.12 0.34 0.10"/></geometry>
+    </collision>
+    <collision name="rear_cross_collision">
+      <origin xyz="-0.16 0 0.0675" rpy="0 0 0"/>
+      <geometry><box size="0.12 0.34 0.10"/></geometry>
+    </collision>
+    <collision name="upper_deck_collision">
+      <origin xyz="0 0 0.0975" rpy="0 0 0"/>
+      <geometry><box size="0.44 0.34 0.04"/></geometry>
+    </collision>
+    <collision name="front_left_ball_collision">
+      <origin xyz="0.15 0.09 -0.0365" rpy="0 0 0"/>
+      <geometry><sphere radius="0.006"/></geometry>
+    </collision>
+    <collision name="front_right_ball_collision">
+      <origin xyz="0.15 -0.09 -0.0365" rpy="0 0 0"/>
+      <geometry><sphere radius="0.006"/></geometry>
+    </collision>
+    <collision name="rear_left_ball_collision">
+      <origin xyz="-0.15 0.09 -0.0365" rpy="0 0 0"/>
+      <geometry><sphere radius="0.006"/></geometry>
+    </collision>
+    <collision name="rear_right_ball_collision">
+      <origin xyz="-0.15 -0.09 -0.0365" rpy="0 0 0"/>
+      <geometry><sphere radius="0.006"/></geometry>
+    </collision>
+  </link>
+
+  <link name="base_footprint"/>
+  <joint name="base_footprint_joint" type="fixed">
+    <parent link="base_link"/><child link="base_footprint"/>
+    <origin xyz="0 0 -0.0425" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Lidar housing is already present in the chassis CAD mesh. -->
+  <link name="laser"/>
+  <joint name="base_to_laser" type="fixed">
+    <parent link="base_link"/><child link="laser"/>
+    <origin xyz="0 0 0.10892" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Reserved CAD frame in the lower tray, aligned x-forward/y-left/z-up. -->
+  <link name="imu_link">
+    <visual>
+      <geometry><box size="0.025 0.020 0.005"/></geometry>
+      <material name="imu_green"><color rgba="0.08 0.50 0.16 1.0"/></material>
+    </visual>
+  </link>
+  <joint name="base_to_imu" type="fixed">
+    <parent link="base_link"/><child link="imu_link"/>
+    <origin xyz="0 0 -0.0128" rpy="0 0 0"/>
+  </joint>
+
+  <link name="left_wheel">
+    <inertial>
+      <origin xyz="-0.000009503 -0.000153866 -0.000012903" rpy="0 0 0"/>
+      <mass value="0.2"/>
+      <inertia ixx="0.000123851" iyy="0.000221573" izz="0.000123851"
+        ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+    <visual>
+      <origin xyz="-0.0353034 0.0735430 -0.2091883" rpy="0 0 0"/>
+      <geometry><mesh filename="package://vacuum_robot_gazebo/models/vacuum_robot/meshes/left_wheel_link_1.stl" scale="0.001 0.001 0.001"/></geometry>
+      <material name="black_rubber"/>
+    </visual>
+    <collision><origin rpy="1.57079632679 0 0"/><geometry><cylinder radius="0.0425" length="0.0300"/></geometry></collision>
+  </link>
+  <joint name="left_wheel_joint" type="continuous">
+    <parent link="base_link"/><child link="left_wheel"/><origin xyz="0 0.1274 0"/>
+    <axis xyz="0 1 0"/><limit effort="20" velocity="10"/>
+    <dynamics damping="0.03" friction="0"/>
+  </joint>
+
+  <link name="right_wheel">
+    <inertial>
+      <origin xyz="-0.000000013 0.000153935 0.000000639" rpy="0 0 0"/>
+      <mass value="0.2"/>
+      <inertia ixx="0.000123851" iyy="0.000221573" izz="0.000123851"
+        ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+    <visual>
+      <origin xyz="-0.0353129 0.3283430 -0.2091955" rpy="0 0 0"/>
+      <geometry><mesh filename="package://vacuum_robot_gazebo/models/vacuum_robot/meshes/right_wheel_link_1.stl" scale="0.001 0.001 0.001"/></geometry>
+      <material name="black_rubber"/>
+    </visual>
+    <collision><origin rpy="1.57079632679 0 0"/><geometry><cylinder radius="0.0425" length="0.0300"/></geometry></collision>
+  </link>
+  <joint name="right_wheel_joint" type="continuous">
+    <parent link="base_link"/><child link="right_wheel"/><origin xyz="0 -0.1274 0"/>
+    <axis xyz="0 1 0"/><limit effort="20" velocity="10"/>
+    <dynamics damping="0.03" friction="0"/>
+  </joint>
+
+</robot>

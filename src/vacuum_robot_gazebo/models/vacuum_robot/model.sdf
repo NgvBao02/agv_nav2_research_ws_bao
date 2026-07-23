@@ -1,0 +1,215 @@
+<?xml version="1.0"?>
+<sdf version="1.9">
+  <model name="vacuum_robot">
+    <self_collide>false</self_collide>
+    <allow_auto_disable>false</allow_auto_disable>
+
+    <!-- The model frame is the geometric center on the floor. base_link is
+         centered laterally at the 85 mm drive-wheel axle height. -->
+    <link name="base_link">
+      <pose>0 0 0.0425 0 0 0</pose>
+      <inertial>
+        <pose>-0.006074 -0.000536 0.016023 0 0 0</pose>
+        <mass>4.6</mass>
+        <inertia>
+          <ixx>0.042710097</ixx><iyy>0.107573321</iyy><izz>0.137292434</izz>
+          <ixy>0.000327650</ixy><ixz>-0.000920746</ixz><iyz>0.000111809</iyz>
+        </inertia>
+      </inertial>
+      <!-- Compound chassis collision covers the 440 x 340 mm CAD envelope
+           while leaving the low wheel pockets open around the axle. -->
+      <collision name="lower_center_collision">
+        <pose>0 0 0.0675 0 0 0</pose>
+        <geometry><box><size>0.44 0.20 0.10</size></box></geometry>
+        <surface>
+          <friction><ode><mu>0.02</mu><mu2>0.02</mu2></ode></friction>
+        </surface>
+      </collision>
+      <collision name="front_cross_collision">
+        <pose>0.16 0 0.0675 0 0 0</pose>
+        <geometry><box><size>0.12 0.34 0.10</size></box></geometry>
+        <surface>
+          <friction><ode><mu>0.02</mu><mu2>0.02</mu2></ode></friction>
+        </surface>
+      </collision>
+      <collision name="rear_cross_collision">
+        <pose>-0.16 0 0.0675 0 0 0</pose>
+        <geometry><box><size>0.12 0.34 0.10</size></box></geometry>
+        <surface>
+          <friction><ode><mu>0.02</mu><mu2>0.02</mu2></ode></friction>
+        </surface>
+      </collision>
+      <collision name="upper_deck_collision">
+        <pose>0 0 0.0975 0 0 0</pose>
+        <geometry><box><size>0.44 0.34 0.04</size></box></geometry>
+        <surface>
+          <friction><ode><mu>0.02</mu><mu2>0.02</mu2></ode></friction>
+        </surface>
+      </collision>
+      <!-- Four 12 mm CAD ball supports touch the floor at x = +/-150 mm,
+           y = +/-90 mm. They need collision but no extra visual because they
+           are already contained in base_link.stl. -->
+      <collision name="front_left_ball_collision">
+        <pose>0.15 0.09 -0.0365 0 0 0</pose>
+        <geometry><sphere><radius>0.006</radius></sphere></geometry>
+        <surface><friction><ode><mu>0.005</mu><mu2>0.005</mu2></ode></friction></surface>
+      </collision>
+      <collision name="front_right_ball_collision">
+        <pose>0.15 -0.09 -0.0365 0 0 0</pose>
+        <geometry><sphere><radius>0.006</radius></sphere></geometry>
+        <surface><friction><ode><mu>0.005</mu><mu2>0.005</mu2></ode></friction></surface>
+      </collision>
+      <collision name="rear_left_ball_collision">
+        <pose>-0.15 0.09 -0.0365 0 0 0</pose>
+        <geometry><sphere><radius>0.006</radius></sphere></geometry>
+        <surface><friction><ode><mu>0.005</mu><mu2>0.005</mu2></ode></friction></surface>
+      </collision>
+      <collision name="rear_right_ball_collision">
+        <pose>-0.15 -0.09 -0.0365 0 0 0</pose>
+        <geometry><sphere><radius>0.006</radius></sphere></geometry>
+        <surface><friction><ode><mu>0.005</mu><mu2>0.005</mu2></ode></friction></surface>
+      </collision>
+      <visual name="chassis_visual">
+        <!-- CAD STL is in millimetres and uses an off-centre SolidWorks frame. -->
+        <pose>-0.035315 0.200943 -0.211698 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://vacuum_robot/meshes/base_link.stl</uri>
+            <scale>0.001 0.001 0.001</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>0.60 0.62 0.65 1</ambient><diffuse>0.72 0.74 0.78 1</diffuse>
+        </material>
+      </visual>
+
+      <!-- The lidar housing is already part of the chassis CAD mesh. Only the
+           simulated ray sensor is added here, at the reserved CAD frame. -->
+      <sensor name="rplidar_a1m8" type="gpu_lidar">
+        <pose>0 0 0.10892 0 0 0</pose>
+        <always_on>true</always_on><visualize>true</visualize><update_rate>5.5</update_rate>
+        <topic>/scan</topic><gz_frame_id>laser</gz_frame_id>
+        <lidar>
+          <scan><horizontal>
+            <samples>1440</samples><resolution>1</resolution>
+            <min_angle>-3.14159265359</min_angle><max_angle>3.14159265359</max_angle>
+          </horizontal></scan>
+          <range><min>0.15</min><max>12.0</max><resolution>0.01</resolution></range>
+          <noise><type>gaussian</type><mean>0.0</mean><stddev>0.01</stddev></noise>
+        </lidar>
+      </sensor>
+
+      <!-- BNO055 board shown in the lower CAD tray. The sensor frame in the
+           original export is 29.7 mm above the floor. -->
+      <visual name="imu_board_visual">
+        <pose>0 0 -0.0128 0 0 0</pose>
+        <geometry><box><size>0.025 0.020 0.005</size></box></geometry>
+        <material><ambient>0.05 0.30 0.10 1</ambient><diffuse>0.08 0.50 0.16 1</diffuse></material>
+      </visual>
+      <sensor name="bno055_imu" type="imu">
+        <pose>0 0 -0.0128 0 0 0</pose>
+        <always_on>true</always_on><update_rate>100</update_rate>
+        <topic>/imu/data</topic><gz_frame_id>imu_link</gz_frame_id>
+        <imu>
+          <angular_velocity>
+            <x><noise type="gaussian"><mean>0</mean><stddev>0.002</stddev></noise></x>
+            <y><noise type="gaussian"><mean>0</mean><stddev>0.002</stddev></noise></y>
+            <z><noise type="gaussian"><mean>0</mean><stddev>0.002</stddev></noise></z>
+          </angular_velocity>
+          <linear_acceleration>
+            <x><noise type="gaussian"><mean>0</mean><stddev>0.03</stddev></noise></x>
+            <y><noise type="gaussian"><mean>0</mean><stddev>0.03</stddev></noise></y>
+            <z><noise type="gaussian"><mean>0</mean><stddev>0.03</stddev></noise></z>
+          </linear_acceleration>
+        </imu>
+      </sensor>
+    </link>
+
+    <link name="base_footprint"><pose>0 0 0 0 0 0</pose></link>
+    <joint name="base_footprint_joint" type="fixed">
+      <parent>base_link</parent><child>base_footprint</child>
+      <pose relative_to="base_link">0 0 -0.0425 0 0 0</pose>
+    </joint>
+
+    <!-- Two powered wheels. The complete CAD part is 42.4 mm wide, but the
+         rolling tread is 30 mm wide. Link origins are at the tread planes. -->
+    <link name="left_wheel">
+      <pose>0 0.1274 0.0425 0 0 0</pose>
+      <inertial>
+        <pose>-0.000009503 -0.000153866 -0.000012903 0 0 0</pose>
+        <mass>0.2</mass>
+        <inertia>
+          <ixx>0.000123851</ixx><iyy>0.000221573</iyy><izz>0.000123851</izz>
+          <ixy>0</ixy><ixz>0</ixz><iyz>0</iyz>
+        </inertia>
+      </inertial>
+      <collision name="collision">
+        <pose>0 0 0 1.57079632679 0 0</pose>
+        <geometry><cylinder><radius>0.0425</radius><length>0.0300</length></cylinder></geometry>
+        <surface><friction><ode><mu>1.2</mu><mu2>0.05</mu2><fdir1>1 0 0</fdir1><slip1>0.0</slip1><slip2>0.02</slip2></ode></friction></surface>
+      </collision>
+      <visual name="visual">
+        <pose>-0.0353034 0.0735430 -0.2091883 0 0 0</pose>
+        <geometry><mesh><uri>model://vacuum_robot/meshes/left_wheel_link_1.stl</uri><scale>0.001 0.001 0.001</scale></mesh></geometry>
+        <material><ambient>0.03 0.03 0.03 1</ambient><diffuse>0.06 0.06 0.06 1</diffuse></material>
+      </visual>
+    </link>
+    <link name="right_wheel">
+      <pose>0 -0.1274 0.0425 0 0 0</pose>
+      <inertial>
+        <pose>-0.000000013 0.000153935 0.000000639 0 0 0</pose>
+        <mass>0.2</mass>
+        <inertia>
+          <ixx>0.000123851</ixx><iyy>0.000221573</iyy><izz>0.000123851</izz>
+          <ixy>0</ixy><ixz>0</ixz><iyz>0</iyz>
+        </inertia>
+      </inertial>
+      <collision name="collision">
+        <pose>0 0 0 1.57079632679 0 0</pose>
+        <geometry><cylinder><radius>0.0425</radius><length>0.0300</length></cylinder></geometry>
+        <surface><friction><ode><mu>1.2</mu><mu2>0.05</mu2><fdir1>1 0 0</fdir1><slip1>0.0</slip1><slip2>0.02</slip2></ode></friction></surface>
+      </collision>
+      <visual name="visual">
+        <pose>-0.0353129 0.3283430 -0.2091955 0 0 0</pose>
+        <geometry><mesh><uri>model://vacuum_robot/meshes/right_wheel_link_1.stl</uri><scale>0.001 0.001 0.001</scale></mesh></geometry>
+        <material><ambient>0.03 0.03 0.03 1</ambient><diffuse>0.06 0.06 0.06 1</diffuse></material>
+      </visual>
+    </link>
+    <joint name="left_wheel_joint" type="revolute">
+      <parent>base_link</parent><child>left_wheel</child>
+      <pose relative_to="base_link">0 0.1274 0 0 0 0</pose>
+      <axis><xyz>0 1 0</xyz><limit><effort>20</effort><velocity>10</velocity></limit><dynamics><damping>0.03</damping></dynamics></axis>
+    </joint>
+    <joint name="right_wheel_joint" type="revolute">
+      <parent>base_link</parent><child>right_wheel</child>
+      <pose relative_to="base_link">0 -0.1274 0 0 0 0</pose>
+      <axis><xyz>0 1 0</xyz><limit><effort>20</effort><velocity>10</velocity></limit><dynamics><damping>0.03</damping></dynamics></axis>
+    </joint>
+
+    <plugin filename="gz-sim-diff-drive-system" name="gz::sim::systems::DiffDrive">
+      <left_joint>left_wheel_joint</left_joint><right_joint>right_wheel_joint</right_joint>
+      <!-- The physical rolling-tread separation is 0.2548 m.  Gazebo's
+           four-point support contact needs a 1.1023 angular calibration
+           (the same role as wheel_separation_multiplier in ros2_control)
+           so plugin odometry agrees with the independent ground truth. -->
+      <wheel_separation>0.2809</wheel_separation><wheel_radius>0.0425</wheel_radius>
+      <max_linear_acceleration>0.20</max_linear_acceleration><min_linear_acceleration>-0.25</min_linear_acceleration>
+      <max_angular_acceleration>0.80</max_angular_acceleration><min_angular_acceleration>-0.80</min_angular_acceleration>
+      <max_linear_velocity>0.08</max_linear_velocity><min_linear_velocity>-0.08</min_linear_velocity>
+      <max_angular_velocity>0.425</max_angular_velocity><min_angular_velocity>-0.425</min_angular_velocity>
+      <topic>/cmd_vel</topic><odom_topic>/odom</odom_topic><tf_topic>/tf</tf_topic>
+      <frame_id>odom</frame_id><child_frame_id>base_link</child_frame_id><odom_publish_frequency>30</odom_publish_frequency>
+    </plugin>
+    <plugin filename="gz-sim-joint-state-publisher-system" name="gz::sim::systems::JointStatePublisher">
+      <joint_name>left_wheel_joint</joint_name><joint_name>right_wheel_joint</joint_name>
+      <topic>/joint_states</topic>
+    </plugin>
+    <!-- Physics ground truth is deliberately separate from wheel odometry. -->
+    <plugin filename="gz-sim-odometry-publisher-system" name="gz::sim::systems::OdometryPublisher">
+      <dimensions>2</dimensions><odom_publish_frequency>30</odom_publish_frequency>
+      <odom_frame>world</odom_frame><robot_base_frame>base_link</robot_base_frame>
+      <odom_topic>/ground_truth/odom</odom_topic>
+      <tf_topic>/ground_truth/tf_gz</tf_topic>
+    </plugin>
+  </model>
+</sdf>
