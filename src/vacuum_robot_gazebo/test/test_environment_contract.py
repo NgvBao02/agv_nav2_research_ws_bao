@@ -146,3 +146,24 @@ def test_nav2_loads_the_declared_planner_families():
     assert planner['SmacHybrid']['smooth_path'] is False
     smoother = parameters['smoother_server']['ros__parameters']
     assert smoother['constrained']['path_downsampling_factor'] == 1
+
+
+def test_research_rviz_loads_the_custom_planner_selector():
+    with (
+        PACKAGE_ROOT / 'rviz' / 'research_comparison.rviz'
+    ).open(encoding='utf-8') as stream:
+        configuration = yaml.safe_load(stream)
+    selector_panels = [
+        panel for panel in configuration['Panels']
+        if panel.get('Name') == 'Selector'
+    ]
+    assert selector_panels == [{
+        'Class': 'adaptive_pivot_g2_rviz/Planner Selector',
+        'Name': 'Selector',
+    }]
+
+    package = ET.parse(PACKAGE_ROOT / 'package.xml').getroot()
+    runtime_dependencies = {
+        dependency.text for dependency in package.findall('exec_depend')
+    }
+    assert 'adaptive_pivot_g2_rviz' in runtime_dependencies

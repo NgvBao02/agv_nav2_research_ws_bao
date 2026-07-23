@@ -3,6 +3,7 @@
 
 """Plan once, compare every configured smoother, and optionally follow one path."""
 
+from copy import deepcopy
 import json
 import math
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple
@@ -26,6 +27,23 @@ from tf2_ros import Buffer, TransformException, TransformListener
 
 
 Point = Tuple[float, float]
+PLANNER_IDS = (
+    'NavFnAStar',
+    'NavFnDijkstra',
+    'ThetaStar',
+    'Smac2D',
+    'SmacHybrid',
+)
+
+
+def normalize_planner_id(planner_id: str) -> str:
+    """Return one exact configured planner ID or raise a clear error."""
+    selected = planner_id.strip()
+    if selected not in PLANNER_IDS:
+        raise ValueError(
+            f'planner_id={selected!r} must be one of {PLANNER_IDS}'
+        )
+    return selected
 
 
 def calculate_path_metrics(
@@ -307,13 +325,20 @@ class PathComparisonNode(Node):
     def __init__(self) -> None:
         super().__init__('adaptive_pivot_g2_path_comparison')
         self.declare_parameter('goal_topic', '/research/goal_pose')
+        self.declare_parameter('planner_selector_topic', '/planner_selector')
         self.declare_parameter('planner_id', 'ThetaStar')
+        self.declare_parameter('replan_on_planner_change', True)
         self.declare_parameter('execute_method', 'simple')
         self.declare_parameter('execute', True)
         self.declare_parameter('check_for_collisions', True)
         self.declare_parameter('max_smoothing_duration', 3.0)
 
-        self._planner_id = str(self.get_parameter('planner_id').value)
+        self._planner_id = normalize_planner_id(
+            str(self.get_parameter('planner_id').value)
+        )
+        self._replan_on_planner_change = bool(
+            self.get_parameter('replan_on_planner_change').value
+        )
         self._execute_method = str(self.get_parameter('execute_method').value)
         self._execute = bool(self.get_parameter('execute').value)
         self._check_collisions = bool(self.get_parameter('check_for_collisions').value)
@@ -342,6 +367,9 @@ class PathComparisonNode(Node):
         self._metrics_publisher = self.create_publisher(
             String, '/research/metrics', latched_qos
         )
+        self._planner_status_publisher = self.create_publisher(
+            String, '/research/planner_active', latched_qos
+        )
         self.create_subscription(
             PoseStamped,
             str(self.get_parameter('goal_topic').value),
@@ -350,6 +378,12 @@ class PathComparisonNode(Node):
         )
         self.create_subscription(
             String, '/research/execute_method', self._method_callback, latched_qos
+        )
+        self.create_subscription(
+            String,
+            str(self.get_parameter('planner_selector_topic').value),
+            self._planner_callback,
+            latched_qos,
         )
 
         self._planner_client = ActionClient(self, ComputePathToPose, 'compute_path_to_pose')
@@ -364,15 +398,21 @@ class PathComparisonNode(Node):
         self._trajectory_timer = self.create_timer(0.10, self._record_trajectory)
 
         self._generation = 0
+        self._planning_planner_id = self._planner_id
+        self._last_goal_pose: Optional[PoseStamped] = None
+        self._active_planner_goal = None
+        self._active_smoother_goal = None
         self._active_controller_goal = None
         self._execution_started_at: Optional[Time] = None
         self._execution_reference_points: List[Point] = []
         self._published_methods = set()
         self._pending_smoothers = []
         self._raw_path: Optional[Path] = None
+        self._publish_active_planner()
         self.get_logger().info(
             'Ready: publish a PoseStamped on /research/goal_pose. '
-            f'Execution method is {self._execute_method!r}.'
+            f'Planner is {self._planner_id!r}; execution method is '
+            f'{self._execute_method!r}.'
         )
 
     def _servers_ready(self) -> bool:
@@ -387,7 +427,49 @@ class PathComparisonNode(Node):
         self._execute_method = method
         self.get_logger().info(f'Next goal will execute method: {method}')
 
+    def _publish_active_planner(self) -> None:
+        message = String()
+        message.data = self._planner_id
+        self._planner_status_publisher.publish(message)
+
+    def _planner_callback(self, message: String) -> None:
+        try:
+            selected = normalize_planner_id(message.data)
+        except ValueError as error:
+            self.get_logger().error(f'Ignoring planner selection: {error}')
+            self._publish_active_planner()
+            return
+
+        changed = selected != self._planner_id
+        self._planner_id = selected
+        self._publish_active_planner()
+        event = String()
+        event.data = json.dumps(
+            {
+                'event': 'planner_selected',
+                'planner': selected,
+                'changed': changed,
+                'has_last_goal': self._last_goal_pose is not None,
+            },
+            sort_keys=True,
+        )
+        self._metrics_publisher.publish(event)
+        self.get_logger().info(event.data)
+        if (
+            self._replan_on_planner_change
+            and self._last_goal_pose is not None
+        ):
+            self._start_planning(
+                deepcopy(self._last_goal_pose), source='planner_selector'
+            )
+
     def _goal_callback(self, goal_pose: PoseStamped) -> None:
+        self._last_goal_pose = deepcopy(goal_pose)
+        self._start_planning(goal_pose, source='rviz_goal')
+
+    def _start_planning(
+        self, goal_pose: PoseStamped, source: str
+    ) -> None:
         if not self._servers_ready():
             self.get_logger().error(
                 'Nav2 action servers are not active yet; retry the goal shortly.'
@@ -395,14 +477,29 @@ class PathComparisonNode(Node):
             return
         self._generation += 1
         generation = self._generation
+        self._planning_planner_id = self._planner_id
         self._published_methods.clear()
+        self._pending_smoothers = []
+        self._raw_path = None
+        if self._active_planner_goal is not None:
+            self._active_planner_goal.cancel_goal_async()
+            self._active_planner_goal = None
+        if self._active_smoother_goal is not None:
+            self._active_smoother_goal.cancel_goal_async()
+            self._active_smoother_goal = None
+        empty_path = Path()
+        empty_path.header.frame_id = 'map'
+        empty_path.header.stamp = self.get_clock().now().to_msg()
+        for publisher in self._path_publishers.values():
+            publisher.publish(empty_path)
 
         goal = ComputePathToPose.Goal()
         goal.goal = goal_pose
-        goal.planner_id = self._planner_id
+        goal.planner_id = self._planning_planner_id
         goal.use_start = False
         self.get_logger().info(
-            f'Planning generation {generation} to '
+            f'Planning generation {generation} with '
+            f'{self._planning_planner_id} from {source} to '
             f'({goal_pose.pose.position.x:.2f}, {goal_pose.pose.position.y:.2f})'
         )
         future = self._planner_client.send_goal_async(goal)
@@ -417,6 +514,7 @@ class PathComparisonNode(Node):
         if not goal_handle.accepted:
             self.get_logger().error('Planner rejected the goal.')
             return
+        self._active_planner_goal = goal_handle
         result_future = goal_handle.get_result_async()
         result_future.add_done_callback(
             lambda completed, token=generation: self._planner_result(completed, token)
@@ -425,6 +523,7 @@ class PathComparisonNode(Node):
     def _planner_result(self, future, generation: int) -> None:
         if generation != self._generation:
             return
+        self._active_planner_goal = None
         response = future.result()
         result = response.result
         if response.status != GoalStatus.STATUS_SUCCEEDED or result.error_code != 0:
@@ -486,6 +585,7 @@ class PathComparisonNode(Node):
             self.get_logger().error(f'{method}: smoother rejected the goal.')
             self._send_next_smoother(generation)
             return
+        self._active_smoother_goal = goal_handle
         result_future = goal_handle.get_result_async()
         result_future.add_done_callback(
             lambda completed, selected=method, token=generation:
@@ -495,6 +595,7 @@ class PathComparisonNode(Node):
     def _smoother_result(self, future, method: str, generation: int) -> None:
         if generation != self._generation:
             return
+        self._active_smoother_goal = None
         response = future.result()
         result = response.result
         if response.status != GoalStatus.STATUS_SUCCEEDED or result.error_code != 0:
@@ -518,6 +619,8 @@ class PathComparisonNode(Node):
         points = [(pose.pose.position.x, pose.pose.position.y) for pose in path.poses]
         payload = {
             'event': 'path_ready',
+            'planner': self._planning_planner_id,
+            'generation': self._generation,
             'method': method,
             f'{stage}_time_s': elapsed_seconds,
             **calculate_path_metrics(points),
@@ -600,6 +703,8 @@ class PathComparisonNode(Node):
             ).nanoseconds * 1.0e-9
         payload = {
             'event': 'execution_finished',
+            'planner': self._planning_planner_id,
+            'generation': self._generation,
             'method': method,
             'success': succeeded,
             'status': response.status,

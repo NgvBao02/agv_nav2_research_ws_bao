@@ -12,6 +12,8 @@ from adaptive_pivot_g2_benchmark.compare_paths import (
     calculate_path_metrics,
     calculate_tracking_metrics,
     condition_trajectory_for_metrics,
+    normalize_planner_id,
+    PLANNER_IDS,
     resample_polyline,
 )
 from adaptive_pivot_g2_benchmark.execution_matrix import (
@@ -122,6 +124,15 @@ class TestPathMetrics(unittest.TestCase):
 
         self.assertEqual(removed, 0)
         self.assertEqual(len(canonical.poses), 3)
+
+    def test_planner_selector_accepts_only_configured_exact_ids(self):
+        for planner_id in PLANNER_IDS:
+            self.assertEqual(normalize_planner_id(planner_id), planner_id)
+        with self.assertRaises(ValueError):
+            normalize_planner_id('GridBased')
+        with self.assertRaises(ValueError):
+            normalize_planner_id('thetastar')
+        self.assertEqual(normalize_planner_id('  Smac2D  '), 'Smac2D')
 
     def test_footprint_clearance_uses_robot_boundary_not_only_center(self):
         occupancy_grid = OccupancyGrid()

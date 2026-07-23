@@ -17,6 +17,9 @@ luồng nghiên cứu chính chạy hoàn toàn trong ROS 2.
   `nav_msgs/Path` vào Nav2 Simple, Savitzky–Golay, Constrained, Pivot–G2 và
   adaptive hybrid; xuất CSV/JSON, metric full-footprint, và chạy ma trận vòng
   kín bằng cùng một controller.
+- `adaptive_pivot_g2_rviz`: panel RViz2 để chọn trực tiếp một trong năm global
+  planner, xác nhận planner đang hoạt động và tự lập lại đường tới goal gần
+  nhất.
 - `vacuum_robot_gazebo`: robot vi sai hai bánh dùng mesh CAD 440 × 340 mm,
   bảy cặp world/map Gazebo–Nav2 đồng nhất, trong đó có ba layout chuyên cho nhà
   kho, bridge Gazebo–ROS, Nav2 và RViz2. Cấu hình cảm biến mô phỏng đã bám theo
@@ -72,6 +75,8 @@ riêng collision. Grid nằm tại mặt đất, còn `base_link` nằm ở cao 
 Frame lidar và IMU dùng đúng vị trí dự trữ từ xacro CAD gốc; housing lidar đã
 nằm sẵn trong mesh thân nên không vẽ thêm cylinder.
 
+## Chọn planner và xem đường trong RViz2
+
 Trong RViz2, chọn tool **2D Goal Pose** rồi click/drag trên map. Mỗi goal sẽ
 publish cùng input và các màu:
 
@@ -82,6 +87,18 @@ publish cùng input và các màu:
 - magenta: Pivot–G2 đề xuất;
 - xanh lam: adaptive hybrid đề xuất;
 - trắng: quỹ đạo xe thực thi.
+
+Để chỉ xem và so sánh đường, nên launch với `execute:=false`. Ở panel
+**Selector** bên phải RViz2:
+
+1. đặt một goal bằng **2D Goal Pose**;
+2. chọn `NavFn A*`, `NavFn Dijkstra`, `Theta*`, `Smac 2D` hoặc `Smac Hybrid`;
+3. nhấn **Áp dụng và lập lại đường**.
+
+Đường đỏ `RAW planner` sẽ được xóa rồi tạo lại từ vị trí hiện tại bằng đúng
+planner đã chọn; năm đường smoother cũng được tính lại từ raw path mới. Dòng
+trạng thái trong panel chỉ báo thành công sau khi node so sánh phản hồi trên
+`/research/planner_active`.
 
 Để xe bám đường đề xuất ngay từ lúc launch:
 
@@ -136,10 +153,10 @@ ros2 run adaptive_pivot_g2_benchmark execution_matrix -- \
 source /opt/ros/jazzy/setup.bash
 colcon build --symlink-install --packages-select \
   adaptive_pivot_g2 adaptive_pivot_g2_nav2 adaptive_pivot_g2_controller \
-  adaptive_pivot_g2_benchmark vacuum_robot_gazebo
+  adaptive_pivot_g2_benchmark adaptive_pivot_g2_rviz vacuum_robot_gazebo
 colcon test --packages-select \
   adaptive_pivot_g2 adaptive_pivot_g2_nav2 adaptive_pivot_g2_controller \
-  adaptive_pivot_g2_benchmark vacuum_robot_gazebo \
+  adaptive_pivot_g2_benchmark adaptive_pivot_g2_rviz vacuum_robot_gazebo \
   --event-handlers console_direct+
 colcon test-result --verbose
 ```
@@ -154,4 +171,5 @@ colcon test-result --verbose
 - [Trạng thái nghiên cứu, số liệu pilot và hướng bài báo](docs/RESEARCH_STATUS_20260723.md)
 - [So sánh 5 planner và 3 map Gazebo mới](docs/PLANNER_MAP_BENCHMARK.md)
 - [Bộ map nhà kho, scenario và kết quả smoke test](docs/WAREHOUSE_MAPS.md)
+- [Cách dùng và kiểm thử ô chọn planner trong RViz2](docs/RVIZ_PLANNER_SELECTOR.md)
 - [Kiểm toán source MATLAB lưu trữ](docs/MATLAB_SOURCE_AUDIT.md)

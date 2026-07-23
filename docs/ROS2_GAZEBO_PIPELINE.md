@@ -47,7 +47,7 @@ Gazebo world + 2-wheel differential robot
  map_server + AMCL       robot_state_publisher
         │
         ▼
- Navfn A* ── một raw path ── benchmark runner
+ 5 global planners ── một raw path ── benchmark runner
                               │
              ┌────────────────┼───────────────┐
              ▼                ▼               ▼
@@ -64,7 +64,9 @@ Gazebo world + 2-wheel differential robot
 | Topic | Nội dung |
 |---|---|
 | `/research/goal_pose` | Goal dành cho runner so sánh |
-| `/research/path/raw` | Path chung từ Navfn |
+| `/planner_selector` | Planner ID do panel RViz2 gửi |
+| `/research/planner_active` | Planner ID đã được runner chấp nhận |
+| `/research/path/raw` | Raw path của global planner đang chọn |
 | `/research/path/simple` | Nav2 Simple Smoother |
 | `/research/path/savitzky_golay` | Nav2 Savitzky–Golay |
 | `/research/path/constrained` | Nav2 Constrained Smoother |
