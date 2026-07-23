@@ -21,9 +21,9 @@ footprint có xét hướng của thân xe 0,44 × 0,34 m, và (3) thực thi po
 minh trên robot hai bánh vi sai.
 
 Đây là hướng đủ hợp lý để xây dựng bài hội nghị, nhưng **chưa thể bảo đảm được
-chấp nhận**. Hiện mới có pilot trên một map và ba lượt closed-loop cho một
-scenario; cần thực nghiệm nhiều map, nhiều tình huống và robot thật trước khi viết
-claim cuối cùng.
+chấp nhận**. Hiện đã có pilot hình học trên ba map mới và smoke test vòng kín
+năm planner, nhưng benchmark smoother nhiều lần lặp vẫn tập trung ở một scenario;
+cần khóa dataset, tăng số lần lặp và chạy robot thật trước khi viết claim cuối.
 
 ## Hệ thống đã chốt để thử nghiệm
 
@@ -34,11 +34,32 @@ claim cuối cùng.
 - Encoder GA25: 1320 tick/vòng; lidar A1M8; IMU BNO055.
 - Baseline: raw path, Nav2 Simple, Savitzky–Golay và Constrained Smoother.
 - Phương pháp: Pivot–G2 đã tuning và bộ Hybrid tự chọn giữa Simple/Pivot–G2.
+- Global planner pilot: NavFn A*, NavFn Dijkstra, Theta*, Smac 2D và Smac
+  Hybrid; planner và smoother được phân tích thành hai yếu tố riêng.
 - Cùng planner input, map, footprint, collision checker và controller cho tất cả
   phương pháp. Controller chung hiểu marker pivot nên phương pháp đề xuất không
   được hưởng một controller riêng thiếu công bằng.
 - Success closed-loop phải thỏa cả kết quả action của Nav2 và ground-truth Gazebo
   trong 0,10 m, 0,15 rad so với goal.
+
+## Bổ sung multi-planner và multi-map
+
+Ba môi trường `open_arena`, `narrow_aisles` và `office_maze` đã có world SDF,
+map PGM/YAML và 8 scenario/map được sinh từ cùng một source hình học. Open arena
+và narrow aisles đạt 240/240 phép planner–smoother; office maze đạt 228/240 và
+giữ nguyên các failure có ý nghĩa ở cửa hẹp. Cả năm planner cũng đạt ground
+truth goal trong smoke test vòng kín `short_open_diagonal`.
+
+Office maze dẫn tới hai sửa lỗi:
+
+1. Constrained Smoother không còn downsample factor 2 vì đoạn NavFn A–B–A có
+   thể bị alias thành A–A và tạo residual NaN trong Ceres.
+2. Hybrid thêm raw-path safety fallback. Nếu Simple và Pivot–G2 đều không tạo
+   được đường an toàn nhưng raw path vẫn qua swept-footprint check, Hybrid trả
+   raw và ghi chẩn đoán thay vì abort.
+
+Số liệu, hình và lệnh tái lập nằm trong `PLANNER_MAP_BENCHMARK.md`. Đây vẫn là
+pilot `n=1` cho mỗi scenario, không thay cho test set khóa.
 
 ## Kết quả offline trên 12 tình huống
 
@@ -142,9 +163,9 @@ Cổng **go/no-go** trước khi viết claim mạnh:
 
 ## Thực nghiệm còn bắt buộc
 
-1. Khóa ít nhất ba map: kho mở, hành lang L/U hẹp, và môi trường clutter; tối
-   thiểu 20–30 cặp start–goal hợp lệ mỗi map. Lưu raw path/costmap snapshot thành
-   dataset để mọi method nhận input đồng nhất.
+1. Dùng ba layout pilot hiện có để khóa train/test split; tăng từ 8 lên tối
+   thiểu 20–30 cặp start–goal hợp lệ mỗi map. Lưu raw path/costmap snapshot
+   thành dataset để mọi method nhận input đồng nhất.
 2. Tách scenario tuning và held-out theo map/start–goal. Không chỉnh ngưỡng sau
    khi đọc held-out.
 3. Chạy closed-loop ít nhất 10 lần cho từng method trên tập tình huống đại diện,

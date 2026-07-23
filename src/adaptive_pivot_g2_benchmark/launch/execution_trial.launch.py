@@ -31,6 +31,7 @@ def _launch_setup(context):
     gui = LaunchConfiguration('gui').perform(context)
     with Path(scenario_file).open(encoding='utf-8') as stream:
         document = yaml.safe_load(stream)
+    environment = str(document.get('environment', 'research_warehouse'))
     selected = next(
         (
             scenario
@@ -55,6 +56,7 @@ def _launch_setup(context):
             'rviz': 'false',
             'compare': 'false',
             'execute': 'false',
+            'environment': environment,
             'x_pose': str(float(start[0])),
             'y_pose': str(float(start[1])),
             'yaw': str(start_yaw),

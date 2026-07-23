@@ -15,6 +15,11 @@ if(BUILD_TESTING)
     test/test_robot_description.py
     TIMEOUT 30
   )
+  ament_add_pytest_test(
+    environment_contract
+    test/test_environment_contract.py
+    TIMEOUT 30
+  )
 endif()
 
 ament_package()

@@ -11,7 +11,11 @@ from launch.actions import (
 )
 from launch.conditions import IfCondition, UnlessCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration
+from launch.substitutions import (
+    LaunchConfiguration,
+    PathJoinSubstitution,
+    PythonExpression,
+)
 from launch_ros.actions import Node
 from nav2_common.launch import RewrittenYaml
 
@@ -21,14 +25,21 @@ def generate_launch_description():
     ros_gz_share = get_package_share_directory('ros_gz_sim')
     nav2_share = get_package_share_directory('nav2_bringup')
 
-    world = os.path.join(package_share, 'worlds', 'research_warehouse.sdf')
     model = os.path.join(package_share, 'models', 'vacuum_robot', 'model.sdf')
     urdf = os.path.join(package_share, 'urdf', 'vacuum_robot.urdf')
     bridge_config = os.path.join(package_share, 'config', 'bridge.yaml')
     nav2_params = os.path.join(package_share, 'config', 'nav2_params.yaml')
-    map_yaml = os.path.join(package_share, 'maps', 'research_warehouse.yaml')
     rviz_config = os.path.join(package_share, 'rviz', 'research_comparison.rviz')
 
+    environment = LaunchConfiguration('environment')
+    environment_filename = PythonExpression(["'", environment, "' + '.sdf'"])
+    map_filename = PythonExpression(["'", environment, "' + '.yaml'"])
+    world = PathJoinSubstitution(
+        [package_share, 'worlds', environment_filename]
+    )
+    map_yaml = PathJoinSubstitution(
+        [package_share, 'maps', map_filename]
+    )
     gui = LaunchConfiguration('gui')
     use_rviz = LaunchConfiguration('rviz')
     use_nav2 = LaunchConfiguration('nav2')
@@ -77,7 +88,7 @@ def generate_launch_description():
         name='spawn_vacuum_robot',
         output='screen',
         arguments=[
-            '-world', 'research_warehouse',
+            '-world', environment,
             '-file', model,
             '-name', 'vacuum_robot',
             '-x', x_pose,
@@ -143,6 +154,15 @@ def generate_launch_description():
     return LaunchDescription(
         [
             DeclareLaunchArgument('gui', default_value='true'),
+            DeclareLaunchArgument(
+                'environment',
+                default_value='research_warehouse',
+                description=(
+                    'Matched Gazebo SDF and Nav2 map basename: '
+                    'research_warehouse, open_arena, narrow_aisles, or '
+                    'office_maze'
+                ),
+            ),
             DeclareLaunchArgument('rviz', default_value='true'),
             DeclareLaunchArgument('nav2', default_value='true'),
             DeclareLaunchArgument('compare', default_value='true'),
@@ -158,7 +178,10 @@ def generate_launch_description():
             DeclareLaunchArgument(
                 'planner_id',
                 default_value='ThetaStar',
-                description='Nav2 planner plugin ID: ThetaStar or GridBased',
+                description=(
+                    'Nav2 planner plugin ID: NavFnAStar, NavFnDijkstra, '
+                    'ThetaStar, Smac2D, or SmacHybrid'
+                ),
             ),
             DeclareLaunchArgument('x_pose', default_value='-5.0'),
             DeclareLaunchArgument('y_pose', default_value='-3.0'),

@@ -16,8 +16,12 @@ from adaptive_pivot_g2_benchmark.compare_paths import (
 )
 from adaptive_pivot_g2_benchmark.execution_matrix import (
     _aggregate,
+    _arguments,
     _process_group_exists,
     _terminate_trial_process_group,
+)
+from adaptive_pivot_g2_benchmark.path_contract import (
+    canonicalize_planner_path,
 )
 from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import OccupancyGrid, Path
@@ -92,6 +96,33 @@ class TestPathMetrics(unittest.TestCase):
         self.assertAlmostEqual(metrics['translation_path_length_m'], 2.0)
         self.assertAlmostEqual(metrics['translation_curvature_energy_1pm'], 0.0)
 
+    def test_path_contract_removes_only_redundant_consecutive_poses(self):
+        path = Path()
+        path.poses = [
+            self._pose(0.0, 0.0, 0.0),
+            self._pose(0.0, 0.0, 0.0),
+            self._pose(1.0, 0.0, 0.0),
+        ]
+
+        canonical, removed = canonicalize_planner_path(path)
+
+        self.assertEqual(removed, 1)
+        self.assertEqual(len(canonical.poses), 2)
+        self.assertEqual(len(path.poses), 3)
+
+    def test_path_contract_preserves_in_place_heading_change(self):
+        path = Path()
+        path.poses = [
+            self._pose(0.0, 0.0, 0.0),
+            self._pose(0.0, 0.0, 0.5 * math.pi),
+            self._pose(1.0, 0.0, 0.5 * math.pi),
+        ]
+
+        canonical, removed = canonicalize_planner_path(path)
+
+        self.assertEqual(removed, 0)
+        self.assertEqual(len(canonical.poses), 3)
+
     def test_footprint_clearance_uses_robot_boundary_not_only_center(self):
         occupancy_grid = OccupancyGrid()
         occupancy_grid.info.resolution = 0.1
@@ -142,6 +173,22 @@ class TestPathMetrics(unittest.TestCase):
         self.assertEqual(aggregate['execution_time_s_mean'], 12.0)
         self.assertAlmostEqual(
             aggregate['execution_time_s_stdev'], math.sqrt(8.0)
+        )
+
+    def test_execution_matrix_accepts_multiple_planners_and_scenario_file(self):
+        options = _arguments([
+            '--scenario-file', '/tmp/open_arena_scenarios.yaml',
+            '--scenario', 'west_east_center',
+            '--planners', 'NavFnAStar', 'ThetaStar', 'Smac2D',
+            '--methods', 'raw', 'adaptive_hybrid',
+        ])
+
+        self.assertEqual(
+            options.planners, ['NavFnAStar', 'ThetaStar', 'Smac2D']
+        )
+        self.assertEqual(options.methods, ['raw', 'adaptive_hybrid'])
+        self.assertEqual(
+            options.scenario_file, '/tmp/open_arena_scenarios.yaml'
         )
 
     def test_trial_cleanup_terminates_only_its_dedicated_process_group(self):

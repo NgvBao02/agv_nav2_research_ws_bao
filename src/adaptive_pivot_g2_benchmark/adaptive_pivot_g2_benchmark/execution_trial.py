@@ -27,6 +27,9 @@ from adaptive_pivot_g2_benchmark.compare_paths import (
     condition_trajectory_for_metrics,
     duration_seconds,
 )
+from adaptive_pivot_g2_benchmark.path_contract import (
+    canonicalize_planner_path,
+)
 from ament_index_python.packages import get_package_share_directory
 from geometry_msgs.msg import PoseWithCovarianceStamped, Twist
 from nav2_msgs.action import ComputePathToPose, FollowPath, SmoothPath
@@ -38,9 +41,9 @@ from rclpy.action import ActionClient
 from rclpy.node import Node
 from rclpy.qos import (
     DurabilityPolicy,
+    qos_profile_sensor_data,
     QoSProfile,
     ReliabilityPolicy,
-    qos_profile_sensor_data,
 )
 from std_srvs.srv import Trigger
 import yaml
@@ -165,6 +168,7 @@ class ExecutionTrial(Node):
         self.command_samples: List[Tuple[float, float]] = []
         self.collision_interventions = 0
         self.last_collision_action = CollisionMonitorState.DO_NOTHING
+        self.environment = 'unknown'
 
     def _ground_truth_callback(self, message: Odometry) -> None:
         self.latest_ground_truth = message
@@ -204,6 +208,9 @@ class ExecutionTrial(Node):
     def _load_scenario(self) -> Dict:
         with self.scenario_file.open(encoding='utf-8') as stream:
             document = yaml.safe_load(stream)
+        self.environment = str(
+            document.get('environment', 'research_warehouse')
+        )
         for scenario in document.get('scenarios', []):
             if scenario.get('name') == self.scenario_name:
                 return scenario
@@ -420,7 +427,10 @@ class ExecutionTrial(Node):
         self._publish_initial_pose(start, start_yaw)
         self._validate_physical_spawn(start, start_yaw)
         plan_result = self._plan(scenario, start_yaw, goal_yaw)
-        raw_path = plan_result.path
+        planner_output_path = plan_result.path
+        raw_path, removed_duplicates = canonicalize_planner_path(
+            planner_output_path
+        )
         selected_path, smoothing_time = self._smooth(raw_path)
         response, controller_success, execution_time = self._execute(selected_path)
 
@@ -455,6 +465,8 @@ class ExecutionTrial(Node):
         )
         result = {
             'generated_at_utc': datetime.now(timezone.utc).isoformat(),
+            'environment': self.environment,
+            'scenario_file': str(self.scenario_file),
             'scenario': self.scenario_name,
             'planner': self.planner_id,
             'method': self.method,
@@ -471,6 +483,10 @@ class ExecutionTrial(Node):
             'start': [float(start[0]), float(start[1]), start_yaw],
             'goal': [float(goal[0]), float(goal[1]), goal_yaw],
             'raw_path_sha256': _path_hash(raw_points),
+            'planner_output_path_sha256': _path_hash(
+                _path_points(planner_output_path)
+            ),
+            'removed_duplicate_pose_count': removed_duplicates,
             'selected_path_sha256': _path_hash(selected_points),
             'planning_time_s': duration_seconds(plan_result.planning_time),
             'smoothing_time_s': smoothing_time,
@@ -525,6 +541,8 @@ class ExecutionTrial(Node):
         """Persist a failed setup/trial so matrix runs cannot fail silently."""
         result = {
             'generated_at_utc': datetime.now(timezone.utc).isoformat(),
+            'environment': self.environment,
+            'scenario_file': str(self.scenario_file),
             'scenario': self.scenario_name,
             'planner': self.planner_id,
             'method': self.method,

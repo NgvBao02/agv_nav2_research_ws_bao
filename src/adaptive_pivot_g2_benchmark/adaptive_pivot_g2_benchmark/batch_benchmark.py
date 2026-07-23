@@ -25,8 +25,13 @@ from adaptive_pivot_g2_benchmark.compare_paths import (
     Point,
     resample_polyline,
 )
+from adaptive_pivot_g2_benchmark.path_contract import (
+    canonicalize_planner_path,
+)
 from ament_index_python.packages import get_package_share_directory
 from geometry_msgs.msg import PoseStamped
+from lifecycle_msgs.msg import State
+from lifecycle_msgs.srv import GetState
 from nav2_msgs.action import ComputePathToPose, SmoothPath
 from nav_msgs.msg import OccupancyGrid, Path as NavPath
 import rclpy
@@ -110,7 +115,16 @@ class BatchBenchmark(Node):
         self.declare_parameter('scenario_file', default_scenarios)
         self.declare_parameter('output_csv', '/tmp/pivot_g2_benchmark.csv')
         self.declare_parameter('output_json', '/tmp/pivot_g2_benchmark_summary.json')
-        self.declare_parameter('planners', ['ThetaStar', 'GridBased'])
+        self.declare_parameter(
+            'planners',
+            [
+                'NavFnAStar',
+                'NavFnDijkstra',
+                'ThetaStar',
+                'Smac2D',
+                'SmacHybrid',
+            ],
+        )
         self.declare_parameter('repetitions', 1)
         self.declare_parameter('resample_spacing', 0.05)
         self.declare_parameter('max_smoothing_duration', 3.0)
@@ -142,6 +156,14 @@ class BatchBenchmark(Node):
             self, ComputePathToPose, 'compute_path_to_pose'
         )
         self.smoother_client = ActionClient(self, SmoothPath, 'smooth_path')
+        self.lifecycle_clients = {
+            'planner_server': self.create_client(
+                GetState, '/planner_server/get_state'
+            ),
+            'smoother_server': self.create_client(
+                GetState, '/smoother_server/get_state'
+            ),
+        }
         map_qos = QoSProfile(
             depth=1,
             reliability=ReliabilityPolicy.RELIABLE,
@@ -153,6 +175,7 @@ class BatchBenchmark(Node):
         )
         self.latest_pivot_diagnostics: Optional[Dict] = None
         self.latest_hybrid_diagnostics: Optional[Dict] = None
+        self.environment = 'unknown'
         self.create_subscription(
             String,
             '/research/pivot_g2/diagnostics',
@@ -188,15 +211,55 @@ class BatchBenchmark(Node):
         ):
             if not client.wait_for_server(timeout_sec=self.server_timeout):
                 raise RuntimeError(f'action server {name!r} did not become ready')
+        for name, client in self.lifecycle_clients.items():
+            self._wait_for_lifecycle_active(name, client)
         deadline = time.monotonic() + self.server_timeout
         while self.occupancy_grid is None and time.monotonic() < deadline:
             rclpy.spin_once(self, timeout_sec=0.1)
         if self.occupancy_grid is None:
             raise RuntimeError('static occupancy grid did not become ready')
 
+    def _wait_for_lifecycle_active(self, name: str, client) -> None:
+        """Wait until a Nav2 server is present and fully active."""
+        deadline = time.monotonic() + self.server_timeout
+        if not client.wait_for_service(timeout_sec=self.server_timeout):
+            raise RuntimeError(
+                f'lifecycle state service for {name!r} did not become ready'
+            )
+
+        last_state = 'unknown'
+        while time.monotonic() < deadline:
+            future = client.call_async(GetState.Request())
+            remaining = max(0.0, deadline - time.monotonic())
+            rclpy.spin_until_future_complete(
+                self, future, timeout_sec=min(1.0, remaining)
+            )
+            if future.done() and not future.cancelled():
+                try:
+                    response = future.result()
+                except Exception as error:  # noqa: BLE001
+                    last_state = f'state request failed: {error}'
+                else:
+                    last_state = response.current_state.label
+                    if (
+                        response.current_state.id
+                        == State.PRIMARY_STATE_ACTIVE
+                    ):
+                        return
+            rclpy.spin_once(self, timeout_sec=0.1)
+
+        raise RuntimeError(
+            f'lifecycle node {name!r} did not become active '
+            f'(last state: {last_state})'
+        )
+
     def _load_scenarios(self) -> List[Dict]:
         with self.scenario_file.open(encoding='utf-8') as stream:
             document = yaml.safe_load(stream)
+        if isinstance(document, dict):
+            self.environment = str(
+                document.get('environment', 'research_warehouse')
+            )
         scenarios = document.get('scenarios', []) if isinstance(document, dict) else []
         if not scenarios:
             raise ValueError(f'no scenarios found in {self.scenario_file}')
@@ -300,6 +363,8 @@ class BatchBenchmark(Node):
         output_path: NavPath,
         algorithm_time: float,
         wall_time: float,
+        planner_output_path_sha256: str,
+        removed_duplicate_pose_count: int,
     ) -> Dict:
         output_points = _path_points(output_path)
         common_points = resample_polyline(output_points, self.resample_spacing)
@@ -311,6 +376,8 @@ class BatchBenchmark(Node):
             'success': True,
             'error': '',
             'raw_path_sha256': _path_hash(raw_points),
+            'planner_output_path_sha256': planner_output_path_sha256,
+            'removed_duplicate_pose_count': removed_duplicate_pose_count,
             'output_path_sha256': _path_hash(output_points),
             'native_point_count': len(output_points),
             'metric_spacing_m': self.resample_spacing,
@@ -363,7 +430,13 @@ class BatchBenchmark(Node):
                             )
                         continue
 
-                    raw_path = plan_result.path
+                    planner_output_path = plan_result.path
+                    planner_output_hash = _path_hash(
+                        _path_points(planner_output_path)
+                    )
+                    raw_path, removed_duplicates = (
+                        canonicalize_planner_path(planner_output_path)
+                    )
                     raw_points = _path_points(raw_path)
                     rows.append(
                         self._success_row(
@@ -375,6 +448,8 @@ class BatchBenchmark(Node):
                             raw_path,
                             duration_seconds(plan_result.planning_time),
                             plan_wall_time,
+                            planner_output_hash,
+                            removed_duplicates,
                         )
                     )
                     for method in SMOOTHERS:
@@ -389,6 +464,12 @@ class BatchBenchmark(Node):
                                     'success': False,
                                     'error': f'smoothing failed: {error}',
                                     'raw_path_sha256': _path_hash(raw_points),
+                                    'planner_output_path_sha256': (
+                                        planner_output_hash
+                                    ),
+                                    'removed_duplicate_pose_count': (
+                                        removed_duplicates
+                                    ),
                                 }
                             )
                             continue
@@ -402,6 +483,8 @@ class BatchBenchmark(Node):
                                 result.path,
                                 duration_seconds(result.smoothing_duration),
                                 wall_time,
+                                planner_output_hash,
+                                removed_duplicates,
                             )
                         )
         self._write_results(rows)
@@ -411,7 +494,9 @@ class BatchBenchmark(Node):
         self.output_csv.parent.mkdir(parents=True, exist_ok=True)
         fieldnames = sorted({key for row in rows for key in row})
         with self.output_csv.open('w', newline='', encoding='utf-8') as stream:
-            writer = csv.DictWriter(stream, fieldnames=fieldnames)
+            writer = csv.DictWriter(
+                stream, fieldnames=fieldnames, lineterminator='\n'
+            )
             writer.writeheader()
             writer.writerows(rows)
 
@@ -460,11 +545,24 @@ class BatchBenchmark(Node):
 
         summary = {
             'generated_at_utc': datetime.now(timezone.utc).isoformat(),
+            'environment': self.environment,
             'scenario_file': str(self.scenario_file),
             'planners': self.planners,
             'repetitions': self.repetitions,
             'resample_spacing_m': self.resample_spacing,
             'row_count': len(rows),
+            'comparison_design': {
+                'planner_comparison_rows': 'method=raw',
+                'smoother_pairing': (
+                    'Compare methods only within the same planner/scenario/'
+                    'repetition raw_path_sha256.'
+                ),
+                'motion_model_warning': (
+                    'SmacHybrid uses a forward-only Dubins model and is a '
+                    'curvature-constrained baseline; the differential-drive '
+                    'robot and other grid planners permit in-place rotation.'
+                ),
+            },
             'aggregate': aggregate,
         }
         self.output_json.parent.mkdir(parents=True, exist_ok=True)

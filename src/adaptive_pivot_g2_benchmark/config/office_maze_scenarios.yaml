@@ -1,0 +1,60 @@
+environment: office_maze
+description: Broken office partition walls with offset doorways, producing L-turns,
+  U-turns, and room-to-room routes.
+scenarios:
+- name: office_long_diagonal
+  start:
+  - -5.2
+  - -3.0
+  goal:
+  - 5.2
+  - 3.0
+- name: office_reverse_diagonal
+  start:
+  - 5.2
+  - 3.0
+  goal:
+  - -5.2
+  - -3.0
+- name: west_room_to_room
+  start:
+  - -4.2
+  - -2.5
+  goal:
+  - -4.2
+  - 2.8
+- name: east_room_to_room
+  start:
+  - 4.2
+  - -2.5
+  goal:
+  - 5.0
+  - 2.8
+- name: lower_cross_offices
+  start:
+  - -5.0
+  - -1.2
+  goal:
+  - 5.0
+  - -1.2
+- name: upper_cross_offices
+  start:
+  - -5.0
+  - 2.3
+  goal:
+  - 5.0
+  - 2.3
+- name: central_u_turn
+  start:
+  - -1.5
+  - -3.0
+  goal:
+  - -1.5
+  - 2.8
+- name: east_partition_detour
+  start:
+  - 0.0
+  - -3.0
+  goal:
+  - 5.0
+  - 0.5

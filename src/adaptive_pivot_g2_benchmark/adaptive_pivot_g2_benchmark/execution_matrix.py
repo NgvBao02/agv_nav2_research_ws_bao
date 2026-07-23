@@ -111,8 +111,23 @@ def _stop_gazebo_server(environment):
 
 def _arguments(args: Optional[List[str]] = None):
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        '--scenario-file',
+        help=(
+            'Scenario YAML to pass to each isolated trial. The file also '
+            'selects its Gazebo environment via the top-level environment key.'
+        ),
+    )
     parser.add_argument('--scenario', default='lower_left_diagonal')
     parser.add_argument('--planner', default='ThetaStar')
+    parser.add_argument(
+        '--planners',
+        nargs='+',
+        help=(
+            'Run multiple planner IDs. When supplied, this replaces the '
+            'single --planner value.'
+        ),
+    )
     parser.add_argument('--methods', nargs='+', default=DEFAULT_METHODS)
     parser.add_argument('--output-dir', default='results/execution_matrix')
     parser.add_argument('--base-domain-id', type=int, default=120)
@@ -162,104 +177,146 @@ def _aggregate(records, methods):
 def main(args: Optional[List[str]] = None) -> None:
     """Run each method in a clean process and aggregate its trial JSON."""
     options = _arguments(args)
+    planners = options.planners or [options.planner]
+    if len(set(planners)) != len(planners):
+        raise ValueError('planner IDs must be unique')
     unknown = sorted(set(options.methods) - set(DEFAULT_METHODS))
     if unknown:
         raise ValueError(f'unknown methods: {unknown}')
     if options.repetitions < 1:
         raise ValueError('repetitions must be at least one')
-    trial_count = len(options.methods) * options.repetitions
+    trial_count = len(planners) * len(options.methods) * options.repetitions
     if options.base_domain_id < 0 or options.base_domain_id + trial_count - 1 > 232:
         raise ValueError('execution-matrix ROS domain IDs must be within 0..232')
     output_dir = Path(options.output_dir).resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
     records = []
     trial_index = 0
-    for method in options.methods:
-        for repetition in range(1, options.repetitions + 1):
-            suffix = (
-                f'_r{repetition:02d}' if options.repetitions > 1 else ''
-            )
-            result_path = output_dir / (
-                f'{options.scenario}_{method}{suffix}.json'
-            )
-            result_path.unlink(missing_ok=True)
-            environment = os.environ.copy()
-            domain_id = options.base_domain_id + trial_index
-            environment['ROS_DOMAIN_ID'] = str(domain_id)
-            environment['GZ_PARTITION'] = (
-                f'pivot_matrix_{os.getpid()}_{domain_id}'
-            )
-            command = [
-                'ros2', 'launch', 'adaptive_pivot_g2_benchmark',
-                'execution_trial.launch.py',
-                f'scenario:={options.scenario}',
-                f'method:={method}',
-                f'planner:={options.planner}',
-                f'output_json:={result_path}',
-                'gui:=false',
-            ]
-            print(
-                f'[{trial_index + 1}/{trial_count}] running {method} '
-                f'(repetition {repetition}/{options.repetitions})',
-                flush=True,
-            )
-            started = time.monotonic()
-            process, return_code = _run_launch(
-                command, environment, options.trial_timeout_s
-            )
-            _stop_gazebo_server(environment)
-            _terminate_trial_process_group(process)
-            wall_time = time.monotonic() - started
-            if result_path.exists():
-                with result_path.open(encoding='utf-8') as stream:
-                    record = json.load(stream)
-            else:
-                record = {
-                    'scenario': options.scenario,
-                    'planner': options.planner,
-                    'method': method,
-                    'success': False,
-                    'error': 'trial did not produce a result file',
-                }
-            record['repetition'] = repetition
-            record['launch_return_code'] = return_code
-            record['trial_wall_time_s'] = wall_time
-            records.append(record)
-            trial_index += 1
-            print(
-                f'    success={record.get("success", False)} '
-                f'execution={record.get("execution_time_s", "n/a")}s '
-                f'wall={wall_time:.1f}s',
-                flush=True,
-            )
+    for planner in planners:
+        planner_slug = ''.join(
+            character.lower() if character.isalnum() else '_'
+            for character in planner
+        ).strip('_')
+        for method in options.methods:
+            for repetition in range(1, options.repetitions + 1):
+                suffix = (
+                    f'_r{repetition:02d}' if options.repetitions > 1 else ''
+                )
+                planner_prefix = (
+                    f'{planner_slug}_' if len(planners) > 1 else ''
+                )
+                result_path = output_dir / (
+                    f'{options.scenario}_{planner_prefix}{method}{suffix}.json'
+                )
+                result_path.unlink(missing_ok=True)
+                environment = os.environ.copy()
+                domain_id = options.base_domain_id + trial_index
+                environment['ROS_DOMAIN_ID'] = str(domain_id)
+                environment['GZ_PARTITION'] = (
+                    f'pivot_matrix_{os.getpid()}_{domain_id}'
+                )
+                command = [
+                    'ros2', 'launch', 'adaptive_pivot_g2_benchmark',
+                    'execution_trial.launch.py',
+                    f'scenario:={options.scenario}',
+                    f'method:={method}',
+                    f'planner:={planner}',
+                    f'output_json:={result_path}',
+                    'gui:=false',
+                ]
+                if options.scenario_file:
+                    command.append(
+                        f'scenario_file:={Path(options.scenario_file).resolve()}'
+                    )
+                print(
+                    f'[{trial_index + 1}/{trial_count}] running {planner} / '
+                    f'{method} (repetition {repetition}/'
+                    f'{options.repetitions})',
+                    flush=True,
+                )
+                started = time.monotonic()
+                process, return_code = _run_launch(
+                    command, environment, options.trial_timeout_s
+                )
+                _stop_gazebo_server(environment)
+                _terminate_trial_process_group(process)
+                wall_time = time.monotonic() - started
+                if result_path.exists():
+                    with result_path.open(encoding='utf-8') as stream:
+                        record = json.load(stream)
+                else:
+                    record = {
+                        'scenario': options.scenario,
+                        'planner': planner,
+                        'method': method,
+                        'success': False,
+                        'error': 'trial did not produce a result file',
+                    }
+                record['repetition'] = repetition
+                record['launch_return_code'] = return_code
+                record['trial_wall_time_s'] = wall_time
+                records.append(record)
+                trial_index += 1
+                print(
+                    f'    success={record.get("success", False)} '
+                    f'execution={record.get("execution_time_s", "n/a")}s '
+                    f'wall={wall_time:.1f}s',
+                    flush=True,
+                )
 
-    raw_hashes = {
-        record.get('raw_path_sha256')
-        for record in records
-        if record.get('raw_path_sha256')
-    }
+    raw_hashes_by_planner = {}
+    pairing_by_planner = {}
+    planner_aggregates = {}
+    for planner in planners:
+        planner_records = [
+            record for record in records
+            if record.get('planner') == planner
+        ]
+        raw_hashes = {
+            record.get('raw_path_sha256')
+            for record in planner_records
+            if record.get('raw_path_sha256')
+        }
+        raw_hashes_by_planner[planner] = sorted(raw_hashes)
+        pairing_by_planner[planner] = (
+            len(raw_hashes) == 1
+            and all(record.get('raw_path_sha256') for record in planner_records)
+        )
+        planner_aggregates[planner] = _aggregate(
+            planner_records, options.methods
+        )
+    paired_comparison_valid = all(pairing_by_planner.values())
     summary = {
         'generated_at_utc': datetime.now(timezone.utc).isoformat(),
+        'scenario_file': (
+            str(Path(options.scenario_file).resolve())
+            if options.scenario_file else None
+        ),
         'scenario': options.scenario,
-        'planner': options.planner,
+        'planner': planners[0] if len(planners) == 1 else None,
+        'planners': planners,
         'methods': options.methods,
         'repetitions': options.repetitions,
         'all_successful': all(record.get('success', False) for record in records),
-        'same_raw_path': len(raw_hashes) == 1 and all(
-            record.get('raw_path_sha256') for record in records
-        ),
-        'paired_comparison_valid': len(raw_hashes) == 1 and all(
-            record.get('raw_path_sha256') for record in records
-        ),
+        'same_raw_path': paired_comparison_valid,
+        'same_raw_path_by_planner': pairing_by_planner,
+        'paired_comparison_valid': paired_comparison_valid,
         'comparison_warning': (
-            '' if len(raw_hashes) == 1 and all(
-                record.get('raw_path_sha256') for record in records
-            ) else
-            'Raw path hashes differ or are missing; do not use aggregate '
-            'differences as paired smoother comparisons.'
+            '' if paired_comparison_valid else
+            'Within one or more planners, raw path hashes differ or are '
+            'missing; do not use those aggregate differences as paired '
+            'smoother comparisons.'
         ),
-        'raw_path_hashes': sorted(raw_hashes),
-        'aggregates': _aggregate(records, options.methods),
+        'raw_path_hashes': (
+            raw_hashes_by_planner[planners[0]]
+            if len(planners) == 1 else []
+        ),
+        'raw_path_hashes_by_planner': raw_hashes_by_planner,
+        'aggregates': (
+            planner_aggregates[planners[0]]
+            if len(planners) == 1 else {}
+        ),
+        'planner_aggregates': planner_aggregates,
         'records': records,
     }
     summary_path = output_dir / f'{options.scenario}_summary.json'

@@ -8,6 +8,9 @@ import math
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
 from action_msgs.msg import GoalStatus
+from adaptive_pivot_g2_benchmark.path_contract import (
+    canonicalize_planner_path,
+)
 from geometry_msgs.msg import PoseStamped
 from nav2_msgs.action import ComputePathToPose, FollowPath, SmoothPath
 from nav_msgs.msg import Path
@@ -304,7 +307,7 @@ class PathComparisonNode(Node):
     def __init__(self) -> None:
         super().__init__('adaptive_pivot_g2_path_comparison')
         self.declare_parameter('goal_topic', '/research/goal_pose')
-        self.declare_parameter('planner_id', 'GridBased')
+        self.declare_parameter('planner_id', 'ThetaStar')
         self.declare_parameter('execute_method', 'simple')
         self.declare_parameter('execute', True)
         self.declare_parameter('check_for_collisions', True)
@@ -431,7 +434,19 @@ class PathComparisonNode(Node):
             )
             return
 
-        raw_path = result.path
+        try:
+            raw_path, removed_duplicates = canonicalize_planner_path(
+                result.path
+            )
+        except ValueError as error:
+            self.get_logger().error(f'Planner returned an invalid path: {error}')
+            return
+        if removed_duplicates:
+            self.get_logger().warning(
+                'Removed '
+                f'{removed_duplicates} redundant consecutive planner pose(s) '
+                'before comparing smoothers.'
+            )
         self._publish_path_and_metrics(
             'raw', raw_path, duration_seconds(result.planning_time), 'planning'
         )

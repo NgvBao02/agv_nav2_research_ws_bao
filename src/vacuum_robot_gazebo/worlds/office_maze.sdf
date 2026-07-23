@@ -1,0 +1,373 @@
+<?xml version='1.0' encoding='utf-8'?>
+<sdf version="1.9">
+  <world name="office_maze">
+    <physics name="research_physics" type="ode">
+      <max_step_size>0.003</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+    </physics>
+    <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics" />
+    <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands" />
+    <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster" />
+    <plugin filename="gz-sim-imu-system" name="gz::sim::systems::Imu" />
+    <plugin filename="gz-sim-sensors-system" name="gz::sim::systems::Sensors">
+      <render_engine>ogre2</render_engine>
+    </plugin>
+    <scene>
+      <ambient>0.8 0.8 0.8 1</ambient>
+      <background>0.18 0.22 0.28 1</background>
+      <shadows>false</shadows>
+      <grid>true</grid>
+    </scene>
+    <light name="sun" type="directional">
+      <pose>0 0 10 0 0 0</pose>
+      <diffuse>0.9 0.9 0.9 1</diffuse>
+      <specular>0.2 0.2 0.2 1</specular>
+      <direction>-0.5 0.2 -1.0</direction>
+    </light>
+    <model name="office_maze_layout">
+      <static>true</static>
+      <link name="layout_link">
+        <collision name="floor_collision">
+          <pose>0 0 -0.025 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>12.0 8.0 0.05</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="floor_visual">
+          <pose>0 0 -0.025 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>12.0 8.0 0.05</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.72 0.72 0.72 1</ambient>
+            <diffuse>0.72 0.72 0.72 1</diffuse>
+          </material>
+        </visual>
+        <collision name="boundary_north">
+          <pose>0.0 3.95 0.5 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>12.0 0.1 1.0</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="boundary_north_visual">
+          <pose>0.0 3.95 0.5 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>12.0 0.1 1.0</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.85 0.85 0.88 1</ambient>
+            <diffuse>0.85 0.85 0.88 1</diffuse>
+          </material>
+        </visual>
+        <collision name="boundary_south">
+          <pose>0.0 -3.95 0.5 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>12.0 0.1 1.0</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="boundary_south_visual">
+          <pose>0.0 -3.95 0.5 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>12.0 0.1 1.0</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.85 0.85 0.88 1</ambient>
+            <diffuse>0.85 0.85 0.88 1</diffuse>
+          </material>
+        </visual>
+        <collision name="boundary_west">
+          <pose>-5.95 0.0 0.5 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.1 8.0 1.0</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="boundary_west_visual">
+          <pose>-5.95 0.0 0.5 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.1 8.0 1.0</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.85 0.85 0.88 1</ambient>
+            <diffuse>0.85 0.85 0.88 1</diffuse>
+          </material>
+        </visual>
+        <collision name="boundary_east">
+          <pose>5.95 0.0 0.5 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.1 8.0 1.0</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="boundary_east_visual">
+          <pose>5.95 0.0 0.5 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.1 8.0 1.0</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.85 0.85 0.88 1</ambient>
+            <diffuse>0.85 0.85 0.88 1</diffuse>
+          </material>
+        </visual>
+        <collision name="west_partition_south">
+          <pose>-2.5 -2.85 0.55 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.15 2.1 1.1</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="west_partition_south_visual">
+          <pose>-2.5 -2.85 0.55 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.15 2.1 1.1</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.16 0.36 0.72 1</ambient>
+            <diffuse>0.16 0.36 0.72 1</diffuse>
+          </material>
+        </visual>
+        <collision name="west_partition_middle">
+          <pose>-2.5 0.1 0.55 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.15 1.8 1.1</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="west_partition_middle_visual">
+          <pose>-2.5 0.1 0.55 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.15 1.8 1.1</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.16 0.36 0.72 1</ambient>
+            <diffuse>0.16 0.36 0.72 1</diffuse>
+          </material>
+        </visual>
+        <collision name="west_partition_north">
+          <pose>-2.5 2.95 0.55 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.15 1.9 1.1</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="west_partition_north_visual">
+          <pose>-2.5 2.95 0.55 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.15 1.9 1.1</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.16 0.36 0.72 1</ambient>
+            <diffuse>0.16 0.36 0.72 1</diffuse>
+          </material>
+        </visual>
+        <collision name="east_partition_south">
+          <pose>2.0 -3.2 0.55 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.15 1.4 1.1</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="east_partition_south_visual">
+          <pose>2.0 -3.2 0.55 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.15 1.4 1.1</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.16 0.36 0.72 1</ambient>
+            <diffuse>0.16 0.36 0.72 1</diffuse>
+          </material>
+        </visual>
+        <collision name="east_partition_middle">
+          <pose>2.0 0.15 0.55 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.15 3.3 1.1</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="east_partition_middle_visual">
+          <pose>2.0 0.15 0.55 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.15 3.3 1.1</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.16 0.36 0.72 1</ambient>
+            <diffuse>0.16 0.36 0.72 1</diffuse>
+          </material>
+        </visual>
+        <collision name="east_partition_north">
+          <pose>2.0 3.35 0.55 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.15 1.1 1.1</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="east_partition_north_visual">
+          <pose>2.0 3.35 0.55 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.15 1.1 1.1</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.16 0.36 0.72 1</ambient>
+            <diffuse>0.16 0.36 0.72 1</diffuse>
+          </material>
+        </visual>
+        <collision name="north_office_wall_west">
+          <pose>-4.85 1.4 0.55 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>2.1 0.15 1.1</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="north_office_wall_west_visual">
+          <pose>-4.85 1.4 0.55 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>2.1 0.15 1.1</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.16 0.36 0.72 1</ambient>
+            <diffuse>0.16 0.36 0.72 1</diffuse>
+          </material>
+        </visual>
+        <collision name="north_office_wall_center">
+          <pose>-1.4 1.4 0.55 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>2.8 0.15 1.1</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="north_office_wall_center_visual">
+          <pose>-1.4 1.4 0.55 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>2.8 0.15 1.1</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.16 0.36 0.72 1</ambient>
+            <diffuse>0.16 0.36 0.72 1</diffuse>
+          </material>
+        </visual>
+        <collision name="north_office_wall_east">
+          <pose>3.45 1.4 0.55 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>4.9 0.15 1.1</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="north_office_wall_east_visual">
+          <pose>3.45 1.4 0.55 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>4.9 0.15 1.1</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.16 0.36 0.72 1</ambient>
+            <diffuse>0.16 0.36 0.72 1</diffuse>
+          </material>
+        </visual>
+        <collision name="desk_west">
+          <pose>-4.4 -0.2 0.4 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>1.0 0.6 0.8</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="desk_west_visual">
+          <pose>-4.4 -0.2 0.4 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>1.0 0.6 0.8</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.55 0.28 0.08 1</ambient>
+            <diffuse>0.55 0.28 0.08 1</diffuse>
+          </material>
+        </visual>
+        <collision name="desk_center">
+          <pose>-0.4 -1.6 0.4 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>1.0 0.6 0.8</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="desk_center_visual">
+          <pose>-0.4 -1.6 0.4 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>1.0 0.6 0.8</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.55 0.28 0.08 1</ambient>
+            <diffuse>0.55 0.28 0.08 1</diffuse>
+          </material>
+        </visual>
+        <collision name="desk_east">
+          <pose>4.1 2.4 0.4 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>1.0 0.6 0.8</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="desk_east_visual">
+          <pose>4.1 2.4 0.4 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>1.0 0.6 0.8</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.55 0.28 0.08 1</ambient>
+            <diffuse>0.55 0.28 0.08 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+  </world>
+</sdf>

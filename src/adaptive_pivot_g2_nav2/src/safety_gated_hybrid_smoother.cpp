@@ -69,6 +69,15 @@ struct PathEvaluation
   std::size_t pivot_count{0};
 };
 
+void append_json_number(std::ostringstream & stream, double value)
+{
+  if (std::isfinite(value)) {
+    stream << value;
+  } else {
+    stream << "null";
+  }
+}
+
 bool evaluate_pose(
   double x,
   double y,
@@ -386,6 +395,8 @@ bool SafetyGatedHybridSmoother::smooth(
   const PathEvaluation pivot_evaluation = pivot_completed ?
     evaluate_path(pivot_path, costmap, checker, footprint, evaluation_spacing_) :
     PathEvaluation{};
+  const PathEvaluation raw_evaluation =
+    evaluate_path(path, costmap, checker, footprint, evaluation_spacing_);
   const auto selection = adaptive_pivot_g2::select_hybrid_candidate(
     {simple_evaluation.safe, simple_evaluation.maximum_proximity_cost,
       simple_evaluation.curvature_energy},
@@ -393,24 +404,42 @@ bool SafetyGatedHybridSmoother::smooth(
       pivot_evaluation.curvature_energy},
     minimum_cost_improvement_, maximum_curvature_energy_ratio_,
     curvature_energy_floor_);
-  if (!selection.valid) {
+  const bool choose_raw = !selection.valid && raw_evaluation.safe;
+  if (!selection.valid && !choose_raw) {
     throw nav2_core::FailedToSmoothPath(
-            "Hybrid smoother found no swept-footprint-safe candidate");
+            "Hybrid smoother found no swept-footprint-safe candidate or raw fallback");
   }
-  const bool choose_pivot = selection.use_pivot;
-  path = choose_pivot ? std::move(pivot_path) : std::move(simple_path);
+  const bool choose_pivot = selection.valid && selection.use_pivot;
+  if (choose_pivot) {
+    path = std::move(pivot_path);
+  } else if (!choose_raw) {
+    path = std::move(simple_path);
+  }
+  const std::string selected = choose_raw ? "raw" :
+    (choose_pivot ? "pivot_g2" : "simple");
+  const std::string reason = choose_raw ?
+    "smoothed_candidates_unsafe_raw_fallback" : selection.reason;
 
   std::ostringstream diagnostics;
   diagnostics << "{\"method\":\"adaptive_hybrid\",\"selected\":\""
-              << (choose_pivot ? "pivot_g2" : "simple")
-              << "\",\"reason\":\"" << selection.reason
-              << "\",\"simple_safe\":" << (simple_evaluation.safe ? "true" : "false")
+              << selected
+              << "\",\"reason\":\"" << reason
+              << "\",\"raw_safe\":" << (raw_evaluation.safe ? "true" : "false")
+              << ",\"simple_safe\":" << (simple_evaluation.safe ? "true" : "false")
               << ",\"pivot_safe\":" << (pivot_evaluation.safe ? "true" : "false")
-              << ",\"simple_max_cost\":" << simple_evaluation.maximum_proximity_cost
-              << ",\"pivot_max_cost\":" << pivot_evaluation.maximum_proximity_cost
-              << ",\"simple_energy\":" << simple_evaluation.curvature_energy
-              << ",\"pivot_energy\":" << pivot_evaluation.curvature_energy
-              << ",\"pivot_markers\":" << pivot_evaluation.pivot_count << "}";
+              << ",\"raw_max_cost\":";
+  append_json_number(diagnostics, raw_evaluation.maximum_proximity_cost);
+  diagnostics << ",\"simple_max_cost\":";
+  append_json_number(diagnostics, simple_evaluation.maximum_proximity_cost);
+  diagnostics << ",\"pivot_max_cost\":";
+  append_json_number(diagnostics, pivot_evaluation.maximum_proximity_cost);
+  diagnostics << ",\"raw_energy\":";
+  append_json_number(diagnostics, raw_evaluation.curvature_energy);
+  diagnostics << ",\"simple_energy\":";
+  append_json_number(diagnostics, simple_evaluation.curvature_energy);
+  diagnostics << ",\"pivot_energy\":";
+  append_json_number(diagnostics, pivot_evaluation.curvature_energy);
+  diagnostics << ",\"pivot_markers\":" << pivot_evaluation.pivot_count << "}";
   if (diagnostics_publisher_ && diagnostics_publisher_->is_activated()) {
     std_msgs::msg::String message;
     message.data = diagnostics.str();

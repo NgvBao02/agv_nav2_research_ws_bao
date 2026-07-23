@@ -17,9 +17,11 @@ dưới ngân sách độ cong/thời gian đã công bố hay không?
 Gazebo và robot thật, xét theo ground-truth success và sai số bám hay không?
 
 Claim dự kiến nên giới hạn ở: **bộ hậu xử lý hybrid có cổng an toàn cho robot vi
-sai**, fallback về Simple, kiểm tra swept footprint và thực thi pivot tường minh.
-Không claim planner mới, tối ưu toàn cục, hoặc nhanh/mượt hơn mọi baseline. Xem
-evidence và go/no-go trong `RESEARCH_STATUS_20260723.md`.
+sai**, ưu tiên Simple/Pivot–G2 theo safety gate và fallback về raw đã xác nhận
+an toàn khi cả hai nhánh làm mượt đều bị loại, kiểm tra swept footprint và thực
+thi pivot tường minh. Không claim planner mới, tối ưu toàn cục, hoặc nhanh/mượt
+hơn mọi baseline. Xem evidence và go/no-go trong
+`RESEARCH_STATUS_20260723.md`.
 
 ## Kiến trúc code đích
 
@@ -44,7 +46,8 @@ planner path + costmap snapshot + robot profile
 2. `adaptive_pivot_g2_nav2` — plugin `nav2_core::Smoother`, lifecycle và pluginlib
    (MVP đã load/chạy trong Smoother Server).
 3. `adaptive_pivot_g2_benchmark` — gọi tuần tự cùng input cho mọi smoother và
-   publish JSON/path (MVP đã chạy; CSV batch/rosbag metadata/hình còn thiếu).
+   publish JSON/path; CSV/JSON batch, multi-planner matrix và hình pilot đã chạy,
+   còn thiếu rosbag cùng metadata commit/params/seed cho dataset khóa.
 4. Nếu cần, `adaptive_pivot_g2_msgs` — `CornerDecision` và summary; không tạo
    message riêng nếu JSON diagnostics đã đủ.
 

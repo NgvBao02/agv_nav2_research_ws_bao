@@ -1,0 +1,60 @@
+environment: narrow_aisles
+description: Alternating shelves with 1.4 m longitudinal aisles and 0.9 m end passages
+  for clearance, zig-zag, and failure analysis.
+scenarios:
+- name: serpentine_west_east
+  start:
+  - -5.0
+  - 0.0
+  goal:
+  - 5.0
+  - 0.0
+- name: serpentine_east_west
+  start:
+  - 5.0
+  - 0.0
+  goal:
+  - -5.0
+  - 0.0
+- name: left_vertical_aisle
+  start:
+  - -4.2
+  - -2.8
+  goal:
+  - -4.2
+  - 2.8
+- name: inner_vertical_aisle
+  start:
+  - -2.0
+  - -1.4
+  goal:
+  - -2.0
+  - 1.4
+- name: bottom_alternating_cross
+  start:
+  - -4.5
+  - -2.6
+  goal:
+  - 2.0
+  - -2.6
+- name: top_alternating_cross
+  start:
+  - -2.0
+  - 2.6
+  goal:
+  - 4.5
+  - 2.6
+- name: southwest_northeast_weave
+  start:
+  - -5.0
+  - -3.0
+  goal:
+  - 5.0
+  - 3.0
+- name: northwest_southeast_weave
+  start:
+  - -5.0
+  - 3.0
+  goal:
+  - 5.0
+  - -3.0

@@ -1,0 +1,60 @@
+environment: open_arena
+description: Sparse open arena for long diagonals, isolated detours, and planner path-length/runtime
+  comparisons.
+scenarios:
+- name: west_east_center
+  start:
+  - -5.0
+  - 0.0
+  goal:
+  - 5.0
+  - 0.0
+- name: southwest_northeast
+  start:
+  - -5.0
+  - -3.0
+  goal:
+  - 5.0
+  - 3.0
+- name: northwest_southeast
+  start:
+  - -5.0
+  - 3.0
+  goal:
+  - 5.0
+  - -3.0
+- name: center_block_detour
+  start:
+  - -2.2
+  - -0.6
+  goal:
+  - 1.2
+  - -0.6
+- name: screen_detour
+  start:
+  - 1.2
+  - 1.4
+  goal:
+  - 3.5
+  - 1.4
+- name: long_lower_lane
+  start:
+  - -5.0
+  - -2.8
+  goal:
+  - 3.2
+  - -2.8
+- name: long_upper_lane
+  start:
+  - -5.0
+  - 2.8
+  goal:
+  - 5.0
+  - 2.8
+- name: short_open_diagonal
+  start:
+  - -5.0
+  - -3.0
+  goal:
+  - -2.5
+  - -2.0

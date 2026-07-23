@@ -11,21 +11,23 @@ luồng nghiên cứu chính chạy hoàn toàn trong ROS 2.
 - `adaptive_pivot_g2_nav2`: plugin `nav2_core::Smoother` đã load và chạy trong
   Nav2 Smoother Server; gồm Pivot–G2 và phương pháp lai có safety gate. Nhánh
   lai chỉ nhận chi phí pivot khi proximity cost cải thiện đủ ngưỡng và năng
-  lượng độ cong vẫn nằm trong ngân sách công bố trước.
+  lượng độ cong vẫn nằm trong ngân sách công bố trước; nếu cả hai nhánh làm
+  mượt không an toàn nhưng raw path an toàn, nó fallback về raw.
 - `adaptive_pivot_g2_benchmark`: lập kế hoạch một lần, tuần tự đưa đúng cùng
   `nav_msgs/Path` vào Nav2 Simple, Savitzky–Golay, Constrained, Pivot–G2 và
   adaptive hybrid; xuất CSV/JSON, metric full-footprint, và chạy ma trận vòng
   kín bằng cùng một controller.
 - `vacuum_robot_gazebo`: robot vi sai hai bánh dùng mesh CAD 440 × 340 mm,
-  warehouse world/map đồng nhất, bridge Gazebo–ROS, Nav2 và RViz2. Cấu hình
-  cảm biến mô phỏng đã bám theo RPLIDAR A1M8 và BNO055 của xe dự kiến.
+  bốn cặp world/map Gazebo–Nav2 đồng nhất, bridge Gazebo–ROS, Nav2 và RViz2.
+  Cấu hình cảm biến mô phỏng đã bám theo RPLIDAR A1M8 và BNO055 của xe dự kiến.
 - `matlab/pivot_g2`: bản lưu source thử ý tưởng cũ, không nằm trong đường chạy.
 
 Raw và năm smoother đã qua regression sinh path. Ma trận vòng kín hiện yêu cầu
 cả Nav2 action lẫn ground truth đạt đích; nó cũng dừng Gazebo server tách rời
 sau mỗi trial. Kết quả hiện tại đủ cho pilot study nhưng chưa đủ để khẳng định
-thống kê vì mới có một map và ba lần lặp của một scenario vòng kín. Xem kết luận
-trung thực và lộ trình còn lại trong
+thống kê: ba map mới đã có smoke test planner/smoother, còn ma trận vòng kín
+nhiều lần lặp mới chỉ có một scenario trên `open_arena`. Xem kết luận trung thực
+và lộ trình còn lại trong
 [RESEARCH_STATUS_20260723.md](docs/RESEARCH_STATUS_20260723.md).
 
 ## Chạy nhanh
@@ -36,6 +38,15 @@ source /opt/ros/jazzy/setup.bash
 colcon build --symlink-install
 source install/setup.bash
 ros2 launch vacuum_robot_gazebo simulation.launch.py execute:=false
+```
+
+Chọn một trong bốn map (`research_warehouse`, `open_arena`, `narrow_aisles`,
+`office_maze`) và một trong năm planner:
+
+```bash
+ros2 launch vacuum_robot_gazebo simulation.launch.py \
+  environment:=narrow_aisles planner_id:=Smac2D \
+  execute:=true execute_method:=adaptive_hybrid
 ```
 
 ## Kiểm tra URDF riêng
@@ -91,23 +102,29 @@ ros2 launch vacuum_robot_gazebo simulation.launch.py \
   gui:=false rviz:=false execute:=false
 ```
 
-Batch hình học công bằng trên 12 cặp start–goal, mọi phương pháp nhận cùng
-đường thô trong từng kịch bản:
+Batch hình học công bằng; planner comparison dùng raw và mọi smoother nhận cùng
+đường thô trong từng planner/kịch bản:
 
 ```bash
-ros2 run adaptive_pivot_g2_benchmark batch_benchmark --ros-args \
-  -p "planners:=['ThetaStar']" \
-  -p output_csv:=$PWD/results/fair_batch.csv \
-  -p output_json:=$PWD/results/fair_batch_summary.json
+ros2 launch adaptive_pivot_g2_benchmark planner_benchmark.launch.py \
+  scenario_file:=$PWD/src/adaptive_pivot_g2_benchmark/config/narrow_aisles_scenarios.yaml \
+  output_csv:=$PWD/results/narrow_aisles.csv \
+  output_json:=$PWD/results/narrow_aisles_summary.json
 ```
+
+Launch tự đọc đúng environment từ scenario YAML, chạy xong rồi tắt stack. Danh
+sách planner mặc định là `NavFnAStar`, `NavFnDijkstra`, `ThetaStar`, `Smac2D`
+và `SmacHybrid`.
 
 Ma trận Gazebo vòng kín, mỗi trial dùng domain/partition sạch và kiểm tra đích
 bằng ground truth:
 
 ```bash
 ros2 run adaptive_pivot_g2_benchmark execution_matrix -- \
-  --scenario lower_left_diagonal --planner ThetaStar \
-  --methods raw simple savitzky_golay constrained pivot_g2 adaptive_hybrid \
+  --scenario-file "$PWD/src/adaptive_pivot_g2_benchmark/config/open_arena_scenarios.yaml" \
+  --scenario short_open_diagonal \
+  --planners NavFnAStar NavFnDijkstra ThetaStar Smac2D SmacHybrid \
+  --methods raw adaptive_hybrid \
   --repetitions 3 --output-dir "$PWD/results/execution_matrix"
 ```
 
@@ -133,4 +150,5 @@ colcon test-result --verbose
 - [Kiểm toán thuật toán](docs/ALGORITHM_AUDIT.md)
 - [Kế hoạch thực nghiệm đến REV-ECIT 2026](docs/EXPERIMENT_PLAN.md)
 - [Trạng thái nghiên cứu, số liệu pilot và hướng bài báo](docs/RESEARCH_STATUS_20260723.md)
+- [So sánh 5 planner và 3 map Gazebo mới](docs/PLANNER_MAP_BENCHMARK.md)
 - [Kiểm toán source MATLAB lưu trữ](docs/MATLAB_SOURCE_AUDIT.md)
