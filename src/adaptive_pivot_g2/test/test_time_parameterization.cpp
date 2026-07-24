@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include <cmath>
+#include <limits>
 #include <vector>
 
 #include "gtest/gtest.h"
@@ -78,6 +79,7 @@ TEST(TimeParameterization, PivotTimeIncludesEquivalentStraightTravel)
 {
   RobotLimits limits;
   limits.max_linear_speed = 1.0;
+  limits.max_wheel_speed = 1.0;
   limits.max_linear_acceleration = 1.0;
   limits.max_linear_deceleration = 1.0;
   limits.max_angular_speed = 1.0;
@@ -90,10 +92,71 @@ TEST(TimeParameterization, PivotTimeIncludesEquivalentStraightTravel)
   EXPECT_NEAR(actual, expected_translation + expected_rotation, 1.0e-12);
 }
 
+TEST(TimeParameterization, PivotStraightMotionAlsoRespectsWheelSpeed)
+{
+  RobotLimits limits;
+  limits.max_linear_speed = 1.0;
+  limits.max_wheel_speed = 0.5;
+  limits.max_linear_acceleration = 1.0;
+  limits.max_linear_deceleration = 1.0;
+  limits.max_angular_speed = 1.0;
+  limits.max_angular_acceleration = 2.0;
+
+  EXPECT_FALSE(std::isfinite(
+      estimate_pivot_window_time(0.2, 0.5, limits, 1.0, 1.0)));
+  EXPECT_TRUE(std::isfinite(
+      estimate_pivot_window_time(0.2, 0.5, limits, 0.5, 0.5)));
+}
+
 TEST(TimeParameterization, RejectsImpossibleBoundarySpeedForShortWindow)
 {
   const double duration = minimum_translation_time(0.01, 1.0, 0.0, 1.0, 1.0, 1.0);
   EXPECT_FALSE(std::isfinite(duration));
+}
+
+TEST(TimeParameterization, RejectsInvalidBoundarySpeedCaps)
+{
+  RobotLimits limits;
+  const std::vector<PathSample> path{
+    {{0.0, 0.0}, 0.0, 0.0, limits.max_linear_speed},
+    {{1.0, 0.0}, 0.0, 0.0, limits.max_linear_speed}};
+
+  EXPECT_FALSE(parameterize_time(path, limits, -0.1, 0.0).valid);
+  EXPECT_FALSE(parameterize_time(
+      path, limits, std::numeric_limits<double>::quiet_NaN(), 0.0).valid);
+}
+
+TEST(TimeParameterization, TransitionWindowAddsContinuousStraightContext)
+{
+  RobotLimits limits;
+  limits.max_linear_speed = 0.60;
+  limits.max_angular_speed = 4.0;
+  limits.max_wheel_speed = 2.0;
+  limits.max_lateral_acceleration = 10.0;
+  limits.max_linear_acceleration = 0.50;
+  limits.max_linear_deceleration = 0.50;
+  limits.max_angular_acceleration = 0.30;
+  const CornerInput corner{{0.0, 0.0}, {1.0, 0.0}, {0.0, 1.0}, 2.0, 2.0};
+  TransitionOptions options;
+  options.design_radius = 0.25;
+  options.sample_spacing = 0.02;
+  const auto candidate = generate_quintic_transition(corner, limits, options);
+  ASSERT_TRUE(candidate.valid) << candidate.rejection_reason;
+
+  const auto curve_only = parameterize_time(
+    candidate.samples, limits, limits.max_linear_speed,
+    limits.max_linear_speed);
+  const auto window = parameterize_transition_window(
+    candidate, 0.60, limits, limits.max_linear_speed,
+    limits.max_linear_speed, options.sample_spacing);
+
+  ASSERT_TRUE(curve_only.valid) << curve_only.rejection_reason;
+  ASSERT_TRUE(window.valid) << window.rejection_reason;
+  EXPECT_GT(window.linear_speed.size(), curve_only.linear_speed.size());
+  EXPECT_GT(window.total_time, curve_only.total_time);
+  EXPECT_LE(
+    window.max_abs_angular_acceleration,
+    limits.max_angular_acceleration * (1.0 + 1.0e-4));
 }
 
 TEST(TimeParameterization, CommonWindowCanPreferPivotWhenAngularAccelerationIsTight)
@@ -103,6 +166,7 @@ TEST(TimeParameterization, CommonWindowCanPreferPivotWhenAngularAccelerationIsTi
   limits.max_linear_speed = 1.0;
   limits.max_angular_speed = 4.0;
   limits.max_wheel_speed = 2.0;
+  limits.max_lateral_acceleration = 100.0;
   limits.max_linear_acceleration = 1.0;
   limits.max_linear_deceleration = 1.0;
   limits.max_angular_acceleration = 2.0;
@@ -114,25 +178,8 @@ TEST(TimeParameterization, CommonWindowCanPreferPivotWhenAngularAccelerationIsTi
   ASSERT_TRUE(candidate.valid) << candidate.rejection_reason;
 
   const double window_distance = 0.80;
-  std::vector<PathSample> common_window_path;
-  const int straight_segments = 23;
-  for (int index = 0; index < straight_segments; ++index) {
-    const double fraction = static_cast<double>(index) / straight_segments;
-    common_window_path.push_back(
-      {{-window_distance + fraction * (window_distance - candidate.trim_distance), 0.0},
-        0.0, 0.0, limits.max_linear_speed});
-  }
-  common_window_path.insert(
-    common_window_path.end(), candidate.samples.begin(), candidate.samples.end());
-  for (int index = 1; index <= straight_segments; ++index) {
-    const double fraction = static_cast<double>(index) / straight_segments;
-    common_window_path.push_back(
-      {{0.0, candidate.trim_distance +
-        fraction * (window_distance - candidate.trim_distance)},
-        0.5 * kPi, 0.0, limits.max_linear_speed});
-  }
-
-  const TimedProfile transition = parameterize_time(common_window_path, limits, 0.0, 0.0);
+  const TimedProfile transition = parameterize_transition_window(
+    candidate, window_distance, limits, 0.0, 0.0, options.sample_spacing);
   const double pivot = estimate_pivot_window_time(
     window_distance, 0.5 * kPi, limits, 0.0, 0.0);
 

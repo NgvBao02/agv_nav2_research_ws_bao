@@ -61,7 +61,7 @@ def _interpolated_poses(
     return result
 
 
-def _footprint_perimeter(
+def _footprint_samples(
     length: float,
     width: float,
     spacing: float,
@@ -73,10 +73,9 @@ def _footprint_perimeter(
     count_y = max(1, int(math.ceil(width / spacing)))
     for index in range(count_x + 1):
         x = -half_length + length * index / count_x
-        samples.extend([(x, -half_width), (x, half_width)])
-    for index in range(1, count_y):
-        y = -half_width + width * index / count_y
-        samples.extend([(-half_length, y), (half_length, y)])
+        for row in range(count_y + 1):
+            y = -half_width + width * row / count_y
+            samples.append((x, y))
     return samples
 
 
@@ -106,9 +105,12 @@ def calculate_footprint_clearance(
     obstacle = (occupancy < 0) | (occupancy >= obstacle_threshold)
     distance_field = distance_transform_edt(~obstacle) * resolution
     origin = occupancy_grid.info.origin.position
-    footprint = _footprint_perimeter(
+    footprint = _footprint_samples(
         footprint_length, footprint_width, min(0.5 * resolution, 0.025)
     )
+    origin_yaw = _yaw(occupancy_grid.info.origin)
+    origin_cosine = math.cos(origin_yaw)
+    origin_sine = math.sin(origin_yaw)
     pose_clearances = []
     for x, y, yaw in _interpolated_poses(
         path, path_spacing, angular_spacing
@@ -119,8 +121,12 @@ def calculate_footprint_clearance(
         for local_x, local_y in footprint:
             world_x = x + cosine * local_x - sine * local_y
             world_y = y + sine * local_x + cosine * local_y
-            column = int(math.floor((world_x - origin.x) / resolution))
-            row = int(math.floor((world_y - origin.y) / resolution))
+            origin_dx = world_x - origin.x
+            origin_dy = world_y - origin.y
+            map_x = origin_cosine * origin_dx + origin_sine * origin_dy
+            map_y = -origin_sine * origin_dx + origin_cosine * origin_dy
+            column = int(math.floor(map_x / resolution))
+            row = int(math.floor(map_y / resolution))
             if column < 0 or column >= width or row < 0 or row >= height:
                 clearance = 0.0
                 break

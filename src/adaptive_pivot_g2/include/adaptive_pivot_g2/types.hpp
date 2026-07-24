@@ -64,12 +64,13 @@ struct RobotLimits
   // Distance between the rolling-tread center planes, not the CAD joint shafts
   // or the complete wheel-mesh bounding-box centers.
   double wheel_separation{0.2548};
-  double max_linear_speed{0.16};
-  double max_angular_speed{0.85};
-  double max_wheel_speed{0.17};
+  double max_linear_speed{0.30};
+  double max_angular_speed{0.80};
+  double max_wheel_speed{0.36};
+  double max_lateral_acceleration{0.18};
   double max_linear_acceleration{0.35};
   double max_linear_deceleration{0.45};
-  double max_angular_acceleration{1.50};
+  double max_angular_acceleration{1.20};
 };
 
 struct CornerInput

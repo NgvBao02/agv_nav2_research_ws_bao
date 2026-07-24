@@ -17,16 +17,20 @@
 
 #include <QWidget>
 
+#include <atomic>
 #include <memory>
+#include <string>
+#include <vector>
 
+#include "diagnostic_msgs/msg/diagnostic_array.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "rviz_common/panel.hpp"
-#include "std_msgs/msg/bool.hpp"
 #include "std_msgs/msg/string.hpp"
 
 class QComboBox;
 class QLabel;
 class QPushButton;
+class QTableWidget;
 
 namespace adaptive_pivot_g2_rviz
 {
@@ -37,6 +41,7 @@ class PlannerSelectorPanel : public rviz_common::Panel
 
 public:
   explicit PlannerSelectorPanel(QWidget * parent = nullptr);
+  ~PlannerSelectorPanel() override;
 
   void onInitialize() override;
   void load(const rviz_common::Config & config) override;
@@ -44,27 +49,60 @@ public:
 
 private Q_SLOTS:
   void applySelection();
-  void toggleSmoothers();
+  void applyEnvironment();
+  void showAllSmoothers();
+  void showRawOnly();
 
 private:
   void updateActivePlanner(const std_msgs::msg::String::SharedPtr message);
-  void updateSmoothersActive(const std_msgs::msg::Bool::SharedPtr message);
+  void updateActiveEnvironment(const std_msgs::msg::String::SharedPtr message);
+  void updateEnvironmentStatus(const std_msgs::msg::String::SharedPtr message);
+  void updateSmootherVisibility(
+    const std_msgs::msg::String::SharedPtr message);
+  void updateMetrics(const std_msgs::msg::String::SharedPtr message);
+  void updateAdaptiveSpeed(
+    const diagnostic_msgs::msg::DiagnosticArray::SharedPtr message);
   void setComboPlanner(const QString & planner_id);
-  void setSmoothersEnabled(bool enabled);
+  void setComboEnvironment(const QString & environment_id);
+  void setSmootherVisibility(
+    const std::vector<std::string> & visible_methods);
+  void publishSmootherVisibility();
+  std::vector<std::string> selectedSmoothers() const;
+  void clearMetricsTable();
 
+  QComboBox * environment_combo_{nullptr};
+  QPushButton * environment_apply_button_{nullptr};
+  QLabel * environment_status_label_{nullptr};
   QComboBox * planner_combo_{nullptr};
   QPushButton * apply_button_{nullptr};
   QLabel * status_label_{nullptr};
-  QPushButton * smoother_toggle_button_{nullptr};
+  std::vector<QPushButton *> smoother_buttons_;
+  QPushButton * show_all_smoothers_button_{nullptr};
+  QPushButton * show_raw_only_button_{nullptr};
   QLabel * smoother_status_label_{nullptr};
-  bool smoothers_enabled_{true};
+  QTableWidget * metrics_table_{nullptr};
+  QLabel * adaptive_speed_status_label_{nullptr};
+  QLabel * adaptive_speed_values_label_{nullptr};
+  bool updating_smoother_buttons_{false};
+  std::atomic_bool shutting_down_{false};
+  int metrics_generation_{-1};
 
   rclcpp::Node::SharedPtr node_;
   rclcpp::Publisher<std_msgs::msg::String>::SharedPtr selection_publisher_;
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr status_subscription_;
-  rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr smoother_toggle_publisher_;
-  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr
-    smoother_status_subscription_;
+  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr
+    smoother_visibility_publisher_;
+  rclcpp::Subscription<std_msgs::msg::String>::SharedPtr
+    smoother_visibility_subscription_;
+  rclcpp::Subscription<std_msgs::msg::String>::SharedPtr
+    metrics_subscription_;
+  rclcpp::Subscription<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr
+    adaptive_speed_subscription_;
+  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr environment_publisher_;
+  rclcpp::Subscription<std_msgs::msg::String>::SharedPtr
+    environment_active_subscription_;
+  rclcpp::Subscription<std_msgs::msg::String>::SharedPtr
+    environment_status_subscription_;
 };
 
 }  // namespace adaptive_pivot_g2_rviz

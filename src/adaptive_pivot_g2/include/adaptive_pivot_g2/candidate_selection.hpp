@@ -61,6 +61,19 @@ CandidateSelection select_competitive_candidate(
   double time_slack,
   const SelectionWeights & weights);
 
+/// Return a stable dimensionless cost for an already safe candidate.
+///
+/// peak_cost is normalized against 252, angular speed against the configured
+/// robot limit, and curvature energy E [1/m] as E / (E + scale). Lower is
+/// better. Infinity denotes invalid input.
+double stable_candidate_cost(
+  double peak_cost,
+  double max_abs_angular_speed,
+  double curvature_energy,
+  double max_angular_speed,
+  double curvature_energy_scale,
+  const SelectionWeights & weights);
+
 }  // namespace adaptive_pivot_g2
 
 #endif  // ADAPTIVE_PIVOT_G2__CANDIDATE_SELECTION_HPP_

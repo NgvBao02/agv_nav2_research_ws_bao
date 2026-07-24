@@ -2,9 +2,9 @@
 
 ## Mục đích
 
-Panel **Selector** cho phép đổi global planner và bật/tắt toàn bộ smoother mà
-không cần tắt Gazebo, sửa YAML hay mở terminal thứ hai. Năm lựa chọn khớp chính
-xác với plugin ID đã nạp trong Nav2:
+Panel **Selector** cho phép đổi toàn bộ cặp Gazebo world/Nav2 map, đổi global
+planner và bật/tắt riêng từng smoother mà không sửa YAML hay mở terminal thứ
+hai. Năm lựa chọn planner khớp chính xác với plugin ID đã nạp trong Nav2:
 
 | Tên trong panel | Plugin ID | Nhóm thuật toán |
 |---|---|---|
@@ -15,9 +15,8 @@ xác với plugin ID đã nạp trong Nav2:
 | Smac Hybrid | `SmacHybrid` | Hybrid-A* SE(2), Dubins |
 
 Đây là panel riêng của package `adaptive_pivot_g2_rviz`, không phải Selector
-mặc định của Nav2. Selector mặc định chỉ publish một lựa chọn chung; phiên bản
-này còn nhận xác nhận từ runner, nhớ lựa chọn trong file cấu hình RViz và yêu
-cầu lập lại goal gần nhất.
+mặc định của Nav2. Panel còn nhận xác nhận từ runner/environment manager, nhớ
+lựa chọn trong file cấu hình RViz và yêu cầu lập lại goal gần nhất.
 
 ## Cách dùng an toàn để xem đường
 
@@ -27,13 +26,19 @@ source /opt/ros/jazzy/setup.bash
 colcon build --symlink-install
 source install/setup.bash
 
-ros2 launch vacuum_robot_gazebo simulation.launch.py \
-  environment:=warehouse_long_aisles \
-  execute:=false \
-  x_pose:=-2.0 y_pose:=-2.4 yaw:=1.5708
+ros2 launch vacuum_robot_gazebo switchable_simulation.launch.py gui:=true
 ```
 
-Sau khi Nav2 chuyển sang trạng thái active:
+Chọn một trong bảy môi trường và nhấn **Đổi map / khởi động lại**. Chỉ đặt goal
+sau khi trạng thái báo Nav2 mới đã active:
+
+- `research_warehouse`;
+- `warehouse_long_aisles`;
+- `warehouse_cross_aisles`;
+- `warehouse_dispatch`;
+- `narrow_aisles`;
+- `office_maze`;
+- `open_arena`.
 
 1. chọn **2D Goal Pose** trên thanh công cụ RViz2;
 2. click và kéo hướng goal trong vùng trắng của map;
@@ -42,19 +47,28 @@ Sau khi Nav2 chuyển sang trạng thái active:
 5. nhấn **Áp dụng và lập lại đường**.
 
 Đường cũ được xóa ngay khi bắt đầu generation mới. Đường đỏ sau đó là raw path
-của planner đang hiển thị trong dòng **Planner đang hoạt động**. Các màu vàng,
-cyan, xanh lá, magenta và xanh lam là năm smoother cùng nhận raw path mới đó.
+của planner đang hiển thị trong dòng **Planner đang hoạt động**. Bảy output
+smoother cùng nhận raw path mới đó:
+
+| Nút | Phương pháp |
+|---|---|
+| Simple | Nav2 Simple |
+| Savitzky–Golay | Nav2 Savitzky–Golay |
+| Constrained | Nav2 Constrained |
+| Pivot–G2 fixed | tập bán kính legacy |
+| Pivot–G2 adaptive | tìm kiếm liên tục + DP |
+| Hybrid fixed | safety-gated hybrid dùng Pivot fixed |
+| Hybrid adaptive | safety-gated hybrid dùng Pivot adaptive |
 
 Để so sánh trước và sau smooth:
 
-1. nhấn nút xanh **Smoother: BẬT — nhấn để chỉ xem RAW**;
-2. nút chuyển sang màu cam và RViz chỉ còn đường RAW màu đỏ;
-3. nhấn nút màu cam để bật lại cả năm đường smoother.
+1. nhấn từng nút phương pháp để bật/tắt đúng một lớp đường;
+2. nhấn **Chỉ RAW** để giữ riêng đường planner màu đỏ;
+3. nhấn **Hiện tất cả** để bật lại đủ bảy output.
 
-Khi tắt, runner hủy lượt smoothing đang chạy và publish path rỗng lên cả năm
-topic smoother, nhưng không xóa RAW. Khi bật, runner dùng lại chính RAW đang
-hiển thị; planner không bị gọi lại nên so sánh trước/sau không bị thay đổi đầu
-vào.
+Khi ẩn một phương pháp, runner publish path rỗng đúng topic đó nhưng không xóa
+RAW hay các output còn bật. Khi bật lại, runner dùng lại chính RAW đang hiển
+thị; planner không bị gọi lại nên so sánh trước/sau không bị thay đổi đầu vào.
 
 Giữ `execute:=false` khi chỉ so sánh hình học. Nếu dùng `execute:=true`, sau
 khi raw path và các smoother được tạo xong, robot sẽ bám phương pháp được chọn
@@ -64,15 +78,14 @@ bởi `execute_method`.
 
 ```text
 RViz panel
-    ├── std_msgs/String ──► /planner_selector
-    └── std_msgs/Bool ───► /research/smoothers_enabled
-                                  │
-                                  ▼
-                            compare_paths
-                                  │
-                    ┌─────────────┼──────────────────┐
-                    ▼             ▼                  ▼
-             ComputePathToPose  SmoothPath   topic trạng thái/path
+    ├── planner ID ──────────────► /planner_selector
+    ├── JSON smoother visibility ► /research/smoother_visibility
+    └── environment ID ──────────► /research/environment_selector
+                                       │
+                   ┌───────────────────┴────────────────────┐
+                   ▼                                        ▼
+             compare_paths                         environment_manager
+        ComputePath + SmoothPath               restart world/map/Nav2
 ```
 
 Các topic chọn và xác nhận dùng QoS `reliable + transient_local`. Vì vậy panel
@@ -99,7 +112,12 @@ ros2 topic echo --once --qos-durability transient_local \
   /research/planner_active
 
 ros2 topic pub --once --qos-durability transient_local \
-  /research/smoothers_enabled std_msgs/msg/Bool "{data: false}"
+  /research/smoother_visibility std_msgs/msg/String \
+  '{data: "{\"methods\":[\"pivot_g2\",\"adaptive_hybrid\"]}"}'
+
+ros2 topic pub --once --qos-durability transient_local \
+  /research/environment_selector std_msgs/msg/String \
+  "{data: warehouse_dispatch}"
 ```
 
 ## Nếu panel không xuất hiện
@@ -126,10 +144,11 @@ unset GIO_MODULE_DIR GIO_EXTRA_MODULES
 export QT_IM_MODULE=none
 ```
 
-## Kiểm thử đã thực hiện ngày 23/07/2026
+## Kiểm thử tích hợp
 
 - package C++ build thành công trên ROS 2 Jazzy;
-- GTest xác nhận đủ năm ID duy nhất và từ chối ID không hợp lệ;
+- GTest xác nhận đủ năm planner, bảy environment và bảy smoother ID duy nhất,
+  đồng thời từ chối ID không hợp lệ;
 - `ament_copyright`, `cppcheck`, `cpplint`, `lint_cmake`, `uncrustify` và
   `xmllint` đều đạt;
 - regression test xác nhận file RViz nạp đúng class panel và package mô phỏng
@@ -138,10 +157,9 @@ export QT_IM_MODULE=none
 - smoke test trên `warehouse_long_aisles`: Theta* tạo raw path 4,80 m, đổi sang
   Smac2D tự tạo generation mới cũng dài 4,80 m; ID giả `GridBased` bị từ chối
   và active planner vẫn là Smac2D.
-- toggle test trên `warehouse_cross_aisles/cross_aisle_transfer`: RAW Theta*
-  dài 7,548 m với 138 pose vẫn được giữ nguyên; tắt smoother xóa đủ năm output,
-  bật lại sinh đủ năm output từ RAW cũ mà không tăng planner generation; chuỗi
-  bấm nhanh tắt–bật–tắt không làm callback cũ xuất hiện lại.
+- toggle test xác nhận ẩn/hiện riêng từng output không đổi RAW hash; regression
+  của environment manager xác nhận chỉ chấp nhận bảy ID, dọn stack cũ và phát
+  trạng thái chuyển map theo thứ tự xác định.
 
 Đoạn 4,80 m là một lối đi thẳng nên hai planner cho cùng độ dài; mục tiêu của
 smoke test này là xác nhận đúng luồng đổi planner. Để đánh giá khác biệt thuật

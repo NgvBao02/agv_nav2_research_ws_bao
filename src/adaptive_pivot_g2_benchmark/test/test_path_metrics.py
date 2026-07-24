@@ -1,7 +1,10 @@
+import json
 import math
 import os
+from pathlib import Path as FilePath
 import subprocess
 import sys
+import tempfile
 import time
 import unittest
 
@@ -15,17 +18,24 @@ from adaptive_pivot_g2_benchmark.compare_paths import (
     calculate_tracking_metrics,
     condition_trajectory_for_metrics,
     normalize_planner_id,
+    normalize_smoother_visibility,
     PathComparisonNode,
     PLANNER_IDS,
     resample_polyline,
+    SMOOTHER_IDS,
 )
 from adaptive_pivot_g2_benchmark.execution_matrix import (
     _aggregate,
     _arguments,
+    _compact_summary_record,
+    _is_infrastructure_failure,
+    _matching_successful_record,
     _process_group_exists,
+    _run_launch,
     _terminate_trial_process_group,
 )
 from adaptive_pivot_g2_benchmark.path_contract import (
+    anchor_path_goal,
     canonicalize_planner_path,
 )
 from geometry_msgs.msg import PoseStamped
@@ -38,7 +48,7 @@ from rclpy.qos import (
     QoSProfile,
     ReliabilityPolicy,
 )
-from std_msgs.msg import Bool
+from std_msgs.msg import Bool, String
 
 
 class TestPathMetrics(unittest.TestCase):
@@ -137,6 +147,28 @@ class TestPathMetrics(unittest.TestCase):
         self.assertEqual(removed, 0)
         self.assertEqual(len(canonical.poses), 3)
 
+    def test_path_contract_anchors_grid_cell_endpoint_to_requested_goal(self):
+        path = Path()
+        path.header.frame_id = 'map'
+        path.poses = [
+            self._pose(0.0, 0.0, 0.0),
+            self._pose(0.975, 0.975, 0.0),
+        ]
+        goal = self._pose(1.0, 1.0, 0.4)
+        goal.header.frame_id = 'map'
+
+        anchored, adjustment = anchor_path_goal(path, goal)
+
+        self.assertAlmostEqual(adjustment, math.hypot(0.025, 0.025))
+        self.assertEqual(anchored.poses[-1].pose.position.x, 1.0)
+        self.assertEqual(anchored.poses[-1].pose.position.y, 1.0)
+        self.assertAlmostEqual(
+            anchored.poses[-1].pose.orientation.z, math.sin(0.2)
+        )
+        self.assertEqual(path.poses[-1].pose.position.x, 0.975)
+        with self.assertRaises(ValueError):
+            anchor_path_goal(path, self._pose(2.0, 2.0, 0.0))
+
     def test_planner_selector_accepts_only_configured_exact_ids(self):
         for planner_id in PLANNER_IDS:
             self.assertEqual(normalize_planner_id(planner_id), planner_id)
@@ -145,6 +177,125 @@ class TestPathMetrics(unittest.TestCase):
         with self.assertRaises(ValueError):
             normalize_planner_id('thetastar')
         self.assertEqual(normalize_planner_id('  Smac2D  '), 'Smac2D')
+
+    def test_smoother_visibility_accepts_only_exact_ordered_ids(self):
+        payload = (
+            '{"methods":["adaptive_hybrid","simple","simple",'
+            '"pivot_g2_fixed"]}'
+        )
+        self.assertEqual(
+            normalize_smoother_visibility(payload),
+            ('simple', 'pivot_g2_fixed', 'adaptive_hybrid'),
+        )
+        self.assertEqual(
+            normalize_smoother_visibility('{"methods":[]}'), ()
+        )
+        with self.assertRaises(ValueError):
+            normalize_smoother_visibility('{"methods":["pivot-g2"]}')
+        with self.assertRaises(ValueError):
+            normalize_smoother_visibility('["simple"]')
+        with self.assertRaises(ValueError):
+            normalize_smoother_visibility('not-json')
+
+    def test_smoother_visibility_filters_and_restores_cached_paths(self):
+        previous_domain = os.environ.get('ROS_DOMAIN_ID')
+        os.environ['ROS_DOMAIN_ID'] = str(120 + os.getpid() % 100)
+        rclpy.init()
+        comparison = PathComparisonNode()
+        probe = rclpy.create_node('smoother_visibility_contract_test')
+        executor = SingleThreadedExecutor()
+        executor.add_node(comparison)
+        executor.add_node(probe)
+        latched_qos = QoSProfile(
+            history=HistoryPolicy.KEEP_LAST,
+            depth=1,
+            reliability=ReliabilityPolicy.RELIABLE,
+            durability=DurabilityPolicy.TRANSIENT_LOCAL,
+        )
+        path_states = {}
+        visibility_states = []
+        for method in SMOOTHER_IDS:
+            probe.create_subscription(
+                Path,
+                f'/research/path/{method}',
+                lambda message, selected=method: path_states.__setitem__(
+                    selected, bool(message.poses)
+                ),
+                latched_qos,
+            )
+        probe.create_subscription(
+            String,
+            '/research/smoother_visibility_active',
+            lambda message: visibility_states.append(
+                normalize_smoother_visibility(message.data)
+            ),
+            latched_qos,
+        )
+        selector = probe.create_publisher(
+            String, '/research/smoother_visibility', latched_qos
+        )
+        cached_path = Path()
+        cached_path.header.frame_id = 'map'
+        cached_path.poses = [self._pose(0.0, 0.0, 0.0)]
+        comparison._method_path_cache = {
+            'simple': cached_path,
+            'pivot_g2': cached_path,
+        }
+
+        def spin_until(predicate, timeout=3.0):
+            deadline = time.monotonic() + timeout
+            while time.monotonic() < deadline:
+                executor.spin_once(timeout_sec=0.05)
+                if predicate():
+                    return True
+            return False
+
+        try:
+            self.assertTrue(
+                spin_until(
+                    lambda: visibility_states
+                    and visibility_states[-1] == SMOOTHER_IDS
+                )
+            )
+            selection = String()
+            selection.data = '{"methods":["simple"]}'
+            selector.publish(selection)
+            self.assertTrue(
+                spin_until(
+                    lambda: visibility_states
+                    and visibility_states[-1] == ('simple',)
+                    and len(path_states) == len(SMOOTHER_IDS)
+                )
+            )
+            self.assertTrue(path_states['simple'])
+            self.assertTrue(
+                all(
+                    not visible for method, visible in path_states.items()
+                    if method != 'simple'
+                )
+            )
+
+            selection.data = '{"methods":["pivot_g2"]}'
+            selector.publish(selection)
+            self.assertTrue(
+                spin_until(
+                    lambda: visibility_states
+                    and visibility_states[-1] == ('pivot_g2',)
+                    and path_states.get('pivot_g2') is True
+                    and path_states.get('simple') is False
+                )
+            )
+        finally:
+            executor.remove_node(probe)
+            executor.remove_node(comparison)
+            probe.destroy_node()
+            comparison.destroy_node()
+            executor.shutdown()
+            rclpy.shutdown()
+            if previous_domain is None:
+                os.environ.pop('ROS_DOMAIN_ID', None)
+            else:
+                os.environ['ROS_DOMAIN_ID'] = previous_domain
 
     def test_smoother_toggle_clears_paths_and_reports_state(self):
         previous_domain = os.environ.get('ROS_DOMAIN_ID')
@@ -239,6 +390,21 @@ class TestPathMetrics(unittest.TestCase):
         self.assertLess(metrics['footprint_clearance_min_m'], 0.9)
         self.assertEqual(metrics['footprint_collision_sample_count'], 0)
 
+    def test_footprint_clearance_detects_obstacle_enclosed_by_robot(self):
+        occupancy_grid = OccupancyGrid()
+        occupancy_grid.info.resolution = 0.05
+        occupancy_grid.info.width = 40
+        occupancy_grid.info.height = 40
+        occupancy_grid.data = [0] * 1600
+        occupancy_grid.data[20 * 40 + 20] = 100
+        path = Path()
+        path.poses = [self._pose(1.025, 1.025, 0.0)]
+
+        metrics = calculate_footprint_clearance(path, occupancy_grid)
+
+        self.assertEqual(metrics['footprint_clearance_min_m'], 0.0)
+        self.assertEqual(metrics['footprint_collision_sample_count'], 1)
+
     def test_execution_aggregate_reports_success_and_conditional_metrics(self):
         records = [
             {
@@ -289,6 +455,114 @@ class TestPathMetrics(unittest.TestCase):
         self.assertEqual(
             options.scenario_file, '/tmp/open_arena_scenarios.yaml'
         )
+
+    def test_execution_matrix_resumes_only_matching_successful_trial(self):
+        with tempfile.TemporaryDirectory() as directory:
+            result_path = FilePath(directory) / 'trial.json'
+            result_path.write_text(json.dumps({
+                'scenario': 'west_east_center',
+                'planner': 'ThetaStar',
+                'method': 'pivot_g2',
+                'fixed_speed_limit_mps': 0.22,
+                'success': True,
+                'repetition': 2,
+                'configuration_sha256': 'config-a',
+            }), encoding='utf-8')
+
+            record = _matching_successful_record(
+                result_path,
+                'west_east_center',
+                'ThetaStar',
+                'pivot_g2',
+                0.22,
+                2,
+                'config-a',
+            )
+            self.assertIsNotNone(record)
+            self.assertTrue(record['resumed'])
+            self.assertIsNone(_matching_successful_record(
+                result_path,
+                'west_east_center',
+                'ThetaStar',
+                'raw',
+                0.22,
+                2,
+                'config-a',
+            ))
+            self.assertIsNone(_matching_successful_record(
+                result_path,
+                'west_east_center',
+                'ThetaStar',
+                'pivot_g2',
+                0.22,
+                2,
+                'config-b',
+            ))
+            result_path.write_text(json.dumps({
+                'scenario': 'west_east_center',
+                'planner': 'ThetaStar',
+                'method': 'pivot_g2',
+                'fixed_speed_limit_mps': 0.22,
+                'success': True,
+            }), encoding='utf-8')
+            self.assertIsNone(_matching_successful_record(
+                result_path,
+                'west_east_center',
+                'ThetaStar',
+                'pivot_g2',
+                0.22,
+                2,
+            ))
+
+    def test_execution_matrix_retries_setup_but_not_controller_failures(self):
+        self.assertTrue(_is_infrastructure_failure({
+            'success': False,
+            'error': 'RuntimeError: Nav2 did not reach the fully active state',
+        }))
+        self.assertTrue(_is_infrastructure_failure({
+            'success': False,
+            'error': 'trial did not produce a result file',
+        }))
+        self.assertFalse(_is_infrastructure_failure({
+            'success': False,
+            'error': 'RuntimeError: FollowPath action timed out',
+            'controller_status': 2,
+        }))
+        self.assertFalse(_is_infrastructure_failure({'success': True}))
+
+    def test_execution_matrix_summary_does_not_duplicate_high_rate_traces(self):
+        compact = _compact_summary_record({
+            'method': 'pivot_g2',
+            'success': True,
+            'tracking_rmse_m': 0.01,
+            'ground_truth_state_trace': [[0.0, 1.0, 2.0]],
+            'adaptive_speed_trace': [[0.0, 'tracking']],
+        })
+
+        self.assertEqual(compact['tracking_rmse_m'], 0.01)
+        self.assertNotIn('ground_truth_state_trace', compact)
+        self.assertNotIn('adaptive_speed_trace', compact)
+        self.assertEqual(
+            compact['omitted_trace_fields'],
+            ['adaptive_speed_trace', 'ground_truth_state_trace'],
+        )
+
+    def test_execution_matrix_retains_trial_console_log(self):
+        with tempfile.TemporaryDirectory() as directory:
+            log_path = FilePath(directory) / 'trial.log'
+            process, return_code = _run_launch(
+                [sys.executable, '-c', 'print("diagnostic evidence")'],
+                os.environ.copy(),
+                5.0,
+                log_path,
+            )
+
+            self.assertEqual(return_code, 0)
+            self.assertEqual(process.returncode, 0)
+            self.assertIn(
+                'diagnostic evidence',
+                log_path.read_text(encoding='utf-8'),
+            )
 
     def test_trial_cleanup_terminates_only_its_dedicated_process_group(self):
         process = subprocess.Popen(

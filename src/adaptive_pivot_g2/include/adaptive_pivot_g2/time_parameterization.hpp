@@ -28,6 +28,19 @@ TimedProfile parameterize_time(
   double start_speed,
   double end_speed);
 
+/// Parameterize a transition inside a common symmetric corner window.
+///
+/// Straight context is inserted before and after candidates whose trim is
+/// smaller than window_trim, so acceleration and angular-acceleration limits
+/// are solved continuously instead of adding optimistic distance / speed terms.
+TimedProfile parameterize_transition_window(
+  const TransitionCandidate & candidate,
+  double window_trim,
+  const RobotLimits & limits,
+  double start_speed,
+  double end_speed,
+  double sample_spacing);
+
 double minimum_translation_time(
   double length,
   double start_speed,

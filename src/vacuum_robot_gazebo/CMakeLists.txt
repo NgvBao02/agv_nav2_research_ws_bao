@@ -8,6 +8,13 @@ install(
   DESTINATION share/${PROJECT_NAME}
 )
 
+install(
+  PROGRAMS
+    scripts/environment_manager.py
+    scripts/sanitized_rviz.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+
 if(BUILD_TESTING)
   find_package(ament_cmake_pytest REQUIRED)
   ament_add_pytest_test(
@@ -18,6 +25,11 @@ if(BUILD_TESTING)
   ament_add_pytest_test(
     environment_contract
     test/test_environment_contract.py
+    TIMEOUT 30
+  )
+  ament_add_pytest_test(
+    environment_manager
+    test/test_environment_manager.py
     TIMEOUT 30
   )
 endif()

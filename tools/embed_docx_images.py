@@ -28,6 +28,11 @@ def main():
         default=6.2,
         help='Clamp inline image widths while preserving their aspect ratio.',
     )
+    parser.add_argument(
+        '--a4',
+        action='store_true',
+        help='Set every DOCX section to ISO A4 portrait (11906 x 16838 twips).',
+    )
     options = parser.parse_args()
     source = Path(options.source).resolve()
     output = Path(options.output).resolve()
@@ -99,6 +104,17 @@ def main():
         ET.register_namespace('wp', WP_NS)
         ET.register_namespace('a', A_NS)
         ET.register_namespace('r', R_NS)
+
+        if options.a4:
+            word_ns = document.getroot().tag.split('}')[0].removeprefix('{')
+            for section in document.getroot().iter(f'{{{word_ns}}}sectPr'):
+                page_size = section.find(f'{{{word_ns}}}pgSz')
+                if page_size is None:
+                    page_size = ET.SubElement(section, f'{{{word_ns}}}pgSz')
+                page_size.set(f'{{{word_ns}}}w', '11906')
+                page_size.set(f'{{{word_ns}}}h', '16838')
+                page_size.attrib.pop(f'{{{word_ns}}}orient', None)
+
         document.write(document_path, encoding='UTF-8', xml_declaration=True)
 
         content_types_path = unpacked / '[Content_Types].xml'

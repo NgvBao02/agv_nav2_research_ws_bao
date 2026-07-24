@@ -66,6 +66,8 @@ private:
   double maximum_curvature_energy_ratio_{2.0};
   double curvature_energy_floor_{0.25};
   double evaluation_spacing_{0.025};
+  double pivot_duplicate_position_tolerance_{1.0e-4};
+  double minimum_pivot_angle_{0.0872664626};
   std::vector<geometry_msgs::msg::Point> fallback_footprint_;
 };
 

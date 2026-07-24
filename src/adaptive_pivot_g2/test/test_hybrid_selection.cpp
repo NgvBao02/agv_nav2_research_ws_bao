@@ -68,4 +68,24 @@ TEST(HybridSelection, RejectsInvalidParameters)
   EXPECT_FALSE(result.valid);
 }
 
+TEST(HybridSelection, UsesRawFallbackWhenBothSmoothedCandidatesAreUnsafe)
+{
+  const auto result = select_hybrid_candidate_with_raw_fallback(
+    {true, 180.0, 2.0}, {false, 0.0, 0.0}, {false, 0.0, 0.0},
+    20.0, 2.0, 0.25);
+
+  ASSERT_TRUE(result.valid);
+  EXPECT_TRUE(result.use_raw);
+  EXPECT_FALSE(result.use_pivot);
+  EXPECT_EQ(result.reason, "smoothed_candidates_unsafe_raw_fallback");
+}
+
+TEST(HybridSelection, RejectsWhenRawAndSmoothedCandidatesAreUnsafe)
+{
+  const auto result = select_hybrid_candidate_with_raw_fallback(
+    {false, 0.0, 0.0}, {false, 0.0, 0.0}, {false, 0.0, 0.0},
+    20.0, 2.0, 0.25);
+  EXPECT_FALSE(result.valid);
+}
+
 }  // namespace adaptive_pivot_g2

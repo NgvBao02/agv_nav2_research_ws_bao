@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "tf2/utils.hpp"
+#include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 
 namespace adaptive_pivot_g2_controller
 {
@@ -40,6 +41,22 @@ double planar_distance(
 }
 
 }  // namespace
+
+TerminalDriveGeometry shortest_terminal_drive(double bearing_error)
+{
+  if (!std::isfinite(bearing_error)) {
+    throw std::invalid_argument("terminal bearing error must be finite");
+  }
+  TerminalDriveGeometry output;
+  output.heading_error = normalized_angle(bearing_error);
+  if (std::cos(output.heading_error) < 0.0) {
+    output.direction = -1.0;
+    output.heading_error = normalized_angle(
+      output.heading_error -
+      std::copysign(3.14159265358979323846, output.heading_error));
+  }
+  return output;
+}
 
 std::vector<ManeuverSegment> split_path_at_pivots(
   const nav_msgs::msg::Path & path,

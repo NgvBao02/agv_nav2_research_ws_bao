@@ -16,10 +16,14 @@
 #define ADAPTIVE_PIVOT_G2_NAV2__ADAPTIVE_PIVOT_G2_SMOOTHER_HPP_
 
 #include <memory>
+#include <map>
 #include <string>
 #include <vector>
 
+#include "adaptive_pivot_g2/adaptive_search.hpp"
 #include "adaptive_pivot_g2/candidate_selection.hpp"
+#include "adaptive_pivot_g2/path_conditioning.hpp"
+#include "adaptive_pivot_g2/path_optimization.hpp"
 #include "adaptive_pivot_g2/types.hpp"
 #include "nav2_core/smoother.hpp"
 #include "nav2_costmap_2d/costmap_subscriber.hpp"
@@ -50,11 +54,23 @@ public:
   bool smooth(nav_msgs::msg::Path & path, const rclcpp::Duration & max_time) override;
 
 private:
+  struct TransitionState
+  {
+    adaptive_pivot_g2::TransitionCandidate candidate;
+    double curve_time{0.0};
+    double common_window_time{0.0};
+    double peak_cost{0.0};
+    double max_abs_angular_speed{0.0};
+    double objective_cost{0.0};
+  };
+
   struct CornerDecision
   {
     adaptive_pivot_g2::Vec2 vertex;
     adaptive_pivot_g2::Vec2 incoming;
     adaptive_pivot_g2::Vec2 outgoing;
+    bool pivot_safe{false};
+    bool pass_through{false};
     bool use_transition{false};
     adaptive_pivot_g2::TransitionCandidate transition;
     double turn_angle{0.0};
@@ -64,7 +80,52 @@ private:
     double clearance_proxy{0.0};
     std::size_t candidate_count{0};
     std::size_t competitive_count{0};
+    double minimum_search_radius{0.0};
+    double maximum_search_radius{0.0};
+    double minimum_search_trim{0.0};
+    double maximum_search_trim{0.0};
+    std::size_t evaluation_count{0};
+    std::size_t feasible_count{0};
+    std::vector<TransitionState> transition_states;
+    std::vector<adaptive_pivot_g2::CornerState> optimization_states;
   };
+
+  void publish_diagnostics(
+    const std::vector<CornerDecision> & decisions,
+    const adaptive_pivot_g2::PathOptimizationResult & path_optimization,
+    const std::map<std::string, std::size_t> & rejection_counts,
+    const adaptive_pivot_g2::PathConditioningResult & conditioning,
+    std::size_t input_point_count,
+    double effective_conditioning_deviation,
+    double effective_oscillation_deviation,
+    double effective_segment_margin,
+    const std::string & fallback_status,
+    const std::string & selected_stitch_rejection,
+    std::size_t output_point_count,
+    double runtime_seconds);
+
+  std::vector<adaptive_pivot_g2::CandidateObjective> parameterize_common_window(
+    std::vector<TransitionState> & evaluations,
+    double common_trim,
+    std::map<std::string, std::size_t> & rejection_counts,
+    double & fastest_time,
+    std::size_t & feasible_count,
+    double & common_entry_speed,
+    double & common_exit_speed) const;
+
+  nav_msgs::msg::Path build_output_path(
+    const std::vector<adaptive_pivot_g2::Vec2> & points,
+    const std::vector<CornerDecision> & decisions,
+    const std_msgs::msg::Header & header,
+    const geometry_msgs::msg::Quaternion & goal_orientation,
+    bool force_pivot) const;
+
+  bool stitched_timing_is_valid(
+    const std::vector<CornerDecision> & decisions,
+    const nav_msgs::msg::Path & candidate_path,
+    bool force_pivot,
+    double effective_segment_margin,
+    std::string * rejection_reason = nullptr) const;
 
   std::string plugin_name_;
   rclcpp_lifecycle::LifecycleNode::WeakPtr node_;
@@ -76,10 +137,22 @@ private:
   adaptive_pivot_g2::RobotLimits limits_;
   adaptive_pivot_g2::TransitionOptions transition_options_;
   std::vector<double> radius_candidates_;
+  std::string radius_search_mode_{"fixed"};
+  adaptive_pivot_g2::AdaptiveSearchOptions adaptive_search_options_;
+  std::size_t retained_candidates_per_corner_{5};
+  double curvature_energy_scale_{1.0};
+  double segment_margin_override_{0.0};
   double delta_time_selection_{0.15};
   double time_competitive_slack_{10.0};
   adaptive_pivot_g2::SelectionWeights selection_weights_;
   double corner_angle_threshold_{0.0872664626};
+  double path_conditioning_max_deviation_{0.0};
+  double path_conditioning_resolution_ratio_{1.5};
+  double oscillation_maximum_span_{2.0};
+  double oscillation_maximum_deviation_{0.0};
+  double oscillation_deviation_resolution_ratio_{3.0};
+  double oscillation_minimum_turn_angle_{0.20};
+  std::size_t oscillation_minimum_sign_changes_{2U};
   double output_spacing_{0.05};
   unsigned char max_footprint_cost_{200};
   bool line_of_sight_pruning_{false};

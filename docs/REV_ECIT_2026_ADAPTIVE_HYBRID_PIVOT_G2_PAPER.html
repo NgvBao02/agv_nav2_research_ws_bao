@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="vi"><head><meta charset="utf-8">
+<title>Adaptive Hybrid Pivot–G2 - REV-ECIT 2026</title>
+<style>
+@page { size: A4; margin: 17mm 16mm 18mm 16mm; }
+body { font-family: "Times New Roman", serif; font-size: 9pt; line-height: 1.04;
+  color: #111; margin: 0; text-align: justify; }
+.title { text-align:center; font-size: 15pt; font-weight: bold; line-height:1.12; }
+.authors { text-align:center; font-size: 10pt; margin: 4pt 0 7pt; }
+.abstract { margin: 0 8mm 5pt; }
+.columns { column-count: 2; column-gap: 7mm; }
+h2 { font-size: 9.7pt; text-align:center; margin: 5pt 0 2pt; break-after: avoid; }
+h3 { font-size: 9.2pt; margin: 4pt 0 1pt; break-after: avoid; }
+p { margin: 1.2pt 0; }
+.eq { text-align:center; font-style:italic; margin: 2pt 0; break-inside: avoid; }
+figure { margin: 3pt 0; break-inside: avoid; text-align:center; }
+figure img { width:100%; max-height: 56mm; object-fit:contain; }
+figure.compact img { max-height: 43mm; }
+figcaption { font-size: 7.5pt; line-height:1.0; text-align:center; }
+table { border-collapse:collapse; width:100%; margin:2pt 0; font-size:6.7pt;
+  break-inside:avoid; }
+th, td { border:0.3pt solid #555; padding:1.0pt; text-align:center; }
+th { font-weight:bold; background:#eee; }
+.compact { font-size:6.2pt; }
+.refs { font-size:7.2pt; line-height:1.0; }
+.note { font-size:7.3pt; }
+</style></head><body>
+<div class="title">ADAPTIVE HYBRID PIVOT–G2 VỚI BAO RÀNG BUỘC VẬN TỐC HAI CHIỀU
+CHO ROBOT VI SAI TRONG ROS 2/NAV2</div>
+<div class="authors">[TÊN TÁC GIẢ] — [ĐƠN VỊ] — [EMAIL]</div>
+<div class="abstract"><b>Tóm tắt—</b> Bài báo trình bày một chuỗi hậu xử lý đường đi
+cho robot vi sai gồm điều kiện hóa polyline có kiểm tra swept-footprint, chuyển tiếp
+Bézier bậc năm liên tục hình học G2, tìm kiếm bán kính thích nghi, tối ưu trạng thái
+góc trên toàn đường, cổng an toàn Hybrid và profile vận tốc hai chiều có giới hạn
+vận tốc bánh, gia tốc ngang, gia tốc góc và jerk. Bộ điều khiển mở rộng Regulated
+Pure Pursuit bằng phép chiếu tiến độ có hướng, giới hạn phục hồi bám và servo đích
+hai chiều. Đánh giá hình học dùng 7,200 mẫu trên 7 map, 5 planner, 8
+phương pháp và 3 lần lặp; chạy kín dùng ground truth Gazebo, odom và TF/AMCL tách
+biệt. Pivot–G2 thích nghi giảm 92.2% năng lượng độ cong trung bình so với Raw; Hybrid thích nghi giảm 74.3% và đạt 897/900 lượt thành công. Trong ma trận chạy kín hiện có 24/24
+lượt thành công; RMSE trung bình theo ground truth là 2.51 cm,
+trong khi RMSE trong hệ điều khiển là 0.71 cm. Kết quả cho thấy
+ưu thế chính của phương pháp là giảm độ gấp khúc có kiểm chứng an toàn và giữ khả
+năng hoàn thành nhờ fallback, không phải tối ưu toàn cục tuyệt đối.</div>
+<div class="abstract"><b>Từ khóa—</b> robot vi sai, làm mượt đường đi, G2,
+Bézier bậc năm, Nav2, profile vận tốc, Gazebo.</div>
+<div class="columns">
+<h2>I. GIỚI THIỆU</h2>
+<p>Đường đi trên costmap thường gồm các đoạn thẳng và góc gấp. Làm mượt thuần
+hình học có thể cắt vào vật cản; làm tròn mọi góc có thể tăng thời gian hoặc tạo
+đoạn cong robot không bám được. Công trình Bézier bậc năm của Simba và cộng sự
+chỉ ra khả năng tạo quỹ đạo C2 cho robot phi holonomic [1], trong khi Regulated
+Pure Pursuit (RPP) điều chỉnh vận tốc theo độ cong, khoảng cách vật cản và đích
+[2]. Tuy nhiên, trong một chuỗi Nav2 thực tế còn cần ràng buộc footprint, các
+góc buộc quay tại chỗ, tiến độ không nhảy sang nhánh giao cắt, động học tăng/giảm
+tốc và sai số định vị.</p>
+<p>Đóng góp của nghiên cứu gồm: (i) ứng viên Pivot–G2 thích nghi được đánh giá
+trong cùng cửa sổ thời gian và ghép bằng quy hoạch động; (ii) Hybrid chọn
+Simple/Pivot–G2/Raw bằng cổng an toàn; (iii) bao vận tốc S-curve hai chiều và
+phục hồi vòng kín; (iv) benchmark cùng raw-path hash và tách ground truth,
+odometry, TF/AMCL.</p>
+<figure class="compact"><img src="rev_ecit_2026_assets/figure_01_architecture.png" alt="Hình 1. Chuỗi thuật toán và vòng phản hồi đo lường."><figcaption>Hình 1. Chuỗi thuật toán và vòng phản hồi đo lường.</figcaption></figure>
+
+<h2>II. PHƯƠNG PHÁP</h2>
+<h3>A. Chuyển tiếp Pivot–G2</h3>
+<p>Với góc đổi hướng Δψ và khoảng trim d, bán kính thiết kế là
+R=d/tan(|Δψ|/2). Sáu điểm điều khiển Bézier bậc năm được đặt đối xứng trên hai
+tiếp tuyến; đạo hàm bậc hai ở hai đầu bằng không nên độ cong nối với đoạn thẳng
+liên tục. Với r(u)=Σ Bᵢ,₅(u)Pᵢ:</p>
+<div class="eq">κ(u) = (x′y″−y′x″)/(x′²+y′²)<sup>3/2</sup>, &nbsp;
+E<sub>κ</sub>=∫κ²ds.</div>
+<p>Ứng viên bị loại nếu đổi dấu độ cong ngoài ý muốn, bánh trong phải đảo chiều,
+footprint va chạm, hoặc vi phạm giới hạn. Tìm kiếm thích nghi ưu tiên biên
+safe/unsafe và lân cận nghiệm tốt nhưng vẫn lấy mẫu toàn miền. Mỗi góc gồm các
+trạng thái G2 và pivot; DP O(NK²) chọn chuỗi có tổng chi phí nhỏ nhất với điều
+kiện trim hai góc kề không chồng lấn. Trong ma trận, DP chọn
+3134 chuyển tiếp;
+43.7% bán kính
+không thuộc bank cố định legacy, xác nhận tìm kiếm không bị lượng tử hóa.</p>
+<h3>B. Cổng Hybrid và profile vận tốc</h3>
+<p>Hybrid lấy Simple làm mặc định; Pivot–G2 chỉ được chọn khi cải thiện cost
+an toàn đủ lớn và năng lượng độ cong nằm trong ngân sách; Raw là fallback cuối.
+Mỗi điểm có trần tức thời:</p>
+<div class="eq">v̄(s)=min[v<sub>max</sub>, √(a<sub>y,max</sub>/|κ|),
+ω<sub>max</sub>/|κ|, v<sub>w,max</sub>/(1+L|κ|/2)].</div>
+<p>Hai lượt truyền tiến/lùi giải vận tốc đạt được với profile gia tốc đối xứng
+giới hạn jerk. Khoảng chuyển từ v₀ đến v₁ dùng profile tam giác khi
+Δv≤a²/j và hình thang trong trường hợp còn lại. Sau đó, cặp nút được giảm đồng
+thời đến khi |Δ(vκ)|/Δt≤α<sub>max</sub>. Cách này khắc phục lỗi cũ chỉ phanh
+nhìn về phía trước nhưng tăng tốc ngay sau cong.</p>
+<h3>C. Điều khiển bám và đích</h3>
+<p>Tiến độ s được chiếu trong cửa sổ cục bộ bằng
+J=e<sub>xy</sub>²+(w<sub>ψ</sub>e<sub>ψ</sub>)², giới hạn lùi 3 cm và ưu tiên
+nghiệm phía trước khi bằng điểm. Các hàm smoothstep giảm v theo sai số ngang,
+hướng và sai số ω. Khi gần đích, vị trí mục tiêu được chốt trong odom còn yaw
+được biến đổi trực tiếp theo TF mới nhất; servo có thể chạy tiến hoặc lùi rồi
+mới căn yaw. Điều này loại vòng quay sai do AMCL dịch chuyển vài cm sau khi
+vừa qua dung sai vị trí.</p>
+
+<h2>III. THIẾT KẾ THỬ NGHIỆM</h2>
+<p>Robot Gazebo dùng CAD 440×340 mm, hai bánh Ø85 mm, khoảng cách tâm bánh
+0,2548 m, RPLIDAR A1M8 và IMU BNO055. Giới hạn chính: v≤0,30 m/s,
+|ω|≤0,80 rad/s, |v<sub>w</sub>|≤0,36 m/s, a<sub>y</sub>≤0,18 m/s²,
+a<sub>tăng</sub>≤0,35 m/s², a<sub>giảm</sub>≤0,45 m/s²,
+j≤0,90 m/s³. Bảy môi trường gồm kho nghiên cứu,
+lối hẹp, văn phòng, không gian mở và ba cấu hình kho công nghiệp.</p>
+<p>Thiết kế hình học ghép cặp giữ nguyên planner output SHA-256 giữa 8 smoother:
+900 nhóm, 0 sai ghép. Có 60 tình huống, 5 planner và 3 lần lặp,
+tổng 7,200 dòng. Chạy kín ghi /world/.../pose ground truth, /odom,
+TF map→base_link, cmd_vel và telemetry; vì vậy sai số điều khiển không bị đánh
+đồng với sai số định vị. Giới hạn tốc độ thử là 0,15; 0,22 và chế độ thích nghi
+đến 0,30 m/s.</p>
+<figure class="compact"><img src="rev_ecit_2026_assets/figure_07_robot_3d.png" alt="Hình 2. Mô hình CAD 3D thực thi trong Gazebo."><figcaption>Hình 2. Mô hình CAD 3D thực thi trong Gazebo.</figcaption></figure>
+
+<h2>IV. KẾT QUẢ VÀ THẢO LUẬN</h2>
+<figure class=""><img src="rev_ecit_2026_assets/figure_02_geometry_overview.png" alt="Hình 3. Tổng hợp đánh giá hình học trên toàn bộ ma trận."><figcaption>Hình 3. Tổng hợp đánh giá hình học trên toàn bộ ma trận.</figcaption></figure>
+<p>Raw chỉ thất bại ở 3 ca planner không sinh được đường. Pivot–G2 độc lập đạt
+882/900; Hybrid đạt 897/900
+và không có mẫu footprint va chạm trong các đường thành công. So với Raw,
+Pivot–G2 thích nghi giảm trung bình 92.2%
+Eκ, rút ngắn 1.65% và tăng
+clearance trung bình 8.9%.
+Hybrid giảm 74.3% Eκ,
+tăng clearance 10.1%;
+so với Simple, Eκ trung bình giảm 11.0%.
+Độ lệch khỏi raw tăng là đánh đổi chủ động, nhưng mọi ứng viên đều qua
+swept-footprint.</p>
+<table class="compact"><thead><tr><th>PP</th><th>OK (%)</th><th>Eκ</th><th>clear. (cm)</th><th>L (m)</th></tr></thead><tbody><tr><td>Raw</td><td>99.7</td><td>30.39</td><td>28.3</td><td>8.22</td></tr><tr><td>Simple</td><td>99.3</td><td>8.79</td><td>30.9</td><td>8.16</td></tr><tr><td>SG</td><td>98.7</td><td>15.07</td><td>30.9</td><td>8.16</td></tr><tr><td>Con.</td><td>99.3</td><td>15.00</td><td>30.6</td><td>8.22</td></tr><tr><td>P–G2 F</td><td>98.0</td><td>2.07</td><td>31.0</td><td>8.09</td></tr><tr><td>P–G2 A</td><td>98.0</td><td>2.38</td><td>30.8</td><td>8.08</td></tr><tr><td>Hyb. F</td><td>99.7</td><td>7.71</td><td>31.1</td><td>8.17</td></tr><tr><td>Hyb. A</td><td>99.7</td><td>7.82</td><td>31.2</td><td>8.17</td></tr></tbody></table>
+<figure class="compact"><img src="rev_ecit_2026_assets/figure_03_map_energy_ratio.png" alt="Hình 4. Mức giảm Eκ theo từng map."><figcaption>Hình 4. Mức giảm Eκ theo từng map.</figcaption></figure>
+<figure class=""><img src="rev_ecit_2026_assets/figure_04_speed_tracking.png" alt="Hình 5. So sánh chạy kín theo bộ làm mượt và tốc độ."><figcaption>Hình 5. So sánh chạy kín theo bộ làm mượt và tốc độ.</figcaption></figure>
+<p>RMSE mà controller quan sát nhỏ hơn ground truth vì phần chênh lệch còn lại
+đến từ AMCL/odom. Đây là lý do không dùng riêng TF để tuyên bố chất lượng bám.
+Jerk danh định P95 lớn nhất là 0.90 m/s³; các điểm chuyển
+an toàn, pivot và servo được báo riêng là safety override. Không có can thiệp
+collision monitor trong các lượt thành công.</p>
+<table class="compact"><thead><tr><th>PP</th><th>t (s)</th><th>GT</th><th>est.</th><th>exit</th><th>vmax</th></tr></thead><tbody><tr><td>Raw</td><td>33.2</td><td>2.59</td><td>0.63</td><td>2.96</td><td>0.30</td></tr><tr><td>Simple</td><td>28.7</td><td>3.75</td><td>1.21</td><td>5.31</td><td>0.30</td></tr><tr><td>SG</td><td>35.7</td><td>2.59</td><td>0.82</td><td>3.31</td><td>0.30</td></tr><tr><td>Con.</td><td>33.4</td><td>2.65</td><td>1.26</td><td>2.32</td><td>0.30</td></tr><tr><td>P–G2 F</td><td>38.2</td><td>2.23</td><td>0.62</td><td>2.86</td><td>0.30</td></tr><tr><td>P–G2 A</td><td>36.8</td><td>1.94</td><td>0.61</td><td>2.27</td><td>0.30</td></tr><tr><td>Hyb. F</td><td>36.7</td><td>2.23</td><td>0.60</td><td>2.77</td><td>0.30</td></tr><tr><td>Hyb. A</td><td>37.1</td><td>2.33</td><td>0.71</td><td>2.44</td><td>0.30</td></tr></tbody></table>
+<figure class=""><img src="rev_ecit_2026_assets/figure_05_trace_speed.png" alt="Hình 6. Quỹ đạo chạy thật trong Gazebo và profile vận tốc vòng kín."><figcaption>Hình 6. Quỹ đạo chạy thật trong Gazebo và profile vận tốc vòng kín.</figcaption></figure>
+<p>Kiểm chứng phân tầng trên cả bảy môi trường cho Pivot–G2 thích nghi đều hoàn
+thành, không có mẫu footprint va chạm. RMSE controller quan sát nằm trong khoảng
+0.49–0.92
+cm; phần sai số ground truth tăng theo drift định vị, đặc biệt trên đường dài.</p>
+<figure class="compact"><img src="rev_ecit_2026_assets/figure_06_all_map_closed_loop.png" alt="Hình 7. Phân rã sai số chạy kín trên bảy môi trường."><figcaption>Hình 7. Phân rã sai số chạy kín trên bảy môi trường.</figcaption></figure>
+<table class="compact"><thead><tr><th>Map</th><th>GT RMSE</th><th>est. RMSE</th><th>loc. P95</th></tr></thead><tbody><tr><td>Kho NC</td><td>1.41</td><td>0.83</td><td>3.61</td></tr><tr><td>Lối hẹp</td><td>2.97</td><td>0.83</td><td>5.62</td></tr><tr><td>Văn phòng</td><td>2.01</td><td>0.70</td><td>6.12</td></tr><tr><td>Mở</td><td>1.62</td><td>0.68</td><td>5.44</td></tr><tr><td>Giao cắt</td><td>2.56</td><td>0.92</td><td>4.73</td></tr><tr><td>Điều phối</td><td>2.62</td><td>0.66</td><td>5.25</td></tr><tr><td>Lối dài</td><td>2.69</td><td>0.49</td><td>5.01</td></tr></tbody></table>
+
+<h2>V. KẾT LUẬN</h2>
+<p>Adaptive Hybrid Pivot–G2 cho lợi thế rõ nhất ở ba mặt: giảm năng lượng độ
+cong mạnh so với raw, kiểm tra an toàn footprint trước khi nhận ứng viên, và
+không đánh đổi độ bền nhờ fallback. Bao vận tốc hai chiều cùng chiếu tiến độ có
+hướng đã xử lý hiện tượng tăng tốc lệch ray sau cong; servo đích sửa hướng quay
+sai do nhiễu định vị. Kết quả chưa chứng minh tối ưu toàn cục hay khả năng chạy
+trên robot vật lý; bước tiếp theo là thí nghiệm phần cứng lặp nhiều lần và kiểm
+định thống kê theo quãng đường dài.</p>
+
+<h2>TÀI LIỆU THAM KHẢO</h2>
+<div class="refs">
+<p>[1] K. R. Simba, N. Uchiyama, S. Sano, “Real-time smooth trajectory generation
+for nonholonomic mobile robots using Bézier curves,” <i>RCIM</i>, vol. 41,
+pp. 31–42, 2016, doi:10.1016/j.rcim.2016.02.002.</p>
+<p>[2] S. Macenski, S. Singh, F. Martín, J. Ginés, “Regulated pure pursuit for
+robot path tracking,” <i>Autonomous Robots</i>, vol. 47, pp. 685–694, 2023,
+doi:10.1007/s10514-023-10097-6.</p>
+<p>[3] H. Pham, Q.-C. Pham, “A new approach to time-optimal path
+parameterization based on reachability analysis,” arXiv:1707.07239, 2017.</p>
+<p>[4] L. Xu, M. Cao, B. Song, “A new approach to smooth path planning of mobile
+robot based on quartic Bézier transition curve and improved PSO,”
+<i>Neurocomputing</i>, vol. 473, pp. 98–106, 2022.</p>
+<p>[5] F. Dellaert, D. Fox, W. Burgard, S. Thrun, “Monte Carlo localization for
+mobile robots,” <i>Proc. ICRA</i>, pp. 1322–1328, 1999.</p>
+<p>[6] Navigation2, “Regulated Pure Pursuit Controller,” tài liệu chính thức,
+truy cập 25-07-2026.</p>
+</div>
+</div></body></html>

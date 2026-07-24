@@ -13,9 +13,12 @@
 // limitations under the License.
 
 #include <cmath>
+#include <limits>
+#include <stdexcept>
 
 #include "gtest/gtest.h"
 #include "tf2/utils.hpp"
+#include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 
 #include "adaptive_pivot_g2_controller/maneuver_path.hpp"
 
@@ -75,6 +78,28 @@ TEST(ManeuverPath, RejectsUnitPath)
   nav_msgs::msg::Path path;
   path.poses.push_back(pose(0.0, 0.0, 0.0));
   EXPECT_THROW(split_path_at_pivots(path, 1.0e-4, 0.05), std::invalid_argument);
+}
+
+TEST(ManeuverPath, TerminalDriveUsesShortestForwardOrReverseHeading)
+{
+  const auto forward = shortest_terminal_drive(0.25);
+  EXPECT_DOUBLE_EQ(forward.direction, 1.0);
+  EXPECT_NEAR(forward.heading_error, 0.25, 1.0e-12);
+
+  const auto reverse_left = shortest_terminal_drive(kPi - 0.20);
+  EXPECT_DOUBLE_EQ(reverse_left.direction, -1.0);
+  EXPECT_NEAR(reverse_left.heading_error, -0.20, 1.0e-12);
+
+  const auto reverse_right = shortest_terminal_drive(-kPi + 0.30);
+  EXPECT_DOUBLE_EQ(reverse_right.direction, -1.0);
+  EXPECT_NEAR(reverse_right.heading_error, 0.30, 1.0e-12);
+}
+
+TEST(ManeuverPath, TerminalDriveRejectsNonFiniteBearing)
+{
+  EXPECT_THROW(
+    shortest_terminal_drive(std::numeric_limits<double>::infinity()),
+    std::invalid_argument);
 }
 
 }  // namespace

@@ -26,6 +26,7 @@ from adaptive_pivot_g2_benchmark.compare_paths import (
     resample_polyline,
 )
 from adaptive_pivot_g2_benchmark.path_contract import (
+    anchor_path_goal,
     canonicalize_planner_path,
 )
 from ament_index_python.packages import get_package_share_directory
@@ -46,7 +47,9 @@ SMOOTHERS = {
     'simple': 'simple_smoother',
     'savitzky_golay': 'savitzky_golay',
     'constrained': 'constrained',
+    'pivot_g2_fixed': 'pivot_g2_fixed',
     'pivot_g2': 'pivot_g2',
+    'adaptive_hybrid_fixed': 'adaptive_hybrid_fixed',
     'adaptive_hybrid': 'adaptive_hybrid',
 }
 
@@ -338,14 +341,19 @@ class BatchBenchmark(Node):
         # DDS delivery can arrive one executor cycle later for very short
         # straight paths. Give the selected research plugin a bounded wall-time
         # window so its decision is attached to the correct CSV row.
-        research_method = method in {'pivot_g2', 'adaptive_hybrid'}
+        pivot_method = method in {'pivot_g2_fixed', 'pivot_g2'}
+        hybrid_method = method in {
+            'adaptive_hybrid_fixed',
+            'adaptive_hybrid',
+        }
+        research_method = pivot_method or hybrid_method
         deadline = time.monotonic() + 0.20
         while research_method and time.monotonic() < deadline:
             diagnostics_ready = (
-                method == 'pivot_g2'
+                pivot_method
                 and self.latest_pivot_diagnostics is not None
             ) or (
-                method == 'adaptive_hybrid'
+                hybrid_method
                 and self.latest_hybrid_diagnostics is not None
             )
             if diagnostics_ready:
@@ -388,11 +396,15 @@ class BatchBenchmark(Node):
             **calculate_footprint_clearance(output_path, self.occupancy_grid),
             **calculate_path_deviation(common_points, raw_points),
         }
-        if method == 'pivot_g2' and self.latest_pivot_diagnostics:
+        if method in {'pivot_g2_fixed', 'pivot_g2'} and (
+            self.latest_pivot_diagnostics
+        ):
             for key, value in self.latest_pivot_diagnostics.items():
                 if key not in {'method'}:
                     row[f'pivot_{key}'] = value
-        if method == 'adaptive_hybrid' and self.latest_hybrid_diagnostics:
+        if method in {'adaptive_hybrid_fixed', 'adaptive_hybrid'} and (
+            self.latest_hybrid_diagnostics
+        ):
             for key, value in self.latest_hybrid_diagnostics.items():
                 if key != 'method':
                     row[f'hybrid_{key}'] = value
@@ -434,8 +446,20 @@ class BatchBenchmark(Node):
                     planner_output_hash = _path_hash(
                         _path_points(planner_output_path)
                     )
+                    goal = scenario['goal']
+                    start = scenario['start']
+                    default_yaw = math.atan2(
+                        goal[1] - start[1], goal[0] - start[0]
+                    )
+                    requested_goal = _pose(
+                        'map', float(goal[0]), float(goal[1]),
+                        float(goal[2]) if len(goal) > 2 else default_yaw,
+                    )
+                    anchored_planner_path, _ = anchor_path_goal(
+                        planner_output_path, requested_goal
+                    )
                     raw_path, removed_duplicates = (
-                        canonicalize_planner_path(planner_output_path)
+                        canonicalize_planner_path(anchored_planner_path)
                     )
                     raw_points = _path_points(raw_path)
                     rows.append(
@@ -473,6 +497,9 @@ class BatchBenchmark(Node):
                                 }
                             )
                             continue
+                        anchored_smoothed_path, _ = anchor_path_goal(
+                            result.path, requested_goal
+                        )
                         rows.append(
                             self._success_row(
                                 scenario,
@@ -480,7 +507,7 @@ class BatchBenchmark(Node):
                                 repetition,
                                 method,
                                 raw_points,
-                                result.path,
+                                anchored_smoothed_path,
                                 duration_seconds(result.smoothing_duration),
                                 wall_time,
                                 planner_output_hash,

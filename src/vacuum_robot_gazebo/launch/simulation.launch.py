@@ -1,4 +1,4 @@
-"""Launch the real-profile robot, Gazebo map, Nav2, RViz, and comparison runner."""
+"""Launch the robot, Gazebo map, Nav2, RViz, and comparison runner."""
 
 import os
 
@@ -8,8 +8,11 @@ from launch.actions import (
     AppendEnvironmentVariable,
     DeclareLaunchArgument,
     IncludeLaunchDescription,
+    RegisterEventHandler,
+    TimerAction,
 )
 from launch.conditions import IfCondition, UnlessCondition
+from launch.event_handlers import OnProcessExit
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import (
     LaunchConfiguration,
@@ -29,7 +32,9 @@ def generate_launch_description():
     urdf = os.path.join(package_share, 'urdf', 'vacuum_robot.urdf')
     bridge_config = os.path.join(package_share, 'config', 'bridge.yaml')
     nav2_params = os.path.join(package_share, 'config', 'nav2_params.yaml')
-    rviz_config = os.path.join(package_share, 'rviz', 'research_comparison.rviz')
+    rviz_config = os.path.join(
+        package_share, 'rviz', 'research_comparison.rviz'
+    )
 
     environment = LaunchConfiguration('environment')
     environment_filename = PythonExpression(["'", environment, "' + '.sdf'"])
@@ -47,9 +52,11 @@ def generate_launch_description():
     execute = LaunchConfiguration('execute')
     execute_method = LaunchConfiguration('execute_method')
     planner_id = LaunchConfiguration('planner_id')
+    initial_sim_time = LaunchConfiguration('initial_sim_time')
     x_pose = LaunchConfiguration('x_pose')
     y_pose = LaunchConfiguration('y_pose')
     yaw = LaunchConfiguration('yaw')
+    nav2_start_delay = LaunchConfiguration('nav2_start_delay')
 
     with open(urdf, 'r', encoding='utf-8') as stream:
         robot_description = stream.read()
@@ -72,14 +79,28 @@ def generate_launch_description():
             os.path.join(ros_gz_share, 'launch', 'gz_sim.launch.py')
         ),
         condition=IfCondition(gui),
-        launch_arguments={'gz_args': ['-r -v 3 ', world]}.items(),
+        launch_arguments={
+            'gz_args': [
+                '-r -v 3 --initial-sim-time ',
+                initial_sim_time,
+                ' ',
+                world,
+            ]
+        }.items(),
     )
     gazebo_headless = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(ros_gz_share, 'launch', 'gz_sim.launch.py')
         ),
         condition=UnlessCondition(gui),
-        launch_arguments={'gz_args': ['-r -s -v 3 ', world]}.items(),
+        launch_arguments={
+            'gz_args': [
+                '-r -s -v 3 --initial-sim-time ',
+                initial_sim_time,
+                ' ',
+                world,
+            ]
+        }.items(),
     )
 
     spawn_robot = Node(
@@ -108,7 +129,9 @@ def generate_launch_description():
         package='robot_state_publisher',
         executable='robot_state_publisher',
         output='screen',
-        parameters=[{'robot_description': robot_description, 'use_sim_time': True}],
+        parameters=[
+            {'robot_description': robot_description, 'use_sim_time': True}
+        ],
     )
 
     nav2 = IncludeLaunchDescription(
@@ -142,13 +165,24 @@ def generate_launch_description():
         ],
     )
     rviz = Node(
-        package='rviz2',
-        executable='rviz2',
+        package='vacuum_robot_gazebo',
+        executable='sanitized_rviz.py',
         name='rviz2',
         output='screen',
         condition=IfCondition(use_rviz),
         arguments=['-d', rviz_config],
         parameters=[{'use_sim_time': True}],
+    )
+    start_navigation_after_spawn = RegisterEventHandler(
+        OnProcessExit(
+            target_action=spawn_robot,
+            on_exit=[
+                TimerAction(
+                    period=nav2_start_delay,
+                    actions=[nav2, comparison],
+                )
+            ],
+        )
     )
 
     return LaunchDescription(
@@ -188,6 +222,22 @@ def generate_launch_description():
             DeclareLaunchArgument('x_pose', default_value='-5.0'),
             DeclareLaunchArgument('y_pose', default_value='-3.0'),
             DeclareLaunchArgument('yaw', default_value='0.0'),
+            DeclareLaunchArgument(
+                'nav2_start_delay',
+                default_value='2.0',
+                description=(
+                    'Seconds after successful entity creation before Nav2 '
+                    'activation, allowing odometry and TF bridges to settle'
+                ),
+            ),
+            DeclareLaunchArgument(
+                'initial_sim_time',
+                default_value='0.0',
+                description=(
+                    'Gazebo initial simulation time in seconds; the '
+                    'switching manager keeps this monotonic across worlds'
+                ),
+            ),
             AppendEnvironmentVariable(
                 'GZ_SIM_RESOURCE_PATH', os.path.join(package_share, 'models')
             ),
@@ -196,8 +246,7 @@ def generate_launch_description():
             spawn_robot,
             bridge,
             robot_state_publisher,
-            nav2,
-            comparison,
+            start_navigation_after_spawn,
             rviz,
         ]
     )

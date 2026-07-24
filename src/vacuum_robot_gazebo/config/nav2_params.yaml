@@ -2,14 +2,14 @@ amcl:
   ros__parameters:
     # Gazebo's wheel odometry was calibrated against ground truth (<0.1%
     # error in the straight/turn regression).  TurtleBot-style 0.2 motion
-    # noise makes the particle cloud wander unrealistically at 0.08 m/s.
+    # noise makes the particle cloud wander unrealistically in this simulation.
     # Keep a small non-zero model uncertainty for the simulated sensor run;
     # the physical robot will use a separately calibrated localization file.
-    alpha1: 0.01
-    alpha2: 0.01
-    alpha3: 0.01
-    alpha4: 0.01
-    alpha5: 0.01
+    alpha1: 0.005
+    alpha2: 0.005
+    alpha3: 0.005
+    alpha4: 0.005
+    alpha5: 0.005
     base_frame_id: "base_link"
     beam_skip_distance: 0.5
     beam_skip_error_threshold: 0.9
@@ -17,30 +17,32 @@ amcl:
     do_beamskip: false
     global_frame_id: "map"
     lambda_short: 0.1
-    laser_likelihood_max_dist: 2.0
-    laser_max_range: 100.0
+    laser_likelihood_max_dist: 1.50
+    laser_max_range: -1.0
     laser_min_range: -1.0
     laser_model_type: "likelihood_field"
-    max_beams: 120
-    max_particles: 2000
-    min_particles: 500
+    max_beams: 180
+    max_particles: 3000
+    min_particles: 1000
     odom_frame_id: "odom"
-    pf_err: 0.05
+    pf_err: 0.03
     pf_z: 0.99
+    random_seed: 42
     recovery_alpha_fast: 0.0
     recovery_alpha_slow: 0.0
     resample_interval: 1
     robot_model_type: "nav2_amcl::DifferentialMotionModel"
     save_pose_rate: 0.5
-    sigma_hit: 0.2
+    sigma_hit: 0.15
     tf_broadcast: true
     transform_tolerance: 1.0
-    update_min_a: 0.05
-    update_min_d: 0.05
-    z_hit: 0.5
-    z_max: 0.05
-    z_rand: 0.5
-    z_short: 0.05
+    update_min_a: 0.02
+    update_min_d: 0.02
+    # likelihood_field uses z_hit and z_rand; keep their mixture normalized.
+    z_hit: 0.65
+    z_max: 0.0
+    z_rand: 0.35
+    z_short: 0.0
     scan_topic: scan
     set_initial_pose: true
     always_reset_initial_pose: true
@@ -79,7 +81,7 @@ bt_navigator:
 
 controller_server:
   ros__parameters:
-    controller_frequency: 10.0
+    controller_frequency: 20.0
     costmap_update_timeout: 0.30
     min_x_velocity_threshold: 0.001
     min_y_velocity_threshold: 0.5
@@ -92,8 +94,12 @@ controller_server:
 
     # Progress checker parameters
     progress_checker:
-      plugin: "nav2_controller::SimpleProgressChecker"
+      # Differential-drive pivots make angular progress without translating.
+      # PoseProgressChecker accepts either 5 cm translation or 0.05 rad
+      # rotation, while retaining the timeout for a genuinely stuck robot.
+      plugin: "nav2_controller::PoseProgressChecker"
       required_movement_radius: 0.05
+      required_movement_angle: 0.05
       movement_time_allowance: 30.0
     # Goal checker parameters
     #precise_goal_checker:
@@ -102,28 +108,42 @@ controller_server:
     #  yaw_goal_tolerance: 0.25
     #  stateful: True
     general_goal_checker:
+      # Completion is a physical state, not only a pose event.  Re-check XY
+      # while turning and require both wheel-derived velocities to be stopped.
+      # Latch XY after it is first satisfied while final yaw is aligned.
+      # Ground-truth acceptance below still rejects a physically wrong pose;
+      # this only prevents AMCL scan corrections from repeatedly reopening XY.
       stateful: True
-      plugin: "nav2_controller::SimpleGoalChecker"
-      xy_goal_tolerance: 0.08
-      yaw_goal_tolerance: 0.10
+      plugin: "nav2_controller::StoppedGoalChecker"
+      # Keep the estimated-pose tolerance below the 0.10 m physical benchmark
+      # tolerance by a margin that covers the measured 0.05--0.065 m AMCL
+      # position error in Gazebo.
+      xy_goal_tolerance: 0.03
+      # Remain just outside the controller's 0.025 rad settled band so the
+      # terminal yaw servo, rather than a loose goal check, decides completion.
+      yaw_goal_tolerance: 0.03
+      trans_stopped_velocity: 0.01
+      rot_stopped_velocity: 0.02
     # One deterministic controller is shared by every smoothing method.
     FollowPath:
       # Same RPP law is used for every method.  The wrapper additionally
       # executes duplicate-position / heading-change markers as explicit
       # stop-and-rotate maneuvers instead of silently skipping Pivot-G2 pivots.
       plugin: "adaptive_pivot_g2_controller::ManeuverAwareRPPController"
-      desired_linear_vel: 0.08
+      # Upper bound only: the wrapper continuously computes a lower safe speed
+      # from future curvature, S-curve braking, wheel limits and RPP safety.
+      desired_linear_vel: 0.30
       lookahead_dist: 0.35
       min_lookahead_dist: 0.25
-      max_lookahead_dist: 0.50
+      max_lookahead_dist: 0.60
       lookahead_time: 1.5
-      rotate_to_heading_angular_vel: 0.35
+      rotate_to_heading_angular_vel: 0.60
       transform_tolerance: 0.20
       use_velocity_scaled_lookahead_dist: true
       min_approach_linear_velocity: 0.025
       approach_velocity_scaling_dist: 0.40
       use_collision_detection: true
-      max_allowed_time_to_collision_up_to_carrot: 1.0
+      max_allowed_time_to_collision_up_to_carrot: 1.5
       use_regulated_linear_velocity_scaling: true
       use_cost_regulated_linear_velocity_scaling: true
       regulated_linear_scaling_min_radius: 0.35
@@ -133,20 +153,81 @@ controller_server:
       inflation_cost_scaling_factor: 5.0
       use_rotate_to_heading: true
       rotate_to_heading_min_angle: 0.35
-      max_angular_accel: 0.80
+      max_angular_accel: 1.20
       allow_reversing: false
       pivot_duplicate_position_tolerance: 0.0001
       minimum_pivot_angle: 0.0872664626
-      # Must be no smaller than the 0.08 m XY goal tolerance: RPP can legally
-      # stop that far from an intermediate segment endpoint.
+      # Switch from predictive braking to the bidirectional precision servo at
+      # this distance from an interior pivot marker.
       pivot_position_tolerance: 0.10
-      pivot_yaw_tolerance: 0.025
+      # Leave 0.015 rad internal deadband so AMCL yaw updates still fit inside
+      # the 0.03 rad global goal-checker tolerance.
+      pivot_yaw_tolerance: 0.015
       pivot_stopped_linear_velocity: 0.01
       pivot_stopped_angular_velocity: 0.02
-      pivot_max_angular_speed: 0.425
-      pivot_max_angular_acceleration: 0.80
+      pivot_max_angular_speed: 0.70
+      pivot_max_angular_acceleration: 1.20
       pivot_heading_gain: 1.8
-      pivot_control_period: 0.10
+      pivot_control_period: 0.05
+      # Latch a low-speed terminal pose servo before localization error can
+      # let RPP pass the endpoint.  It holds XY, then aligns final yaw.
+      terminal_position_tolerance: 0.15
+      # Remain inside StoppedGoalChecker's 0.03 m estimated-pose radius while
+      # avoiding noisy bearing control on millimetre-scale residual vectors.
+      terminal_hold_position_tolerance: 0.025
+      # The position controller aims 5 mm inside the hold threshold, avoiding
+      # an asymptotic equilibrium exactly on the state-transition boundary.
+      terminal_hold_entry_margin: 0.005
+      # If AMCL drifts while final yaw is being aligned, leave the yaw phase
+      # and reacquire XY before StoppedGoalChecker is allowed to complete.
+      terminal_release_position_tolerance: 0.04
+      # Stop from cruise at this staging radius. Only after the base is
+      # physically stopped does the bidirectional precision servo enter.
+      terminal_staging_position_tolerance: 0.15
+      terminal_stop_margin: 0.03
+      # Gazebo end-to-end cmd_vel -> base response measured from the failed
+      # trials is ~0.08 m/s^2 near completion despite higher component limits.
+      terminal_effective_deceleration: 0.08
+      # The pose servo may enter at cruise speed; the S-curve braking envelope
+      # reduces it continuously instead of imposing a 0.12 m/s step.
+      terminal_max_linear_speed: 0.30
+      terminal_precision_max_linear_speed: 0.05
+      terminal_position_gain: 2.5
+      terminal_realign_heading_tolerance: 0.05
+      # Predictive Constraint Envelope (PCE): path-space backward braking plus
+      # online RPP/cost, lateral, angular and differential-wheel constraints.
+      adaptive_speed_enabled: true
+      adaptive_max_linear_speed: 0.30
+      adaptive_max_angular_speed: 0.80
+      adaptive_max_wheel_linear_speed: 0.36
+      adaptive_wheel_separation: 0.2548
+      adaptive_max_lateral_acceleration: 0.18
+      adaptive_max_linear_acceleration: 0.35
+      adaptive_max_linear_deceleration: 0.45
+      adaptive_max_angular_acceleration: 1.20
+      adaptive_max_linear_jerk: 0.90
+      adaptive_curvature_sample_distance: 0.10
+      adaptive_terminal_linear_speed: 0.0
+      # Stop inside the goal-checker region before FollowPath can
+      # complete and remove a still-moving command.
+      adaptive_terminal_stop_buffer: 0.05
+      adaptive_projection_search_backward: 0.25
+      adaptive_projection_search_forward: 0.80
+      # Heading-aware, progress-monotone projection prevents selecting the
+      # wrong branch where a path passes close to itself.
+      adaptive_projection_heading_weight: 0.20
+      adaptive_projection_max_regression: 0.03
+      adaptive_feedback_sync_tolerance: 0.06
+      # Closed-loop recovery envelope: speed is only released after lateral,
+      # heading and measured-yaw-response errors settle after a curve.
+      adaptive_cross_track_error_soft: 0.02
+      adaptive_cross_track_error_hard: 0.10
+      adaptive_heading_error_soft: 0.08
+      adaptive_heading_error_hard: 0.45
+      adaptive_angular_tracking_error_soft: 0.08
+      adaptive_angular_tracking_error_hard: 0.35
+      adaptive_recovery_min_linear_speed: 0.06
+      adaptive_speed_diagnostics_topic: "/research/adaptive_speed"
 
 local_costmap:
   local_costmap:
@@ -155,6 +236,9 @@ local_costmap:
       publish_frequency: 2.0
       global_frame: odom
       robot_base_frame: base_link
+      # Environment switching restarts Gazebo and its TF bridge. Give the new
+      # odom->base_link stream time to appear before lifecycle activation.
+      initial_transform_timeout: 10.0
       rolling_window: true
       width: 4
       height: 4
@@ -197,6 +281,7 @@ global_costmap:
       publish_frequency: 1.0
       global_frame: map
       robot_base_frame: base_link
+      initial_transform_timeout: 10.0
       footprint: "[[0.22, 0.17], [0.22, -0.17], [-0.22, -0.17], [-0.22, 0.17]]"
       resolution: 0.05
       track_unknown_space: true
@@ -331,7 +416,7 @@ smoother_server:
     costmap_topic: global_costmap/costmap_raw
     footprint_topic: global_costmap/published_footprint
     robot_base_frame: base_link
-    smoother_plugins: ["simple_smoother", "savitzky_golay", "constrained", "pivot_g2", "adaptive_hybrid"]
+    smoother_plugins: ["simple_smoother", "savitzky_golay", "constrained", "pivot_g2_fixed", "pivot_g2", "adaptive_hybrid_fixed", "adaptive_hybrid"]
     simple_smoother:
       plugin: "nav2_smoother::SimpleSmoother"
       tolerance: 1.0e-10
@@ -362,13 +447,56 @@ smoother_server:
       optimizer:
         max_iterations: 70
         debug_optimizer: false
+    pivot_g2_fixed:
+      plugin: "adaptive_pivot_g2_nav2/AdaptivePivotG2Smoother"
+      radius_search_mode: fixed
+      radius_candidates: [0.20, 0.30, 0.40, 0.50, 0.60, 0.75, 1.00, 1.25, 1.50]
+      delta_time_selection: 0.15
+      time_competitive_slack: 10.0
+      clearance_weight: 0.15
+      angular_speed_weight: 0.10
+      curvature_energy_weight: 0.75
+      max_footprint_cost: 200
+      corner_angle_threshold: 0.0872664626
+      # Collapse planner-grid staircase noise only inside a 1.5-cell corridor;
+      # every shortcut is swept-footprint checked before it is accepted.
+      path_conditioning_max_deviation: 0.0
+      path_conditioning_resolution_ratio: 1.5
+      oscillation_maximum_span: 2.0
+      oscillation_maximum_deviation: 0.0
+      oscillation_deviation_resolution_ratio: 3.0
+      oscillation_minimum_turn_angle: 0.20
+      oscillation_minimum_sign_changes: 2
+      line_of_sight_pruning: false
+      output_spacing: 0.05
+      sample_spacing: 0.02
+      bezier_control_fraction: 0.35
+      max_trim_fraction: 0.45
+      wheel_separation: 0.2548
+      max_linear_speed: 0.30
+      max_angular_speed: 0.80
+      max_wheel_speed: 0.36
+      max_lateral_acceleration: 0.18
+      max_linear_acceleration: 0.35
+      max_linear_deceleration: 0.45
+      max_angular_acceleration: 1.20
+      fallback_footprint_length: 0.44
+      fallback_footprint_width: 0.34
     pivot_g2:
       plugin: "adaptive_pivot_g2_nav2/AdaptivePivotG2Smoother"
-      # Development-set ablation found that the wider radius bank and
-      # energy-dominant ranking reduce translational curvature energy while
-      # retaining the same hard swept-footprint safety checks.  Evaluation
-      # results and the original profile are kept under results/ for audit.
+      radius_search_mode: adaptive
       radius_candidates: [0.20, 0.30, 0.40, 0.50, 0.60, 0.75, 1.00, 1.25, 1.50]
+      minimum_radius: 0.10
+      maximum_physical_radius: 1.50
+      initial_search_samples: 6
+      maximum_evaluations_per_corner: 20
+      radius_tolerance: 0.01
+      objective_tolerance: 0.01
+      # Zero selects max(output_spacing, 2*sample_spacing, costmap resolution).
+      segment_margin: 0.0
+      retained_candidates_per_corner: 5
+      # Scale for integral(kappa^2 ds), whose unit is 1/m.
+      curvature_energy_scale: 1.0
       delta_time_selection: 0.15
       time_competitive_slack: 10.0
       clearance_weight: 0.15
@@ -378,6 +506,13 @@ smoother_server:
       # checked separately against lethal cells, avoiding double inflation.
       max_footprint_cost: 200
       corner_angle_threshold: 0.0872664626
+      path_conditioning_max_deviation: 0.0
+      path_conditioning_resolution_ratio: 1.5
+      oscillation_maximum_span: 2.0
+      oscillation_maximum_deviation: 0.0
+      oscillation_deviation_resolution_ratio: 3.0
+      oscillation_minimum_turn_angle: 0.20
+      oscillation_minimum_sign_changes: 2
       # Disabled in the primary benchmark.  Applying LOS only inside Pivot-G2
       # would change its input path while the baselines keep the raw path and
       # would confound pruning gains with smoothing gains.  Keep the feature in
@@ -389,12 +524,61 @@ smoother_server:
       max_trim_fraction: 0.45
       # CAD rolling-tread center distance; calibrate on the physical robot.
       wheel_separation: 0.2548
-      max_linear_speed: 0.08
-      max_angular_speed: 0.425
-      max_wheel_speed: 0.17
-      max_linear_acceleration: 0.20
-      max_linear_deceleration: 0.25
-      max_angular_acceleration: 0.80
+      max_linear_speed: 0.30
+      max_angular_speed: 0.80
+      max_wheel_speed: 0.36
+      max_lateral_acceleration: 0.18
+      max_linear_acceleration: 0.35
+      max_linear_deceleration: 0.45
+      max_angular_acceleration: 1.20
+      fallback_footprint_length: 0.44
+      fallback_footprint_width: 0.34
+    adaptive_hybrid_fixed:
+      plugin: "adaptive_pivot_g2_nav2/SafetyGatedHybridSmoother"
+      minimum_cost_improvement: 20.0
+      maximum_curvature_energy_ratio: 2.0
+      curvature_energy_floor: 0.25
+      evaluation_spacing: 0.025
+      pivot_duplicate_position_tolerance: 0.0001
+      minimum_pivot_angle: 0.0872664626
+      simple:
+        tolerance: 1.0e-10
+        max_its: 1000
+        do_refinement: True
+        refinement_num: 2
+        enforce_path_inversion: false
+      pivot:
+        radius_search_mode: fixed
+        radius_candidates: [0.20, 0.30, 0.40, 0.50, 0.60, 0.75, 1.00, 1.25, 1.50]
+        delta_time_selection: 0.15
+        time_competitive_slack: 10.0
+        clearance_weight: 0.15
+        angular_speed_weight: 0.10
+        curvature_energy_weight: 0.75
+        max_footprint_cost: 200
+        corner_angle_threshold: 0.0872664626
+        path_conditioning_max_deviation: 0.0
+        path_conditioning_resolution_ratio: 1.5
+        oscillation_maximum_span: 2.0
+        oscillation_maximum_deviation: 0.0
+        oscillation_deviation_resolution_ratio: 3.0
+        oscillation_minimum_turn_angle: 0.20
+        oscillation_minimum_sign_changes: 2
+        line_of_sight_pruning: false
+        output_spacing: 0.05
+        sample_spacing: 0.02
+        bezier_control_fraction: 0.35
+        max_trim_fraction: 0.45
+        wheel_separation: 0.2548
+        max_linear_speed: 0.30
+        max_angular_speed: 0.80
+        max_wheel_speed: 0.36
+        max_lateral_acceleration: 0.18
+        max_linear_acceleration: 0.35
+        max_linear_deceleration: 0.45
+        max_angular_acceleration: 1.20
+        fallback_footprint_length: 0.44
+        fallback_footprint_width: 0.34
       fallback_footprint_length: 0.44
       fallback_footprint_width: 0.34
     adaptive_hybrid:
@@ -406,6 +590,8 @@ smoother_server:
       maximum_curvature_energy_ratio: 2.0
       curvature_energy_floor: 0.25
       evaluation_spacing: 0.025
+      pivot_duplicate_position_tolerance: 0.0001
+      minimum_pivot_angle: 0.0872664626
       simple:
         tolerance: 1.0e-10
         max_its: 1000
@@ -413,7 +599,17 @@ smoother_server:
         refinement_num: 2
         enforce_path_inversion: false
       pivot:
+        radius_search_mode: adaptive
         radius_candidates: [0.20, 0.30, 0.40, 0.50, 0.60, 0.75, 1.00, 1.25, 1.50]
+        minimum_radius: 0.10
+        maximum_physical_radius: 1.50
+        initial_search_samples: 6
+        maximum_evaluations_per_corner: 20
+        radius_tolerance: 0.01
+        objective_tolerance: 0.01
+        segment_margin: 0.0
+        retained_candidates_per_corner: 5
+        curvature_energy_scale: 1.0
         delta_time_selection: 0.15
         time_competitive_slack: 10.0
         clearance_weight: 0.15
@@ -421,18 +617,26 @@ smoother_server:
         curvature_energy_weight: 0.75
         max_footprint_cost: 200
         corner_angle_threshold: 0.0872664626
+        path_conditioning_max_deviation: 0.0
+        path_conditioning_resolution_ratio: 1.5
+        oscillation_maximum_span: 2.0
+        oscillation_maximum_deviation: 0.0
+        oscillation_deviation_resolution_ratio: 3.0
+        oscillation_minimum_turn_angle: 0.20
+        oscillation_minimum_sign_changes: 2
         line_of_sight_pruning: false
         output_spacing: 0.05
         sample_spacing: 0.02
         bezier_control_fraction: 0.35
         max_trim_fraction: 0.45
         wheel_separation: 0.2548
-        max_linear_speed: 0.08
-        max_angular_speed: 0.425
-        max_wheel_speed: 0.17
-        max_linear_acceleration: 0.20
-        max_linear_deceleration: 0.25
-        max_angular_acceleration: 0.80
+        max_linear_speed: 0.30
+        max_angular_speed: 0.80
+        max_wheel_speed: 0.36
+        max_lateral_acceleration: 0.18
+        max_linear_acceleration: 0.35
+        max_linear_deceleration: 0.45
+        max_angular_acceleration: 1.20
         fallback_footprint_length: 0.44
         fallback_footprint_width: 0.34
       fallback_footprint_length: 0.44
@@ -461,9 +665,9 @@ behavior_server:
     robot_base_frame: base_link
     transform_tolerance: 0.1
     simulate_ahead_time: 2.0
-    max_rotational_vel: 0.425
+    max_rotational_vel: 0.70
     min_rotational_vel: 0.10
-    rotational_acc_lim: 0.80
+    rotational_acc_lim: 1.20
 
 waypoint_follower:
   ros__parameters:
@@ -501,18 +705,21 @@ route_server:
 
 velocity_smoother:
   ros__parameters:
-    smoothing_frequency: 30.0
+    smoothing_frequency: 50.0
     stamp_smoothed_velocity_with_smoothing_time: False
     scale_velocities: False
-    feedback: "OPEN_LOOP"
-    max_velocity: [0.08, 0.0, 0.425]
-    min_velocity: [-0.08, 0.0, -0.425]
-    max_accel: [0.20, 0.0, 0.80]
-    max_decel: [-0.25, 0.0, -0.80]
+    feedback: "CLOSED_LOOP"
+    max_velocity: [0.30, 0.0, 0.80]
+    min_velocity: [-0.30, 0.0, -0.80]
+    max_accel: [0.35, 0.0, 1.20]
+    max_decel: [-0.45, 0.0, -1.20]
     odom_topic: "odom"
     odom_duration: 0.1
     deadband_velocity: [0.0, 0.0, 0.0]
-    velocity_timeout: 1.0
+    # At 20 Hz controller rate this tolerates two missed cycles, but prevents
+    # the base from replaying a stale non-zero command for a full second after
+    # FollowPath succeeds or aborts.
+    velocity_timeout: 0.15
 
 collision_monitor:
   ros__parameters:
@@ -535,8 +742,8 @@ collision_monitor:
       type: "polygon"
       action_type: "approach"
       footprint_topic: "/local_costmap/published_footprint"
-      time_before_collision: 1.2
-      simulation_time_step: 0.1
+      time_before_collision: 1.5
+      simulation_time_step: 0.05
       min_points: 6
       visualize: False
       enabled: True

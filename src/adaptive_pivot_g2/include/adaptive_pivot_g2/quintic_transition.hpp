@@ -25,6 +25,16 @@ TransitionCandidate generate_quintic_transition(
   const RobotLimits & limits,
   const TransitionOptions & options);
 
+/// Generate the same quintic G2 curve using an explicit trim distance.
+///
+/// This entry point deliberately does not apply max_trim_fraction. The caller
+/// must derive the geometric domain and enforce inter-corner overlap.
+TransitionCandidate generate_quintic_transition_for_trim(
+  const CornerInput & corner,
+  const RobotLimits & limits,
+  const TransitionOptions & options,
+  double trim_distance);
+
 }  // namespace adaptive_pivot_g2
 
 #endif  // ADAPTIVE_PIVOT_G2__QUINTIC_TRANSITION_HPP_

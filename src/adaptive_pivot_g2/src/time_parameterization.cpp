@@ -87,6 +87,12 @@ TimedProfile parameterize_time(
     profile.rejection_reason = "acceleration limits must be finite and positive";
     return profile;
   }
+  if (!std::isfinite(start_speed) || start_speed < 0.0 ||
+    !std::isfinite(end_speed) || end_speed < 0.0)
+  {
+    profile.rejection_reason = "boundary speed caps must be finite and non-negative";
+    return profile;
+  }
 
   std::vector<double> segment_lengths(path.size() - 1, 0.0);
   std::vector<double> caps(path.size(), 0.0);
@@ -171,6 +177,64 @@ TimedProfile parameterize_time(
     profile.rejection_reason = "profile duration is not finite";
   }
   return profile;
+}
+
+TimedProfile parameterize_transition_window(
+  const TransitionCandidate & candidate,
+  double window_trim,
+  const RobotLimits & limits,
+  double start_speed,
+  double end_speed,
+  double sample_spacing)
+{
+  TimedProfile profile;
+  if (!candidate.valid || candidate.samples.size() < 2U ||
+    !std::isfinite(window_trim) ||
+    window_trim + kEpsilon < candidate.trim_distance ||
+    !finite_positive(sample_spacing) ||
+    !finite_positive(limits.max_linear_speed) ||
+    !finite_positive(limits.max_wheel_speed))
+  {
+    profile.rejection_reason = "transition window inputs are invalid";
+    return profile;
+  }
+
+  const double extension = std::max(0.0, window_trim - candidate.trim_distance);
+  if (extension <= kEpsilon) {
+    return parameterize_time(
+      candidate.samples, limits, start_speed, end_speed);
+  }
+
+  const double straight_speed_limit =
+    std::min(limits.max_linear_speed, limits.max_wheel_speed);
+  std::vector<PathSample> window;
+  const int straight_segments = std::max(
+    1, static_cast<int>(std::ceil(extension / sample_spacing)));
+  window.reserve(
+    candidate.samples.size() + 2U * static_cast<std::size_t>(straight_segments));
+
+  const auto & entry = candidate.samples.front();
+  const Vec2 incoming{std::cos(entry.heading), std::sin(entry.heading)};
+  const Vec2 window_start = entry.position - incoming * extension;
+  for (int index = 0; index < straight_segments; ++index) {
+    const double fraction =
+      static_cast<double>(index) / static_cast<double>(straight_segments);
+    window.push_back(
+      {window_start + incoming * (fraction * extension),
+        entry.heading, 0.0, straight_speed_limit});
+  }
+  window.insert(window.end(), candidate.samples.begin(), candidate.samples.end());
+
+  const auto & exit = candidate.samples.back();
+  const Vec2 outgoing{std::cos(exit.heading), std::sin(exit.heading)};
+  for (int index = 1; index <= straight_segments; ++index) {
+    const double fraction =
+      static_cast<double>(index) / static_cast<double>(straight_segments);
+    window.push_back(
+      {exit.position + outgoing * (fraction * extension),
+        exit.heading, 0.0, straight_speed_limit});
+  }
+  return parameterize_time(window, limits, start_speed, end_speed);
 }
 
 double minimum_translation_time(
@@ -261,11 +325,13 @@ double estimate_pivot_window_time(
   double entry_speed,
   double exit_speed)
 {
+  const double maximum_translation_speed =
+    std::min(limits.max_linear_speed, limits.max_wheel_speed);
   const double approach_time = minimum_translation_time(
-    trim_distance, entry_speed, 0.0, limits.max_linear_speed,
+    trim_distance, entry_speed, 0.0, maximum_translation_speed,
     limits.max_linear_acceleration, limits.max_linear_deceleration);
   const double departure_time = minimum_translation_time(
-    trim_distance, 0.0, exit_speed, limits.max_linear_speed,
+    trim_distance, 0.0, exit_speed, maximum_translation_speed,
     limits.max_linear_acceleration, limits.max_linear_deceleration);
   const double rotation_time = minimum_rotation_time(
     turn_angle, limits.max_angular_speed, limits.max_angular_acceleration);

@@ -1,4 +1,23 @@
-# Phân loại kết quả ngày 23/07/2026
+# Phân loại kết quả nghiên cứu
+
+## Dataset hội nghị ngày 25/07/2026
+
+- `conference_geometry_20260725/`: ma trận hình học đầy đủ gồm 7 môi trường,
+  60 scenario, 5 planner, 8 phương pháp và 3 repetition (7.200 dòng). Mọi nhóm
+  planner/scenario/repetition phải có đúng một `raw_path_sha256`.
+- `conference_execution_20260725/conference_execution_compact.csv`: bảng vô
+  hướng scalar của ma trận vòng kín phân tầng; high-rate ground-truth, odom,
+  estimated pose, command và telemetry được giữ trong JSON gốc tại máy chạy
+  thí nghiệm nhưng không lặp lại trong summary.
+- `closed_loop_audit_20260725/`: các trace chẩn đoán dùng để tái hiện và sửa
+  lỗi hướng terminal, projection nhảy nhánh và lệch sau đường cong.
+- `docs/rev_ecit_2026_assets/report_data_summary.json`: snapshot số liệu đã
+  dùng để sinh bài báo và phụ lục.
+
+Phần chạy kín là thiết kế phân tầng, không phải toàn bộ tích Descartes 7 map ×
+5 planner × 8 smoother × 3 tốc độ. Báo cáo phải giữ rõ giới hạn này.
+
+## Pilot ngày 23/07/2026
 
 Thư mục này chứa pilot và các lượt chẩn đoán trong quá trình sửa pipeline. Chưa
 file nào là dataset cuối để đưa nguyên trạng vào manuscript.

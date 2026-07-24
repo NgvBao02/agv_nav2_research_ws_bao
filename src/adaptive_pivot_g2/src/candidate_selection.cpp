@@ -134,4 +134,36 @@ CandidateSelection select_competitive_candidate(
   return result;
 }
 
+double stable_candidate_cost(
+  double peak_cost,
+  double max_abs_angular_speed,
+  double curvature_energy,
+  double max_angular_speed,
+  double curvature_energy_scale,
+  const SelectionWeights & weights)
+{
+  const double weight_sum = weights.clearance + weights.angular_speed +
+    weights.curvature_energy;
+  if (!std::isfinite(peak_cost) || peak_cost < 0.0 ||
+    !std::isfinite(max_abs_angular_speed) || max_abs_angular_speed < 0.0 ||
+    !std::isfinite(curvature_energy) || curvature_energy < 0.0 ||
+    !std::isfinite(max_angular_speed) || max_angular_speed <= 0.0 ||
+    !std::isfinite(curvature_energy_scale) || curvature_energy_scale <= 0.0 ||
+    !std::isfinite(weights.clearance) || weights.clearance < 0.0 ||
+    !std::isfinite(weights.angular_speed) || weights.angular_speed < 0.0 ||
+    !std::isfinite(weights.curvature_energy) ||
+    weights.curvature_energy < 0.0 ||
+    !std::isfinite(weight_sum) || weight_sum <= kEpsilon)
+  {
+    return std::numeric_limits<double>::infinity();
+  }
+  const double risk = std::min(1.0, peak_cost / 252.0);
+  const double angular = std::min(1.0, max_abs_angular_speed / max_angular_speed);
+  const double energy = curvature_energy /
+    (curvature_energy + curvature_energy_scale);
+  return (weights.clearance * risk +
+         weights.angular_speed * angular +
+         weights.curvature_energy * energy) / weight_sum;
+}
+
 }  // namespace adaptive_pivot_g2

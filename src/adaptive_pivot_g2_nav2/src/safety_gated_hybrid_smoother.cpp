@@ -106,7 +106,9 @@ bool evaluate_pose(
 
 std::vector<std::vector<std::pair<double, double>>> translation_segments(
   const nav_msgs::msg::Path & path,
-  std::size_t & pivot_count)
+  std::size_t & pivot_count,
+  double duplicate_position_tolerance,
+  double minimum_pivot_angle)
 {
   std::vector<std::vector<std::pair<double, double>>> segments;
   pivot_count = 0;
@@ -123,10 +125,12 @@ std::vector<std::vector<std::pair<double, double>>> translation_segments(
       current.position.y - previous.position.y);
     const double yaw_change = std::abs(normalized_angle(
         tf2::getYaw(current.orientation) - tf2::getYaw(previous.orientation)));
-    if (distance <= 1.0e-4 && yaw_change >= 0.0872664626) {
+    if (distance <= duplicate_position_tolerance &&
+      yaw_change >= minimum_pivot_angle)
+    {
       ++pivot_count;
       segments.push_back({{current.position.x, current.position.y}});
-    } else if (distance > 1.0e-4) {
+    } else if (distance > duplicate_position_tolerance) {
       segments.back().emplace_back(current.position.x, current.position.y);
     }
   }
@@ -172,10 +176,14 @@ std::vector<std::pair<double, double>> resample(
 double curvature_energy(
   const nav_msgs::msg::Path & path,
   double spacing,
-  std::size_t & pivot_count)
+  std::size_t & pivot_count,
+  double duplicate_position_tolerance,
+  double minimum_pivot_angle)
 {
   double energy = 0.0;
-  for (const auto & segment : translation_segments(path, pivot_count)) {
+  for (const auto & segment : translation_segments(
+      path, pivot_count, duplicate_position_tolerance, minimum_pivot_angle))
+  {
     const auto sampled = resample(segment, spacing);
     for (std::size_t index = 1; index + 1 < sampled.size(); ++index) {
       const auto & first = sampled[index - 1];
@@ -203,7 +211,9 @@ PathEvaluation evaluate_path(
   const std::shared_ptr<Costmap> & costmap,
   CollisionChecker & checker,
   const std::vector<geometry_msgs::msg::Point> & footprint,
-  double spacing)
+  double spacing,
+  double duplicate_position_tolerance,
+  double minimum_pivot_angle)
 {
   PathEvaluation evaluation;
   if (path.poses.empty()) {
@@ -249,7 +259,9 @@ PathEvaluation evaluate_path(
       }
     }
   }
-  evaluation.curvature_energy = curvature_energy(path, 0.05, evaluation.pivot_count);
+  evaluation.curvature_energy = curvature_energy(
+    path, 0.05, evaluation.pivot_count,
+    duplicate_position_tolerance, minimum_pivot_angle);
   evaluation.safe = std::isfinite(evaluation.curvature_energy);
   return evaluation;
 }
@@ -281,6 +293,10 @@ void SafetyGatedHybridSmoother::configure(
     node, prefix + "curvature_energy_floor", 0.25);
   evaluation_spacing_ = declare_and_get<double>(
     node, prefix + "evaluation_spacing", 0.025);
+  pivot_duplicate_position_tolerance_ = declare_and_get<double>(
+    node, prefix + "pivot_duplicate_position_tolerance", 1.0e-4);
+  minimum_pivot_angle_ = declare_and_get<double>(
+    node, prefix + "minimum_pivot_angle", 0.0872664626);
   const double footprint_length = declare_and_get<double>(
     node, prefix + "fallback_footprint_length", 0.44);
   const double footprint_width = declare_and_get<double>(
@@ -290,6 +306,10 @@ void SafetyGatedHybridSmoother::configure(
     maximum_curvature_energy_ratio_ < 1.0 ||
     !std::isfinite(curvature_energy_floor_) || curvature_energy_floor_ < 0.0 ||
     !std::isfinite(evaluation_spacing_) || evaluation_spacing_ <= 0.0 ||
+    !std::isfinite(pivot_duplicate_position_tolerance_) ||
+    pivot_duplicate_position_tolerance_ < 0.0 ||
+    !std::isfinite(minimum_pivot_angle_) || minimum_pivot_angle_ <= 0.0 ||
+    minimum_pivot_angle_ > std::acos(-1.0) ||
     !std::isfinite(footprint_length) || footprint_length <= 0.0 ||
     !std::isfinite(footprint_width) || footprint_width <= 0.0)
   {
@@ -390,25 +410,34 @@ bool SafetyGatedHybridSmoother::smooth(
   }
 
   const PathEvaluation simple_evaluation = simple_completed ?
-    evaluate_path(simple_path, costmap, checker, footprint, evaluation_spacing_) :
+    evaluate_path(
+    simple_path, costmap, checker, footprint, evaluation_spacing_,
+    pivot_duplicate_position_tolerance_, minimum_pivot_angle_) :
     PathEvaluation{};
   const PathEvaluation pivot_evaluation = pivot_completed ?
-    evaluate_path(pivot_path, costmap, checker, footprint, evaluation_spacing_) :
+    evaluate_path(
+    pivot_path, costmap, checker, footprint, evaluation_spacing_,
+    pivot_duplicate_position_tolerance_, minimum_pivot_angle_) :
     PathEvaluation{};
   const PathEvaluation raw_evaluation =
-    evaluate_path(path, costmap, checker, footprint, evaluation_spacing_);
-  const auto selection = adaptive_pivot_g2::select_hybrid_candidate(
+    evaluate_path(
+    path, costmap, checker, footprint, evaluation_spacing_,
+    pivot_duplicate_position_tolerance_, minimum_pivot_angle_);
+  const auto selection =
+    adaptive_pivot_g2::select_hybrid_candidate_with_raw_fallback(
+    {raw_evaluation.safe, raw_evaluation.maximum_proximity_cost,
+      raw_evaluation.curvature_energy},
     {simple_evaluation.safe, simple_evaluation.maximum_proximity_cost,
       simple_evaluation.curvature_energy},
     {pivot_evaluation.safe, pivot_evaluation.maximum_proximity_cost,
       pivot_evaluation.curvature_energy},
     minimum_cost_improvement_, maximum_curvature_energy_ratio_,
     curvature_energy_floor_);
-  const bool choose_raw = !selection.valid && raw_evaluation.safe;
-  if (!selection.valid && !choose_raw) {
+  if (!selection.valid) {
     throw nav2_core::FailedToSmoothPath(
             "Hybrid smoother found no swept-footprint-safe candidate or raw fallback");
   }
+  const bool choose_raw = selection.use_raw;
   const bool choose_pivot = selection.valid && selection.use_pivot;
   if (choose_pivot) {
     path = std::move(pivot_path);
@@ -417,8 +446,7 @@ bool SafetyGatedHybridSmoother::smooth(
   }
   const std::string selected = choose_raw ? "raw" :
     (choose_pivot ? "pivot_g2" : "simple");
-  const std::string reason = choose_raw ?
-    "smoothed_candidates_unsafe_raw_fallback" : selection.reason;
+  const std::string reason = selection.reason;
 
   std::ostringstream diagnostics;
   diagnostics << "{\"method\":\"adaptive_hybrid\",\"selected\":\""

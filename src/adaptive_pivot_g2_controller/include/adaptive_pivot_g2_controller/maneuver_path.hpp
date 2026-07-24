@@ -30,11 +30,20 @@ struct ManeuverSegment
   geometry_msgs::msg::PoseStamped pivot_target;
 };
 
+struct TerminalDriveGeometry
+{
+  double direction{1.0};
+  double heading_error{0.0};
+};
+
 /// Split a path at duplicate-position poses whose headings encode a pivot.
 std::vector<ManeuverSegment> split_path_at_pivots(
   const nav_msgs::msg::Path & path,
   double duplicate_position_tolerance,
   double minimum_pivot_angle);
+
+/// Select forward or reverse motion requiring at most a 90 degree turn.
+TerminalDriveGeometry shortest_terminal_drive(double bearing_error);
 
 }  // namespace adaptive_pivot_g2_controller
 

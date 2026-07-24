@@ -32,10 +32,21 @@ struct HybridSelection
   bool valid{false};
   bool use_pivot{false};
   std::string reason{"no_safe_candidate"};
+  bool use_raw{false};
 };
 
 /// Apply the declared safety-gain and curvature-budget decision rule.
 HybridSelection select_hybrid_candidate(
+  const HybridCandidate & simple,
+  const HybridCandidate & pivot,
+  double minimum_cost_improvement,
+  double maximum_curvature_energy_ratio,
+  double curvature_energy_floor);
+
+/// Apply the same Simple/Pivot rule and use raw only when both smoothed
+/// candidates are unsafe.
+HybridSelection select_hybrid_candidate_with_raw_fallback(
+  const HybridCandidate & raw,
   const HybridCandidate & simple,
   const HybridCandidate & pivot,
   double minimum_cost_improvement,

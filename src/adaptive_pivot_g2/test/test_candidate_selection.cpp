@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <cmath>
 #include <limits>
 #include <vector>
 
@@ -83,6 +84,37 @@ TEST(CandidateSelection, RejectsInvalidWeights)
     {{0U, 1.0, 0.2, 0.3, 1.0}}, 0.2, weights);
 
   EXPECT_FALSE(selected.valid);
+}
+
+TEST(CandidateSelection, StableCostDoesNotDependOnCandidateSet)
+{
+  const double first = stable_candidate_cost(
+    126.0, 0.425, 1.0, 0.85, 1.0, SelectionWeights{});
+  const double repeated = stable_candidate_cost(
+    126.0, 0.425, 1.0, 0.85, 1.0, SelectionWeights{});
+
+  EXPECT_DOUBLE_EQ(first, repeated);
+  EXPECT_NEAR(first, 0.5, 1.0e-12);
+}
+
+TEST(CandidateSelection, StableCostRejectsInvalidEnergyScale)
+{
+  const double cost = stable_candidate_cost(
+    100.0, 0.3, 1.0, 0.85, 0.0, SelectionWeights{});
+  EXPECT_FALSE(std::isfinite(cost));
+}
+
+TEST(CandidateSelection, StableCostClampsInscribedInflationCost)
+{
+  SelectionWeights weights;
+  weights.clearance = 1.0;
+  weights.angular_speed = 0.0;
+  weights.curvature_energy = 0.0;
+
+  const double cost = stable_candidate_cost(
+    253.0, 0.0, 0.0, 0.85, 1.0, weights);
+
+  EXPECT_DOUBLE_EQ(cost, 1.0);
 }
 
 }  // namespace

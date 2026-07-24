@@ -17,22 +17,21 @@ luồng nghiên cứu chính chạy hoàn toàn trong ROS 2.
   `nav_msgs/Path` vào Nav2 Simple, Savitzky–Golay, Constrained, Pivot–G2 và
   adaptive hybrid; xuất CSV/JSON, metric full-footprint, và chạy ma trận vòng
   kín bằng cùng một controller.
-- `adaptive_pivot_g2_rviz`: panel RViz2 để chọn trực tiếp một trong năm global
-  planner, xác nhận planner đang hoạt động và tự lập lại đường tới goal gần
-  nhất.
+- `adaptive_pivot_g2_rviz`: panel RViz2 để đổi trực tiếp bảy môi trường, chọn
+  một trong năm global planner, bật/tắt riêng từng baseline/Pivot/Hybrid và
+  theo dõi metric cùng trạng thái profile vận tốc.
 - `vacuum_robot_gazebo`: robot vi sai hai bánh dùng mesh CAD 440 × 340 mm,
   bảy cặp world/map Gazebo–Nav2 đồng nhất, trong đó có ba layout chuyên cho nhà
   kho, bridge Gazebo–ROS, Nav2 và RViz2. Cấu hình cảm biến mô phỏng đã bám theo
   RPLIDAR A1M8 và BNO055 của xe dự kiến.
 - `matlab/pivot_g2`: bản lưu source thử ý tưởng cũ, không nằm trong đường chạy.
 
-Raw và năm smoother đã qua regression sinh path. Ma trận vòng kín hiện yêu cầu
-cả Nav2 action lẫn ground truth đạt đích; nó cũng dừng Gazebo server tách rời
-sau mỗi trial. Kết quả hiện tại đủ cho pilot study nhưng chưa đủ để khẳng định
-thống kê: sáu map sinh tự động đã có smoke test planner/smoother, ba map kho đã
-có thêm smoke test vòng kín, còn ma trận nhiều lần lặp mới chỉ có một scenario
-trên `open_arena`. Xem kết luận trung thực và lộ trình còn lại trong
-[RESEARCH_STATUS_20260723.md](docs/RESEARCH_STATUS_20260723.md).
+Raw và bảy biến thể smoother đã qua ma trận hình học dùng raw-path hash cố
+định. Ma trận vòng kín yêu cầu đồng thời Nav2 action và ground truth Gazebo đạt
+đích, lưu riêng ground truth, odom, pose ước lượng, command và telemetry profile
+vận tốc, rồi dừng server cô lập sau mỗi trial. Báo cáo REV-ECIT hiện hành tách
+rõ ma trận hình học toàn phần khỏi ma trận vòng kín phân tầng; không suy diễn
+“tối ưu toàn cục” từ số liệu mô phỏng.
 
 ## Chạy nhanh
 
@@ -41,10 +40,14 @@ cd /home/linh-pham/agv_nav2_research_ws
 source /opt/ros/jazzy/setup.bash
 colcon build --symlink-install
 source install/setup.bash
-ros2 launch vacuum_robot_gazebo simulation.launch.py execute:=false
+ros2 launch vacuum_robot_gazebo switchable_simulation.launch.py gui:=true
 ```
 
-Chọn một trong bảy map. Ba map sát bài toán kho nhất là
+Sau khi RViz2 mở, đổi map bằng ô **MÔI TRƯỜNG GAZEBO / NAV2** ở panel bên
+phải. Environment manager sẽ tắt stack cũ, khởi động đúng cặp world/map rồi
+chỉ báo hoàn tất khi Nav2 mới đã active.
+
+Để chạy trực tiếp một map cố định, ba map sát bài toán kho nhất là
 `warehouse_long_aisles`, `warehouse_cross_aisles` và `warehouse_dispatch`:
 
 ```bash
@@ -84,28 +87,24 @@ publish cùng input và các màu:
 - vàng: Nav2 Simple;
 - cyan: Nav2 Savitzky–Golay;
 - xanh lá: Nav2 Constrained;
-- magenta: Pivot–G2 đề xuất;
-- xanh lam: adaptive hybrid đề xuất;
+- hồng nhạt: Pivot–G2 fixed;
+- magenta: Pivot–G2 adaptive;
+- xanh lam nhạt: Hybrid fixed;
+- xanh lam đậm: Adaptive Hybrid;
 - trắng: quỹ đạo xe thực thi.
 
-Để chỉ xem và so sánh đường, nên launch với `execute:=false`. Ở panel
+Để chỉ xem và so sánh đường, đặt một goal sau khi map mới đã active. Ở panel
 **Selector** bên phải RViz2:
 
 1. đặt một goal bằng **2D Goal Pose**;
 2. chọn `NavFn A*`, `NavFn Dijkstra`, `Theta*`, `Smac 2D` hoặc `Smac Hybrid`;
 3. nhấn **Áp dụng và lập lại đường**.
 
-Đường đỏ `RAW planner` sẽ được xóa rồi tạo lại từ vị trí hiện tại bằng đúng
-planner đã chọn; năm đường smoother cũng được tính lại từ raw path mới. Dòng
-trạng thái trong panel chỉ báo thành công sau khi node so sánh phản hồi trên
-`/research/planner_active`.
-
-Ngay dưới ô chọn planner có nút màu xanh
-**Smoother: BẬT — nhấn để chỉ xem RAW**:
-
-- nhấn một lần để chuyển sang màu cam và chỉ giữ đường RAW màu đỏ;
-- nhấn lại để tạo và hiện lại cả năm đường smoother từ đúng RAW hiện tại,
-  không gọi planner lần nữa.
+Đường đỏ `RAW planner` được tạo lại bằng đúng planner đã chọn. Bảy nút riêng
+cho Simple, Savitzky–Golay, Constrained, Pivot–G2 fixed/adaptive và Hybrid
+fixed/adaptive cho phép ẩn/hiện từng đường; **Hiện tất cả** và **Chỉ RAW** là
+hai thao tác nhanh. Tất cả phương pháp của một generation nhận đúng cùng raw
+path, và bảng metric hiển thị kết quả riêng từng phương pháp.
 
 Để xe bám đường đề xuất ngay từ lúc launch:
 
@@ -150,9 +149,16 @@ ros2 run adaptive_pivot_g2_benchmark execution_matrix -- \
   --scenario-file "$PWD/src/adaptive_pivot_g2_benchmark/config/open_arena_scenarios.yaml" \
   --scenario short_open_diagonal \
   --planners NavFnAStar NavFnDijkstra ThetaStar Smac2D SmacHybrid \
-  --methods raw adaptive_hybrid \
+  --methods raw simple savitzky_golay constrained pivot_g2_fixed pivot_g2 \
+    adaptive_hybrid_fixed adaptive_hybrid \
+  --speed-limits 0.15 0.22 0 \
   --repetitions 3 --output-dir "$PWD/results/execution_matrix"
 ```
+
+`--speed-limits 0` dùng trần tốc độ thích nghi; các giá trị dương tạo nhánh
+đối chứng có trần cố định. `--resume` chỉ dùng lại JSON thành công có đúng
+planner, smoother, tốc độ và repetition; lỗi khởi tạo Gazebo/Nav2 được retry
+riêng, còn timeout/va chạm của thuật toán không bị che bằng retry.
 
 ## Build và test có chọn lọc
 
@@ -180,3 +186,5 @@ colcon test-result --verbose
 - [Bộ map nhà kho, scenario và kết quả smoke test](docs/WAREHOUSE_MAPS.md)
 - [Cách dùng và kiểm thử ô chọn planner trong RViz2](docs/RVIZ_PLANNER_SELECTOR.md)
 - [Kiểm toán source MATLAB lưu trữ](docs/MATLAB_SOURCE_AUDIT.md)
+- [Bài báo REV-ECIT 2026](docs/REV_ECIT_2026_ADAPTIVE_HYBRID_PIVOT_G2_PAPER.pdf)
+- [Phụ lục kết quả đầy đủ](docs/REV_ECIT_2026_ADAPTIVE_HYBRID_PIVOT_G2_SUPPLEMENT.pdf)

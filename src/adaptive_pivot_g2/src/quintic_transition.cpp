@@ -121,13 +121,18 @@ bool finite_positive(double value)
 
 }  // namespace
 
-TransitionCandidate generate_quintic_transition(
+namespace
+{
+
+TransitionCandidate generate_quintic_transition_impl(
   const CornerInput & corner,
   const RobotLimits & limits,
-  const TransitionOptions & options)
+  const TransitionOptions & options,
+  bool use_explicit_trim,
+  double explicit_trim)
 {
   TransitionCandidate candidate;
-  candidate.design_radius = options.design_radius;
+  candidate.design_radius = use_explicit_trim ? 0.0 : options.design_radius;
 
   if (!finite(corner.vertex) || !finite_positive(corner.incoming_length) ||
     !finite_positive(corner.outgoing_length))
@@ -135,10 +140,12 @@ TransitionCandidate generate_quintic_transition(
     candidate.rejection_reason = "corner geometry is not finite or has zero-length segments";
     return candidate;
   }
-  if (!finite_positive(options.design_radius) ||
+  if ((!use_explicit_trim && !finite_positive(options.design_radius)) ||
+    (use_explicit_trim && !finite_positive(explicit_trim)) ||
     !finite_positive(options.control_fraction) || options.control_fraction >= 0.5 ||
     !finite_positive(options.sample_spacing) ||
-    !finite_positive(options.max_trim_fraction) || options.max_trim_fraction >= 0.5)
+    (!use_explicit_trim &&
+    (!finite_positive(options.max_trim_fraction) || options.max_trim_fraction >= 0.5)))
   {
     candidate.rejection_reason = "transition options are outside their valid range";
     return candidate;
@@ -146,7 +153,8 @@ TransitionCandidate generate_quintic_transition(
   if (!finite_positive(limits.wheel_separation) ||
     !finite_positive(limits.max_linear_speed) ||
     !finite_positive(limits.max_angular_speed) ||
-    !finite_positive(limits.max_wheel_speed))
+    !finite_positive(limits.max_wheel_speed) ||
+    !finite_positive(limits.max_lateral_acceleration))
   {
     candidate.rejection_reason = "robot speed or geometry limits are invalid";
     return candidate;
@@ -172,12 +180,21 @@ TransitionCandidate generate_quintic_transition(
     return candidate;
   }
 
-  const double trim_distance = options.design_radius * std::tan(0.5 * absolute_angle);
+  const double half_angle_tangent = std::tan(0.5 * absolute_angle);
+  const double trim_distance = use_explicit_trim ?
+    explicit_trim : options.design_radius * half_angle_tangent;
   candidate.trim_distance = trim_distance;
-  const double maximum_trim = options.max_trim_fraction *
+  if (use_explicit_trim) {
+    candidate.design_radius = trim_distance / half_angle_tangent;
+  }
+  const double available_trim =
     std::min(corner.incoming_length, corner.outgoing_length);
+  const double maximum_trim = use_explicit_trim ?
+    available_trim : options.max_trim_fraction * available_trim;
   if (!std::isfinite(trim_distance) || trim_distance > maximum_trim) {
-    candidate.rejection_reason = "transition would overlap an adjacent corner window";
+    candidate.rejection_reason = use_explicit_trim ?
+      "trim distance exceeds corner segment geometry" :
+      "transition would overlap an adjacent corner window";
     return candidate;
   }
 
@@ -225,6 +242,8 @@ TransitionCandidate generate_quintic_transition(
     double speed_limit = limits.max_linear_speed;
     if (absolute_curvature > kEpsilon) {
       speed_limit = std::min(speed_limit, limits.max_angular_speed / absolute_curvature);
+      speed_limit = std::min(
+        speed_limit, std::sqrt(limits.max_lateral_acceleration / absolute_curvature));
     }
     const double wheel_factor = std::max(std::abs(left_factor), std::abs(right_factor));
     speed_limit = std::min(speed_limit, limits.max_wheel_speed / wheel_factor);
@@ -246,6 +265,26 @@ TransitionCandidate generate_quintic_transition(
   candidate.curvature_energy = curvature_energy;
   candidate.valid = true;
   return candidate;
+}
+
+}  // namespace
+
+TransitionCandidate generate_quintic_transition(
+  const CornerInput & corner,
+  const RobotLimits & limits,
+  const TransitionOptions & options)
+{
+  return generate_quintic_transition_impl(corner, limits, options, false, 0.0);
+}
+
+TransitionCandidate generate_quintic_transition_for_trim(
+  const CornerInput & corner,
+  const RobotLimits & limits,
+  const TransitionOptions & options,
+  double trim_distance)
+{
+  return generate_quintic_transition_impl(
+    corner, limits, options, true, trim_distance);
 }
 
 }  // namespace adaptive_pivot_g2

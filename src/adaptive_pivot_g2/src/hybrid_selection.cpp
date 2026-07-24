@@ -63,4 +63,28 @@ HybridSelection select_hybrid_candidate(
   return {true, false, "simple_default"};
 }
 
+HybridSelection select_hybrid_candidate_with_raw_fallback(
+  const HybridCandidate & raw,
+  const HybridCandidate & simple,
+  const HybridCandidate & pivot,
+  double minimum_cost_improvement,
+  double maximum_curvature_energy_ratio,
+  double curvature_energy_floor)
+{
+  HybridSelection selection = select_hybrid_candidate(
+    simple, pivot, minimum_cost_improvement, maximum_curvature_energy_ratio,
+    curvature_energy_floor);
+  if (selection.valid) {
+    return selection;
+  }
+  if (raw.safe && std::isfinite(raw.maximum_proximity_cost) &&
+    raw.maximum_proximity_cost >= 0.0 &&
+    std::isfinite(raw.translational_curvature_energy) &&
+    raw.translational_curvature_energy >= 0.0)
+  {
+    return {true, false, "smoothed_candidates_unsafe_raw_fallback", true};
+  }
+  return selection;
+}
+
 }  // namespace adaptive_pivot_g2
