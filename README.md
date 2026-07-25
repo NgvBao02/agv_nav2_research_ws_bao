@@ -176,17 +176,6 @@ colcon test-result --verbose
 
 ## Tài liệu
 
-- [Báo cáo toàn diện cho người mới: từ ROS 2, robot vi sai đến Adaptive Hybrid Pivot–G2 (PDF)](docs/BAO_CAO_TOAN_DIEN_ADAPTIVE_HYBRID_PIVOT_G2.pdf)
-- [Bản Word có thể chỉnh sửa của báo cáo toàn diện](docs/BAO_CAO_TOAN_DIEN_ADAPTIVE_HYBRID_PIVOT_G2.docx)
-- [Luồng ROS 2/Gazebo và các giới hạn hiện tại](docs/ROS2_GAZEBO_PIPELINE.md)
-- [Kiểm tra chi tiết URDF/SDF và hình học CAD](docs/URDF_VALIDATION.md)
-- [Kiến trúc tích hợp GA25 encoder, A1M8 và BNO055](docs/HARDWARE_INTEGRATION.md)
-- [Kiểm toán thuật toán](docs/ALGORITHM_AUDIT.md)
-- [Kế hoạch thực nghiệm đến REV-ECIT 2026](docs/EXPERIMENT_PLAN.md)
-- [Trạng thái nghiên cứu, số liệu pilot và hướng bài báo](docs/RESEARCH_STATUS_20260723.md)
-- [So sánh 5 planner và 3 map Gazebo mới](docs/PLANNER_MAP_BENCHMARK.md)
-- [Bộ map nhà kho, scenario và kết quả smoke test](docs/WAREHOUSE_MAPS.md)
-- [Cách dùng và kiểm thử ô chọn planner trong RViz2](docs/RVIZ_PLANNER_SELECTOR.md)
-- [Kiểm toán source MATLAB lưu trữ](docs/MATLAB_SOURCE_AUDIT.md)
-- [Bài báo REV-ECIT 2026](docs/REV_ECIT_2026_ADAPTIVE_HYBRID_PIVOT_G2_PAPER.pdf)
-- [Phụ lục kết quả đầy đủ](docs/REV_ECIT_2026_ADAPTIVE_HYBRID_PIVOT_G2_SUPPLEMENT.pdf)
+- [Báo cáo toàn diện cho người mới: từ ROS 2, robot vi sai đến Adaptive Hybrid Pivot–G2](docs/BAO_CAO_TOAN_DIEN_ADAPTIVE_HYBRID_PIVOT_G2.html)
+- [Bài báo REV-ECIT 2026](docs/REV_ECIT_2026_ADAPTIVE_HYBRID_PIVOT_G2_PAPER.html)
+- [Phụ lục kết quả đầy đủ](docs/REV_ECIT_2026_ADAPTIVE_HYBRID_PIVOT_G2_SUPPLEMENT.html)
