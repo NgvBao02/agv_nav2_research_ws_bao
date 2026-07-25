@@ -1,7 +1,41 @@
 <?xml version="1.0"?>
 <robot name="vacuum_robot">
+  <!--
+    PHYSICAL DRIVE CONTRACT
+    =======================
+    Two bidirectional GA25 encoder motors, 12 V DC, 45:1 gearbox:
+      armature speed                 6000 rpm
+      no-load output speed           130 rpm +/-10 %
+      no-load current                0.060 A per motor
+      rated-load output speed        100 rpm +/-10 %
+      rated-load current             0.300 A per motor
+      rated output torque            1.0 kgf.cm = 0.0980665 N.m
+      stall current                  1.3 A per motor
+      stall output torque            3.6 kgf.cm = 0.3530394 N.m
+      motor body                     68 mm long, 25 mm diameter
+
+    The continuous wheel joints use the measured no-load output speed as their
+    absolute velocity limit and the stall torque as their absolute effort
+    limit. Rated torque/speed, not these absolute limits, remain the normal
+    operating region. Never command or hold a stalled/locked rotor.
+
+    POWER CONTRACT
+    ==============
+    16 x 18650 cells, 2600 mAh each, 5C / 13 A, connected 4S4P. For the usual
+    3.7 V nominal / 4.2 V full Li-ion cell assumption this gives 14.8 V
+    nominal, 16.8 V full, 10.4 Ah and 153.92 Wh. The motor rail therefore must
+    be regulated to 12 V; a full 4S pack must not feed a 12 V GA25 directly.
+    Cell chemistry, BMS, fuse, wiring, regulator and motor-driver ratings must
+    be verified on the actual hardware. Encoder resolution was not supplied
+    and is deliberately not invented here.
+
+    The machine-readable electrical contract and all derived quantities live
+    in config/real_robot_profile.yaml. URDF represents geometry, frames,
+    transmissions and joint limits only.
+  -->
   <material name="silver"><color rgba="0.72 0.74 0.78 1.0"/></material>
   <material name="black_rubber"><color rgba="0.04 0.04 0.04 1.0"/></material>
+  <material name="motor_brass"><color rgba="0.70 0.52 0.18 1.0"/></material>
 
   <!-- base_link is centred on the differential axle at z = wheel radius. -->
   <link name="base_link">
@@ -74,6 +108,33 @@
     <origin xyz="0 0 -0.0128" rpy="0 0 0"/>
   </joint>
 
+  <!-- Visual-only motor housings. Their shafts are coaxial with the wheel
+       joints; collision and inertia are already included in the chassis
+       model, so duplicating them here would double-count the same hardware. -->
+  <link name="left_motor">
+    <visual>
+      <origin xyz="0 0 0" rpy="1.57079632679 0 0"/>
+      <geometry><cylinder radius="0.0125" length="0.068"/></geometry>
+      <material name="motor_brass"/>
+    </visual>
+  </link>
+  <joint name="base_to_left_motor" type="fixed">
+    <parent link="base_link"/><child link="left_motor"/>
+    <origin xyz="0 0.0934 0" rpy="0 0 0"/>
+  </joint>
+
+  <link name="right_motor">
+    <visual>
+      <origin xyz="0 0 0" rpy="1.57079632679 0 0"/>
+      <geometry><cylinder radius="0.0125" length="0.068"/></geometry>
+      <material name="motor_brass"/>
+    </visual>
+  </link>
+  <joint name="base_to_right_motor" type="fixed">
+    <parent link="base_link"/><child link="right_motor"/>
+    <origin xyz="0 -0.0934 0" rpy="0 0 0"/>
+  </joint>
+
   <link name="left_wheel">
     <inertial>
       <origin xyz="-0.000009503 -0.000153866 -0.000012903" rpy="0 0 0"/>
@@ -90,7 +151,8 @@
   </link>
   <joint name="left_wheel_joint" type="continuous">
     <parent link="base_link"/><child link="left_wheel"/><origin xyz="0 0.1274 0"/>
-    <axis xyz="0 1 0"/><limit effort="20" velocity="10"/>
+    <axis xyz="0 1 0"/>
+    <limit effort="0.3530394" velocity="13.6135681656"/>
     <dynamics damping="0.03" friction="0"/>
   </joint>
 
@@ -110,8 +172,34 @@
   </link>
   <joint name="right_wheel_joint" type="continuous">
     <parent link="base_link"/><child link="right_wheel"/><origin xyz="0 -0.1274 0"/>
-    <axis xyz="0 1 0"/><limit effort="20" velocity="10"/>
+    <axis xyz="0 1 0"/>
+    <limit effort="0.3530394" velocity="13.6135681656"/>
     <dynamics damping="0.03" friction="0"/>
   </joint>
+
+  <!-- The 45:1 reduction maps each GA25 armature to its output wheel joint.
+       Encoder hardware interfaces remain unspecified until the exact encoder
+       pulses/revolution and decode mode are measured. -->
+  <transmission name="left_ga25_transmission">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="left_wheel_joint">
+      <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="left_ga25_motor">
+      <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+      <mechanicalReduction>45</mechanicalReduction>
+    </actuator>
+  </transmission>
+
+  <transmission name="right_ga25_transmission">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="right_wheel_joint">
+      <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="right_ga25_motor">
+      <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+      <mechanicalReduction>45</mechanicalReduction>
+    </actuator>
+  </transmission>
 
 </robot>

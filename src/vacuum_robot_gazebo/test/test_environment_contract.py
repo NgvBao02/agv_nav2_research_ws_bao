@@ -290,6 +290,18 @@ def test_motion_limits_are_consistent_across_nav2_and_gazebo():
             'controller_frequency'
         ]
     )
+    assert (
+        0.0
+        < controller['pivot_effective_angular_deceleration']
+        <= controller['pivot_max_angular_acceleration']
+    )
+    assert (
+        0.0
+        < controller['initial_alignment_exit_angle']
+        < controller['initial_alignment_enter_angle']
+        < controller['rotate_to_heading_min_angle']
+    )
+    assert controller['initial_alignment_preview_distance'] > 0.0
 
     smoother = parameters['smoother_server']['ros__parameters']
     pivot_profiles = [
@@ -373,7 +385,7 @@ def test_motion_limits_are_consistent_across_nav2_and_gazebo():
     ]
     # Gazebo's calibrated odometry separation is deliberately different from
     # the physical rolling-tread separation used by kinematics and metrics.
-    assert float(drive.findtext('wheel_separation')) == 0.2809
+    assert float(drive.findtext('wheel_separation')) == 0.2834
     left_wheel_y = float(
         model.find(".//link[@name='left_wheel']/pose").text.split()[1]
     )
@@ -384,4 +396,44 @@ def test_motion_limits_are_consistent_across_nav2_and_gazebo():
     assert (
         real_profile['robot']['wheel_separation_m']
         == expected['wheel_separation']
+    )
+    assert (
+        real_profile['simulation_calibration'][
+            'effective_wheel_separation_m'
+        ]
+        == float(drive.findtext('wheel_separation'))
+    )
+
+    # Nav2 stays inside the rated-load speed region of the supplied GA25,
+    # while URDF/SDF retain no-load speed and stall torque as hard absolutes.
+    motor = real_profile['drive']
+    assert (
+        controller['adaptive_max_wheel_linear_speed']
+        <= motor['theoretical_rated_load_linear_speed_mps']
+        < motor['theoretical_no_load_linear_speed_mps']
+    )
+    assert (
+        controller['adaptive_max_linear_speed']
+        <= controller['adaptive_max_wheel_linear_speed']
+    )
+    for joint_name in ('left_wheel_joint', 'right_wheel_joint'):
+        joint = model.find(f".//joint[@name='{joint_name}']")
+        assert (
+            float(joint.findtext('axis/limit/velocity'))
+            == motor['maximum_joint_velocity_radps']
+        )
+        assert (
+            float(joint.findtext('axis/limit/effort'))
+            == motor['maximum_joint_effort_nm']
+        )
+
+    power = real_profile['power']
+    assert power['motor_rail']['regulator_required'] is True
+    assert (
+        power['pack']['full_voltage_assumption_v']
+        > motor['rated_voltage_v']
+    )
+    assert (
+        power['pack']['theoretical_continuous_discharge_current_a']
+        > motor['two_motor_stall_current_a']
     )

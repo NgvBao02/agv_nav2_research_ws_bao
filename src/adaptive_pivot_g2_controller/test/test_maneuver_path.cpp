@@ -102,5 +102,60 @@ TEST(ManeuverPath, TerminalDriveRejectsNonFiniteBearing)
     std::invalid_argument);
 }
 
+TEST(ManeuverPath, PreviewHeadingUsesArcLengthTargetFromPathStart)
+{
+  nav_msgs::msg::Path path;
+  path.poses = {
+    pose(0.0, 0.0, 0.0),
+    pose(0.10, 0.0, 0.0),
+    pose(0.10, 1.0, 0.5 * kPi),
+  };
+
+  const auto heading = preview_path_heading(path, 0.30);
+
+  ASSERT_TRUE(heading.has_value());
+  EXPECT_NEAR(*heading, std::atan2(0.20, 0.10), 1.0e-12);
+}
+
+TEST(ManeuverPath, PreviewHeadingRejectsInvalidOrStationaryPath)
+{
+  nav_msgs::msg::Path stationary;
+  stationary.poses = {
+    pose(0.0, 0.0, 0.0),
+    pose(0.0, 0.0, 1.0),
+  };
+
+  EXPECT_FALSE(preview_path_heading(stationary, 0.30).has_value());
+  EXPECT_THROW(
+    preview_path_heading(stationary, 0.0),
+    std::invalid_argument);
+}
+
+TEST(ManeuverPath, AngularBrakingLimitUsesRemainingAngle)
+{
+  EXPECT_NEAR(
+    angular_braking_speed_limit(0.50, 0.02, 0.18, 0.70),
+    std::sqrt(2.0 * 0.18 * 0.48), 1.0e-12);
+  EXPECT_NEAR(
+    angular_braking_speed_limit(-3.0, 0.02, 0.18, 0.70),
+    0.70, 1.0e-12);
+  EXPECT_DOUBLE_EQ(
+    angular_braking_speed_limit(0.01, 0.02, 0.18, 0.70),
+    0.0);
+}
+
+TEST(ManeuverPath, AngularBrakingLimitRejectsInvalidInputs)
+{
+  EXPECT_THROW(
+    angular_braking_speed_limit(0.5, -0.01, 0.18, 0.70),
+    std::invalid_argument);
+  EXPECT_THROW(
+    angular_braking_speed_limit(0.5, 0.01, 0.0, 0.70),
+    std::invalid_argument);
+  EXPECT_THROW(
+    angular_braking_speed_limit(0.5, 0.01, 0.18, 0.0),
+    std::invalid_argument);
+}
+
 }  // namespace
 }  // namespace adaptive_pivot_g2_controller

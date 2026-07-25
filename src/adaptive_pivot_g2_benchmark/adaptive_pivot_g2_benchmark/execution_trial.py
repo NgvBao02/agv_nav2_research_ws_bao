@@ -32,12 +32,16 @@ from adaptive_pivot_g2_benchmark.compare_paths import (
 )
 from adaptive_pivot_g2_benchmark.path_contract import (
     anchor_path_goal,
+    anchor_path_start,
     canonicalize_planner_path,
 )
 from adaptive_pivot_g2_benchmark.localization_metrics import (
     align_odometry_trace,
     calculate_localization_metrics,
     calculate_pose_trace_error_metrics,
+)
+from adaptive_pivot_g2_benchmark.initial_heading import (
+    resolve_scenario_start_heading,
 )
 from adaptive_pivot_g2_benchmark.velocity_metrics import (
     calculate_shaper_metrics,
@@ -743,7 +747,13 @@ class ExecutionTrial(Node):
         start = scenario['start']
         goal = scenario['goal']
         default_yaw = math.atan2(goal[1] - start[1], goal[0] - start[0])
-        start_yaw = float(start[2]) if len(start) > 2 else default_yaw
+        start_heading = resolve_scenario_start_heading(
+            scenario,
+            self.environment,
+            Path(get_package_share_directory('vacuum_robot_gazebo'))
+            / 'maps',
+        )
+        start_yaw = start_heading.yaw
         goal_yaw = float(goal[2]) if len(goal) > 2 else default_yaw
         self._wait_for_system()
         self._publish_initial_pose(start, start_yaw)
@@ -753,16 +763,25 @@ class ExecutionTrial(Node):
         )
         plan_result = self._plan(scenario, start_yaw, goal_yaw)
         planner_output_path = plan_result.path
+        requested_start = _pose(
+            'map', float(start[0]), float(start[1]), start_yaw
+        )
         requested_goal = _pose(
             'map', float(goal[0]), float(goal[1]), goal_yaw
         )
+        anchored_planner_path, planner_start_adjustment = anchor_path_start(
+            planner_output_path, requested_start
+        )
         anchored_planner_path, planner_goal_adjustment = anchor_path_goal(
-            planner_output_path, requested_goal
+            anchored_planner_path, requested_goal
         )
         raw_path, removed_duplicates = canonicalize_planner_path(
             anchored_planner_path
         )
         selected_path, smoothing_time = self._smooth(raw_path)
+        selected_path, selected_start_adjustment = anchor_path_start(
+            selected_path, requested_start
+        )
         selected_path, selected_goal_adjustment = anchor_path_goal(
             selected_path, requested_goal
         )
@@ -1003,13 +1022,22 @@ class ExecutionTrial(Node):
             'controller_error_code': response.result.error_code,
             'controller_error_msg': response.result.error_msg,
             'start': [float(start[0]), float(start[1]), start_yaw],
+            'initial_heading_source': start_heading.source,
+            'initial_heading_direct_bearing_rad': start_heading.direct_yaw,
+            'initial_heading_free_probe_m': start_heading.free_distance,
             'goal': [float(goal[0]), float(goal[1]), goal_yaw],
             'raw_path_sha256': _path_hash(raw_points),
             'planner_output_path_sha256': _path_hash(
                 _path_points(planner_output_path)
             ),
             'removed_duplicate_pose_count': removed_duplicates,
+            'planner_start_anchor_adjustment_m': (
+                planner_start_adjustment
+            ),
             'planner_goal_anchor_adjustment_m': planner_goal_adjustment,
+            'selected_start_anchor_adjustment_m': (
+                selected_start_adjustment
+            ),
             'selected_goal_anchor_adjustment_m': selected_goal_adjustment,
             'selected_path_sha256': _path_hash(selected_points),
             'planning_time_s': duration_seconds(plan_result.planning_time),

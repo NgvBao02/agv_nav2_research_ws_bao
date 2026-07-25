@@ -439,6 +439,29 @@ TEST(AdaptiveSpeedProfile, LaggingFeedbackDoesNotResetCommandIntegrator)
   EXPECT_GT(caught_up.speed, held.speed);
 }
 
+TEST(AdaptiveSpeedProfile, ZeroSpeedViabilityClipIsReportedAsOverride)
+{
+  AdaptiveSpeedParameters parameters;
+  JerkLimitedSpeedState state;
+  state.initialized = true;
+  state.speed = 0.00524;
+  state.acceleration = -0.2691;
+
+  const auto clipped = update_jerk_limited_speed(
+    0.06, 0.12, 0.051, parameters, state);
+
+  EXPECT_DOUBLE_EQ(clipped.speed, 0.0);
+  EXPECT_TRUE(clipped.safety_override);
+  EXPECT_DOUBLE_EQ(state.acceleration, 0.0);
+
+  const auto recovery = update_jerk_limited_speed(
+    0.06, 0.11, 0.051, parameters, state);
+  EXPECT_TRUE(recovery.safety_override);
+  EXPECT_LE(
+    std::abs(recovery.jerk),
+    parameters.max_linear_jerk + 1.0e-12);
+}
+
 TEST(AdaptiveSpeedProfile, RejectsInvalidLimitsAndDuplicatePathPoints)
 {
   AdaptiveSpeedParameters parameters;

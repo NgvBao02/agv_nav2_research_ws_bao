@@ -1,9 +1,11 @@
 """Start a fresh Gazebo/Nav2 stack and run exactly one execution trial."""
 
-import math
 import os
 from pathlib import Path
 
+from adaptive_pivot_g2_benchmark.initial_heading import (
+    resolve_scenario_start_heading,
+)
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import (
@@ -46,9 +48,10 @@ def _launch_setup(context):
     if selected is None:
         raise RuntimeError(f'unknown execution scenario: {scenario_name!r}')
     start = selected['start']
-    goal = selected['goal']
-    default_yaw = math.atan2(goal[1] - start[1], goal[0] - start[0])
-    start_yaw = float(start[2]) if len(start) > 2 else default_yaw
+    heading = resolve_scenario_start_heading(
+        selected, environment, Path(gazebo_share) / 'maps'
+    )
+    start_yaw = heading.yaw
 
     simulation = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(

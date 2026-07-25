@@ -11,15 +11,18 @@ be converted to DOCX/PDF with ``html_report_to_docx.py``.
 from __future__ import annotations
 
 import argparse
+import collections
 import csv
+import gzip
 import html
 import json
 import math
-from pathlib import Path
 import shutil
 import site
+import statistics
 import sys
 import xml.etree.ElementTree as ET
+from pathlib import Path
 
 # ROS Jazzy's Ubuntu Matplotlib and NumPy are a matching pair.  Do not allow a
 # newer user-site NumPy to shadow the system version before Matplotlib loads.
@@ -44,7 +47,7 @@ OUTPUT = DOCS / "BAO_CAO_TOAN_DIEN_ADAPTIVE_HYBRID_PIVOT_G2.html"
 MAP_DIR = ROOT / "src" / "vacuum_robot_gazebo" / "maps"
 WORLD_DIR = ROOT / "src" / "vacuum_robot_gazebo" / "worlds"
 SCENARIO_DIR = ROOT / "src" / "adaptive_pivot_g2_benchmark" / "config"
-REPORT_DATA = DOCS / "rev_ecit_2026_assets" / "report_data_summary.json"
+GEOMETRY_DIR = ROOT / "results" / "conference_geometry_20260725"
 EXECUTION_CSV = (
     ROOT
     / "results"
@@ -122,59 +125,77 @@ VALIDATION_PATHS = {
     "research_warehouse": (
         ROOT
         / "results"
-        / "closed_loop_audit_20260725"
-        / "terminal_v2"
-        / "lower_left_diagonal_pivot_g2.json"
+        / "current_full_audit_20260726"
+        / "lower_left_diagonal_pivot_g2_final.json.gz"
     ),
     "narrow_aisles": (
         ROOT
         / "results"
-        / "closed_loop_audit_20260725"
-        / "map_validation"
-        / "narrow_aisles"
-        / "southwest_northeast_weave_pivot_g2.json"
+        / "current_full_audit_20260726"
+        / "narrow_aisles_pivot_g2_final.json.gz"
     ),
     "office_maze": (
         ROOT
         / "results"
-        / "closed_loop_audit_20260725"
-        / "map_validation"
-        / "office_maze"
-        / "office_long_diagonal_pivot_g2.json"
+        / "current_full_audit_20260726"
+        / "office_maze_pivot_g2_final.json.gz"
     ),
     "open_arena": (
         ROOT
         / "results"
-        / "closed_loop_audit_20260725"
-        / "map_validation"
-        / "open_arena"
-        / "southwest_northeast_pivot_g2.json"
+        / "current_full_audit_20260726"
+        / "open_arena_pivot_g2_final.json.gz"
     ),
     "warehouse_cross_aisles": (
         ROOT
         / "results"
-        / "closed_loop_audit_20260725"
-        / "map_validation"
-        / "warehouse_cross_aisles"
-        / "cross_aisle_transfer_pivot_g2.json"
+        / "current_full_audit_20260726"
+        / "warehouse_cross_aisles_pivot_g2_final.json.gz"
     ),
     "warehouse_dispatch": (
         ROOT
         / "results"
-        / "closed_loop_audit_20260725"
-        / "map_validation"
-        / "warehouse_dispatch"
-        / "full_replenishment_pivot_g2.json"
+        / "current_full_audit_20260726"
+        / "warehouse_dispatch_pivot_g2_final.json.gz"
     ),
     "warehouse_long_aisles": (
         ROOT
         / "results"
-        / "closed_loop_audit_20260725"
-        / "map_validation"
-        / "warehouse_long_aisles"
-        / "diagonal_replenishment_pivot_g2.json"
+        / "current_full_audit_20260726"
+        / "warehouse_long_aisles_pivot_g2_final.json.gz"
     ),
 }
+CURRENT_AUDIT_PATHS = {
+    "lower_before": (
+        ROOT
+        / "results"
+        / "current_full_audit_20260726"
+        / "lower_left_diagonal_pivot_g2_baseline.json.gz"
+    ),
+    "lower_after": VALIDATION_PATHS["research_warehouse"],
+    "rack_before": (
+        ROOT
+        / "results"
+        / "current_full_audit_20260726"
+        / "right_rack_detour_pivot_g2_baseline.json.gz"
+    ),
+    "rack_after": (
+        ROOT
+        / "results"
+        / "current_full_audit_20260726"
+        / "right_rack_detour_pivot_g2_final.json.gz"
+    ),
+    "narrow_before_angular_braking": (
+        ROOT
+        / "results"
+        / "current_full_audit_20260726"
+        / "narrow_aisles_pivot_g2_optimized.json.gz"
+    ),
+    "narrow_after": VALIDATION_PATHS["narrow_aisles"],
+}
+HARDWARE_PROFILE = (
+    ROOT / "src" / "vacuum_robot_gazebo" / "config" / "real_robot_profile.yaml"
+)
 
 METHOD_LABEL = {
     "raw": "Raw (chưa làm mượt)",
@@ -206,7 +227,95 @@ def percentage_reduction(new, reference):
 
 
 def load_json(path):
+    if path.suffix == ".gz":
+        with gzip.open(path, "rt", encoding="utf-8") as stream:
+            return json.load(stream)
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def finite_mean(values):
+    finite = [value for value in values if math.isfinite(value)]
+    return statistics.mean(finite) if finite else math.nan
+
+
+def load_geometry_summary():
+    """Rebuild the compact geometry summary from the retained source CSVs.
+
+    The old conference-report JSON was deliberately removed during repository
+    cleanup.  Keeping this aggregation here makes the tutorial reproducible
+    without restoring a redundant report-specific intermediate artifact.
+    """
+    rows = []
+    for path in sorted(GEOMETRY_DIR.glob("*.csv")):
+        with path.open(newline="", encoding="utf-8") as stream:
+            for row in csv.DictReader(stream):
+                row["environment"] = path.stem
+                row["ok"] = row.get("success", "").lower() == "true"
+                rows.append(row)
+    if not rows:
+        raise RuntimeError(f"No geometry CSV files found in {GEOMETRY_DIR}")
+
+    def aggregate(key_fields):
+        groups = collections.defaultdict(list)
+        for row in rows:
+            groups[tuple(row[field] for field in key_fields)].append(row)
+        output = {}
+        for key, group in groups.items():
+            successful = [row for row in group if row["ok"]]
+            output[key] = {
+                "attempts": len(group),
+                "successes": len(successful),
+                "energy": finite_mean(
+                    as_float(row["translation_curvature_energy_1pm"])
+                    for row in successful
+                ),
+                "clearance": finite_mean(
+                    as_float(row["footprint_clearance_min_m"])
+                    for row in successful
+                ),
+                "length": finite_mean(
+                    as_float(row["path_length_m"]) for row in successful
+                ),
+                "deviation": finite_mean(
+                    as_float(row["deviation_rmse_m"]) for row in successful
+                ),
+                "runtime_ms": 1000.0
+                * finite_mean(
+                    as_float(row["algorithm_time_s"]) for row in successful
+                ),
+                "collisions": sum(
+                    int(as_float(row["footprint_collision_sample_count"], 0.0))
+                    for row in successful
+                ),
+            }
+        return output
+
+    overall = aggregate(("method",))
+    by_map = aggregate(("environment", "method"))
+    pairing = collections.defaultdict(set)
+    for row in rows:
+        pairing[
+            (
+                row["environment"],
+                row["scenario"],
+                row["planner"],
+                row["repetition"],
+            )
+        ].add(row["raw_path_sha256"])
+    bad_pairing = [key for key, hashes in pairing.items() if len(hashes) != 1]
+    return {
+        "geometry_row_count": len(rows),
+        "geometry_pairing_group_count": len(pairing),
+        "geometry_pairing_bad_groups": bad_pairing,
+        "geometry_overall": {
+            method: overall[(method,)] for method in METHOD_LABEL
+        },
+        "geometry_by_map_method": {
+            f"{environment}/{method}": by_map[(environment, method)]
+            for environment in ENVIRONMENTS
+            for method in METHOD_LABEL
+        },
+    }
 
 
 def load_execution_rows():
@@ -219,6 +328,17 @@ def load_validation():
         environment: load_json(path)
         for environment, path in VALIDATION_PATHS.items()
     }
+
+
+def load_current_audit():
+    return {
+        label: load_json(path)
+        for label, path in CURRENT_AUDIT_PATHS.items()
+    }
+
+
+def load_hardware_profile():
+    return yaml.safe_load(HARDWARE_PROFILE.read_text(encoding="utf-8"))
 
 
 def load_scenarios(environment):
@@ -830,6 +950,14 @@ SYMBOLS = [
     ("α", "rad/s²", "Gia tốc góc."),
     ("j", "m/s³", "Jerk: tốc độ thay đổi của gia tốc."),
     ("v̄", "m/s", "Trần vận tốc an toàn tại một điểm."),
+    ("n", "rpm", "Tốc độ quay: số vòng trong một phút."),
+    ("τ", "N·m", "Mô-men xoắn tại trục."),
+    ("G", "–", "Tỷ số truyền hộp số; GA25 hiện dùng 45:1."),
+    ("U", "V", "Điện áp giữa hai điểm."),
+    ("I", "A", "Dòng điện chạy qua một nhánh."),
+    ("Q", "Ah", "Dung lượng điện tích danh nghĩa của bộ pin."),
+    ("E", "Wh", "Năng lượng điện danh nghĩa, xấp xỉ U·Q."),
+    ("C-rate", "1/h", "Hệ số dòng xả so với dung lượng; 5C của 2,6 Ah là 13 A."),
     ("J", "–", "Cost/hàm mục tiêu cần tối thiểu hóa."),
     ("e_xy", "m", "Sai số ngang từ robot đến đường."),
     ("e_ψ", "rad", "Sai số giữa hướng robot và tiếp tuyến đường."),
@@ -843,12 +971,15 @@ SYMBOLS = [
 ]
 
 GLOSSARY = [
+    ("4S4P", "Bốn cell nối tiếp trong mỗi nhánh và bốn nhánh song song; tổng 16 cell."),
     ("Action", "Cơ chế ROS cho tác vụ kéo dài, có goal, feedback, result và khả năng hủy."),
     ("Adaptive", "Thích nghi: tham số được chọn theo từng dữ liệu đầu vào thay vì một giá trị cố định."),
     ("AMCL", "Adaptive Monte Carlo Localization: định vị robot trên map bằng particle filter."),
     ("Baseline", "Phương pháp đối chứng dùng làm mốc so sánh."),
     ("Behavior Tree (BT)", "Cây hành vi điều phối tuần tự/rẽ nhánh các tác vụ Nav2."),
     ("Bézier curve", "Đường cong đa thức được xác định bởi các điểm điều khiển."),
+    ("BMS", "Battery Management System: mạch bảo vệ/cân bằng cell; chưa chốt model trong dự án."),
+    ("Buck converter", "Bộ nguồn hạ áp DC–DC; cần để hạ pack 4S tối đa 16,8 V xuống rail motor 12 V."),
     ("Camera-ready", "Bản cuối để xuất bản; không liên quan đến báo cáo giáo trình này."),
     ("Clearance", "Khoảng hở nhỏ nhất từ footprint robot đến vật cản."),
     ("Closed loop", "Vòng kín: lệnh được cập nhật bằng phản hồi trạng thái robot thực/mô phỏng."),
@@ -861,6 +992,7 @@ GLOSSARY = [
     ("Deterministic", "Xác định: cùng đầu vào và tham số cho cùng kết quả."),
     ("Differential drive", "Kiểu xe hai bánh chủ động độc lập; quay nhờ chênh lệch tốc độ bánh."),
     ("Dynamic Programming (DP)", "Quy hoạch động: ghép nghiệm tối ưu từ các trạng thái con và quan hệ tương thích."),
+    ("Encoder", "Cảm biến tạo xung theo chuyển động trục; phải biết PPR và cách giải mã trước khi đổi xung ra quãng đường."),
     ("Fallback", "Phương án dự phòng an toàn khi phương án ưu tiên không hợp lệ."),
     ("Footprint", "Đa giác chiếu bằng đại diện toàn thân robot trong costmap."),
     ("Frame", "Hệ tọa độ có gốc và hướng riêng, ví dụ map, odom, base_link."),
@@ -877,6 +1009,7 @@ GLOSSARY = [
     ("Interpolation", "Nội suy giá trị ở giữa các mẫu đã biết."),
     ("Jerk", "Đạo hàm của gia tốc; jerk lớn tạo thay đổi lệnh đột ngột."),
     ("Lifecycle node", "Node ROS có các trạng thái configure/activate/deactivate/cleanup."),
+    ("Locked rotor / stall", "Trạng thái trục motor bị khóa; dòng và nhiệt tăng cao, không phải chế độ vận hành."),
     ("Localization", "Định vị: ước lượng robot đang ở đâu trong map."),
     ("Lookahead / carrot", "Điểm nhìn trước trên đường mà Pure Pursuit hướng tới."),
     ("Map server", "Node phát occupancy map cho Nav2."),
@@ -898,6 +1031,7 @@ GLOSSARY = [
     ("Raw path", "Đường đầu ra planner trước mọi bước làm mượt."),
     ("Regulated Pure Pursuit (RPP)", "Pure Pursuit có thêm giảm tốc theo cong, cost và va chạm dự báo."),
     ("Repetition", "Lần lặp thí nghiệm độc lập cùng cấu hình."),
+    ("Rated load", "Điểm làm việc có tải định mức do nhà sản xuất công bố."),
     ("Resampling", "Lấy lại mẫu đường với khoảng cách đều hơn."),
     ("Robot Operating System 2", "Middleware và hệ sinh thái giao tiếp cho robot; không phải hệ điều hành kernel."),
     ("RViz2", "Công cụ trực quan hóa map, TF, robot, sensor, path và panel điều khiển."),
@@ -908,6 +1042,7 @@ GLOSSARY = [
     ("Smoother", "Bộ hậu xử lý làm đường planner bớt gấp khúc và khả thi hơn."),
     ("Smoothstep", "Hàm 3r²−2r³ chuyển giá trị trơn với slope bằng 0 ở hai đầu."),
     ("Speed cap", "Giới hạn trên của vận tốc tại một điểm; controller có thể chạy chậm hơn."),
+    ("No-load speed", "Tốc độ khi motor gần như không mang tải; không phải tốc độ xe an toàn dưới tải."),
     ("S-curve", "Profile gia tốc có các đoạn jerk hữu hạn, tránh bước nhảy gia tốc."),
     ("Swept footprint", "Hợp của footprint khi robot quét dọc toàn đoạn chuyển động."),
     ("Telemetry", "Dữ liệu trạng thái/giới hạn/metric phát ra để theo dõi và debug."),
@@ -955,6 +1090,39 @@ def parameters_table():
         ("Footprint cost tối đa", "200", "Gate center cost trước kiểm tra footprint"),
     ]
     return table(("Tham số", "Giá trị", "Vai trò"), rows, "compact")
+
+
+def hardware_tables(profile):
+    drive = profile["drive"]
+    power = profile["power"]
+    cell = power["cell"]
+    pack = power["pack"]
+    motor_rows = [
+        ("Số lượng / model", f"{drive['motor_count']} × {drive['motor_model']}", "Hai bánh chủ động độc lập"),
+        ("Điện áp định mức", f"{fmt(drive['rated_voltage_v'], 1)} V DC", "Rail motor bắt buộc được điều áp"),
+        ("Tỷ số truyền", f"{fmt(drive['gearbox_ratio'], 0)}:1", "Giảm tốc armature xuống trục ra"),
+        ("Tốc độ armature", f"{fmt(drive['armature_speed_rpm'], 0)} rpm", "Giá trị kỹ thuật được cung cấp"),
+        ("Không tải", f"{fmt(drive['nominal_output_rpm'], 0)} ± {fmt(drive['no_load_output_speed_tolerance_percent'], 0)}% rpm; {fmt(1000*drive['no_load_current_per_motor_a'], 0)} mA", "Không dùng làm tốc độ chạy liên tục dưới tải"),
+        ("Tải định mức", f"{fmt(drive['rated_load_output_rpm'], 0)} ± {fmt(drive['rated_load_output_speed_tolerance_percent'], 0)}% rpm; {fmt(1000*drive['rated_load_current_per_motor_a'], 0)} mA", "Vùng làm việc danh nghĩa"),
+        ("Mô-men định mức", f"{fmt(drive['rated_output_torque_kgf_cm'], 1)} kgf·cm = {fmt(drive['rated_output_torque_nm'], 7)} N·m", "Mô-men vận hành tham chiếu"),
+        ("Stall", f"{fmt(drive['stall_current_per_motor_a'], 1)} A; {fmt(drive['stall_output_torque_kgf_cm'], 1)} kgf·cm = {fmt(drive['stall_output_torque_nm'], 7)} N·m", "Giới hạn tuyệt đối; không được giữ rotor khóa"),
+        ("Kích thước thân motor", f"{fmt(1000*drive['motor_body_length_m'], 0)} × Ø{fmt(1000*drive['motor_body_diameter_m'], 0)} mm", "Visual GA25 trong URDF/SDF"),
+        ("Vận tốc bánh lý thuyết", f"{fmt(drive['theoretical_rated_load_linear_speed_mps'], 3)} m/s rated; {fmt(drive['theoretical_no_load_linear_speed_mps'], 3)} m/s no-load", "Controller giới hạn bánh ở 0,36 m/s"),
+    ]
+    battery_rows = [
+        ("Cấu hình", power["topology"], f"{power['series_cell_count']} nối tiếp × {power['parallel_cell_count']} song song = {power['total_cell_count']} cell"),
+        ("Mỗi cell", f"{cell['type']}; {fmt(cell['capacity_mah'], 0)} mAh; {fmt(cell['discharge_rate_c'], 0)}C / {fmt(cell['stated_discharge_current_a'], 0)} A", "Thông số người dùng cung cấp"),
+        ("Điện áp pack", f"{fmt(pack['nominal_voltage_assumption_v'], 1)} V nominal; {fmt(pack['full_voltage_assumption_v'], 1)} V full", "Suy ra từ giả định Li-ion 3,7/4,2 V mỗi cell"),
+        ("Dung lượng pack", f"{fmt(pack['capacity_ah'], 1)} Ah", "Song song cộng dung lượng: 4 × 2,6 Ah"),
+        ("Năng lượng danh nghĩa", f"{fmt(pack['nominal_energy_assumption_wh'], 2)} Wh", "14,8 V × 10,4 Ah"),
+        ("Dòng xả lý thuyết", f"{fmt(pack['theoretical_continuous_discharge_current_a'], 0)} A", "4 nhánh × 13 A; không phải rating tự động của toàn xe"),
+        ("Rail motor", f"{fmt(power['motor_rail']['regulated_voltage_v'], 1)} V", "Cần buck 12 V vì pack đầy là 16,8 V"),
+        ("Các giá trị còn thiếu", "BMS, fuse, buck, driver, dây/giắc, nhiệt, cutoff", "Phải chốt theo phần tử có rating thấp nhất"),
+    ]
+    return (
+        table(("Thông số GA25", "Giá trị", "Ý nghĩa và lý do sử dụng"), motor_rows, "compact"),
+        table(("Thông số nguồn", "Giá trị", "Ý nghĩa và lý do sử dụng"), battery_rows, "compact"),
+    )
 
 
 def scenarios_table(environment):
@@ -1142,17 +1310,17 @@ với ground truth cho thấy ảnh hưởng của định vị.</p>
     return "\n".join(output)
 
 
-def tutorial_html(summary, execution, validation):
+def tutorial_html(summary, execution, validation, current_audit, hardware):
     raw = summary["geometry_overall"]["raw"]
     pivot = summary["geometry_overall"]["pivot_g2"]
     hybrid = summary["geometry_overall"]["adaptive_hybrid"]
-    baseline = load_json(
-        ROOT
-        / "results"
-        / "closed_loop_audit_20260725"
-        / "baseline_lower_left_pivot_g2.json"
-    )
-    fixed = validation["research_warehouse"]
+    motor_table, battery_table = hardware_tables(hardware)
+    lower_before = current_audit["lower_before"]
+    lower_after = current_audit["lower_after"]
+    rack_before = current_audit["rack_before"]
+    rack_after = current_audit["rack_after"]
+    narrow_before = current_audit["narrow_before_angular_braking"]
+    narrow_after = current_audit["narrow_after"]
     return f"""<!doctype html>
 <html lang="vi"><head><meta charset="utf-8">
 <title>Báo cáo toàn diện Adaptive Hybrid Pivot–G2</title>
@@ -1201,7 +1369,7 @@ ADAPTIVE HYBRID PIVOT–G2<br>
 CHO ROBOT VI SAI TRONG ROS 2 / NAV2</div>
 <div class="subtitle">Từ kiến thức nhập môn, phương trình và kiến trúc phần mềm<br>
 đến mô phỏng Gazebo, RViz2, bảy bản đồ và so sánh thực nghiệm</div>
-<div class="meta">Phiên bản thuật toán hiện tại — tự sinh từ source và dữ liệu ngày 25/07/2026</div>
+<div class="meta">Phiên bản thuật toán hiện tại — tự sinh từ source và dữ liệu ngày 26/07/2026</div>
 <div class="meta">Workspace: <code>/home/linh-pham/agv_nav2_research_ws</code></div>
 {figure("figure_01_learning_roadmap.png", "Lộ trình đọc báo cáo.", "compact")}
 <p class="center"><b>Đối tượng:</b> người mới bắt đầu về robot di động, ROS 2 và
@@ -1348,9 +1516,11 @@ dừng stack cũ và khởi động cặp mới.</p>
 <p>Chassis có envelope 440×340 mm, khối lượng 4,6 kg; hai bánh mỗi bánh 0,2 kg,
 đường kính 85 mm. Tổng danh nghĩa khoảng 5,0 kg. Footprint Nav2 là hình chữ nhật
 [(0,22;0,17), (0,22;−0,17), (−0,22;−0,17), (−0,22;0,17)]. Khoảng cách hai tâm
-vệt lăn vật lý là 0,2548 m. Gazebo DiffDrive dùng 0,2809 m như hệ số hiệu chuẩn
-tiếp xúc để odometry khớp ground truth; công thức thuật toán vẫn dùng kích thước
-vật lý 0,2548 m.</p>
+vệt lăn vật lý là 0,2548 m. Gazebo DiffDrive từng dùng 0,2809 m như hệ số hiệu
+chuẩn tiếp xúc; phép fit bình phương tối thiểu có trọng số trên hai trace độc
+lập ngày 26/07 đã cập nhật giá trị hiệu dụng thành <b>0,2834 m</b>, tương
+đương multiplier 1,112245. Đây là hiệu chuẩn contact/odometry của mô phỏng,
+không thay đổi kích thước động học vật lý 0,2548 m.</p>
 <h3>5.2 Collision và visual</h3>
 <p><i>Visual</i> là mesh nhìn thấy; <i>collision</i> là hình đơn giản dùng cho
 vật lý. Thân dùng nhiều box để phủ đúng envelope nhưng chừa hốc bánh. Bốn bi đỡ
@@ -1367,7 +1537,40 @@ CAD chi tiết.</p>
     ],
     "compact",
 )}
-<h3>5.4 Các giới hạn đang dùng</h3>
+<h3>5.4 Hai động cơ GA25 encoder 130 rpm</h3>
+<p>Trước tiên, các giá trị nhà sản xuất được giữ nguyên trong profile phần
+cứng. Sau đó mới đổi sang SI để kiểm tra với bánh xe. Cuối cùng, URDF/SDF chỉ
+dùng no-load speed và stall torque làm <i>giới hạn tuyệt đối</i>; controller
+vẫn chạy trong vùng bảo thủ hơn.</p>
+<div class="eq">ω<sub>out</sub> = n·2π/60;&nbsp;&nbsp;
+v<sub>wheel</sub> = r·ω<sub>out</sub></div>
+<div class="eq">τ[N·m] = τ[kgf·cm]·0,0980665</div>
+{motor_table}
+<p class="warning"><b>Cảnh báo bản chất:</b> stall torque không phải mô-men
+được phép giữ lâu. Khi rotor bị khóa, mỗi motor có thể hút 1,3 A và sinh nhiệt
+nhanh. Phần mềm không thay thế fuse, giới hạn dòng driver và bảo vệ nhiệt.</p>
+
+<h3>5.5 Bộ nguồn 16 cell 18650 mắc 4S4P</h3>
+<p>Trong ký hiệu 4S4P, chữ <b>S</b> là <i>series</i> (nối tiếp, cộng điện áp);
+chữ <b>P</b> là <i>parallel</i> (song song, cộng dung lượng và khả năng dòng).
+Với giả định cell Li-ion chuẩn 3,7 V danh nghĩa, 4,2 V khi đầy:</p>
+<div class="eq">U<sub>pack</sub>=4U<sub>cell</sub>;
+&nbsp; Q<sub>pack</sub>=4Q<sub>cell</sub>;
+&nbsp; E≈U<sub>nom</sub>Q</div>
+{battery_table}
+<p class="warning">Pack đầy 16,8 V <b>không được</b> cấp thẳng vào GA25 định
+mức 12 V. Cần buck 12 V, BMS 4S, fuse, motor driver và dây dẫn có rating đã
+xác minh. Giá trị 52 A chỉ là phép nhân lý tưởng của cell, không phải dòng xe
+được phép khai thác.</p>
+
+<h3>5.6 Encoder: điều gì chưa được phép giả định?</h3>
+<p>Tên motor có chữ encoder nhưng dữ liệu được cung cấp chưa có PPR
+(pulses per revolution), vị trí encoder trước/sau hộp số hoặc chế độ giải mã
+x1/x2/x4. Vì vậy <code>ticks_per_rev</code>, rad/tick và m/tick được để
+<code>null</code>. Điền một con số đoán sẽ trực tiếp làm sai odometry, sai yaw
+và cuối cùng làm xe lệch khỏi đường sau cua.</p>
+
+<h3>5.7 Các giới hạn đang dùng</h3>
 {parameters_table()}
 
 <h2>6. Map, costmap và footprint</h2>
@@ -1395,14 +1598,16 @@ planner đã cấu hình.<br><b>Đầu ra hình học:</b> một path an toàn c
 Simple, Adaptive Pivot–G2 và Raw.<br><b>Đầu ra điều khiển:</b> cmd_vel được giới
 hạn theo đường phía trước, phản hồi bám và trạng thái robot.</div>
 <ol>
-<li>Chuẩn hóa endpoint, bỏ pose trùng và điều kiện hóa polyline trong hành lang an toàn.</li>
+<li>Neo chính xác cả start và goal liên tục vào path grid, bỏ pose trùng và
+điều kiện hóa polyline trong hành lang an toàn.</li>
 <li>Phát hiện góc bằng hướng hai đoạn và ngưỡng 5°.</li>
 <li>Ở mỗi góc tạo trạng thái Pivot và tìm nhiều transition Bézier G2 an toàn.</li>
 <li>Chấm cost ổn định; giữ tối đa năm G2 tốt nhất.</li>
 <li>DP chọn một trạng thái mỗi góc, không cho hai trim chồng nhau.</li>
 <li>Khâu toàn đường; kiểm tra lại endpoint, NaN, duplicate, động học và swept footprint.</li>
 <li>Hybrid so sánh Simple/Pivot, fallback Raw nếu cần.</li>
-<li>Controller xây speed envelope hai chiều, bám path, thực thi marker Pivot và servo goal.</li>
+<li>Controller căn yaw theo preview 0,30 m của path thật, xây speed envelope
+hai chiều, bám path, thực thi marker Pivot và servo goal.</li>
 </ol>
 {figure(
     "figure_01_learning_roadmap.png",
@@ -1542,14 +1747,31 @@ làm mặc định và chỉ nhận Pivot khi có safety gain đủ rõ.</p>
 )}
 
 <h2>14. Profile vận tốc và điều khiển vòng kín</h2>
-<h3>14.1 Trần tức thời theo độ cong</h3>
+<h3>14.1 Hướng ban đầu: hai tầng thay vì đoán một lần</h3>
+<p><b>Tầng trước planning.</b> Nếu scenario không ghi yaw, bộ resolver đọc
+PGM/YAML, inflation theo footprint, tìm route A* bảo thủ và kiểm tra swept
+footprint theo nhiều hướng. Yaw này làm tư thế spawn an toàn; nó chưa thể biết
+chính xác planner nào sẽ chọn nhánh nào.</p>
+<p><b>Tầng sau planning.</b> Khi path đã được smoother chọn, controller lấy
+điểm preview cách start 0,30 m theo chiều dài cung:</p>
+<div class="eq">ψ<sub>path,0</sub> =
+atan2(y<sub>preview</sub>−y<sub>0</sub>,
+x<sub>preview</sub>−x<sub>0</sub>)</div>
+<p>Nếu |ψpath,0−ψrobot| ≥ 0,15 rad, xe giữ v=0 và căn hướng; chỉ bắt đầu tịnh
+tiến khi sai số vào dải 0,035 rad và vận tốc góc đã dừng. Hysteresis
+0,15/0,035 tránh bật–tắt quanh một ngưỡng.</p>
+<p><b>Neo start/goal.</b> Planner grid thường trả tâm ô lệch pose yêu cầu
+√(0,025²+0,025²)=0,03536 m. Benchmark và panel RViz2 nay phục hồi chính xác
+pose start/goal trước và sau smoothing; correction lớn hơn 0,08 m bị từ chối.</p>
+
+<h3>14.2 Trần tức thời theo độ cong</h3>
 <div class="eq">v̄(s)=min[v<sub>max</sub>,
 √(a<sub>y,max</sub>/|κ|),
 ω<sub>max</sub>/|κ|,
 v<sub>w,max</sub>/(1+L|κ|/2)]</div>
 <p>Đường thẳng có κ≈0 nên chỉ bị vmax/bánh giới hạn. Cong gắt tăng |κ| làm ba
 trần còn lại giảm.</p>
-<h3>14.2 Khoảng chuyển vận tốc giới hạn jerk</h3>
+<h3>14.3 Khoảng chuyển vận tốc giới hạn jerk</h3>
 <p>Đặt Δv=|v1−v0|, a là giới hạn tăng/giảm tốc, j là jerk. Khi
 Δv≤a²/j, profile gia tốc tam giác:</p>
 <div class="eq">S = (v0+v1)√(Δv/j)</div>
@@ -1557,20 +1779,20 @@ trần còn lại giảm.</p>
 <div class="eq">S = 0,5(v0+v1)(Δv/a + a/j)</div>
 <p>Code dùng tìm kiếm nhị phân để đảo công thức: biết khoảng cách còn lại thì
 tìm vận tốc lớn nhất vẫn kịp tăng/giảm.</p>
-<h3>14.3 Hai lượt truyền</h3>
+<h3>14.4 Hai lượt truyền</h3>
 <ul>
 <li><b>Backward pass:</b> giới hạn tương lai được truyền ngược để phanh trước cong/goal.</li>
 <li><b>Forward pass:</b> giới hạn quá khứ được truyền xuôi để không tăng tốc ngay sau cong nhanh hơn động lực học cho phép.</li>
 <li>Hai pass lặp đến hội tụ vì một cap mới ở pass này có thể tác động pass kia.</li>
 <li>Sau đó cặp điểm tiếp tục bị scale đến khi |Δ(vκ)|/Δt≤αmax.</li>
 </ul>
-<h3>14.4 Phép chiếu tiến độ có hướng</h3>
+<h3>14.5 Phép chiếu tiến độ có hướng</h3>
 <div class="eq">score = e<sub>xy</sub><sup>2</sup> +
 (0,20·e<sub>ψ</sub>)<sup>2</sup></div>
 <p>Chỉ tìm trong cửa sổ 0,25 m sau và 0,80 m trước hint; tiến độ chỉ được lùi
 tối đa 0,03 m. Khi hai điểm bằng score, chọn s lớn hơn. Đây là sửa lỗi chọn
 nhầm nhánh gần về khoảng cách nhưng ngược hướng.</p>
-<h3>14.5 RPP và giảm tốc phục hồi</h3>
+<h3>14.6 RPP và giảm tốc phục hồi</h3>
 <p>Pure Pursuit chọn carrot phía trước. Trong hệ robot, nếu carrot có tọa độ
 (xL,yL) và khoảng lookahead ℓ thì κ xấp xỉ 2yL/ℓ²; sau đó ω=vκ. RPP của Nav2
 còn giảm v theo cost, curvature và time-to-collision.</p>
@@ -1579,7 +1801,7 @@ angular-tracking error đi từ soft đến hard, cap giảm bằng smoothstep:<
 <div class="eq">r=(|e|−e<sub>soft</sub>)/(e<sub>hard</sub>−e<sub>soft</sub>);
 &nbsp; h(r)=3r²−2r³</div>
 <div class="eq">v<sub>cap</sub>=(1−h)v<sub>max</sub>+h·v<sub>min</sub></div>
-<h3>14.6 Bộ tạo lệnh jerk-limited</h3>
+<h3>14.7 Bộ tạo lệnh jerk-limited</h3>
 <div class="eq">a* = clamp((v<sub>target</sub>−v<sub>prev</sub>)/Δt,
 −a<sub>dec</sub>,a<sub>acc</sub>)</div>
 <div class="eq">a<sub>cmd</sub> =
@@ -1588,8 +1810,20 @@ clamp(a*, a<sub>prev</sub>−jΔt, a<sub>prev</sub>+jΔt)</div>
 min(v<sub>target</sub>, max(0,v<sub>prev</sub>+a<sub>cmd</sub>Δt))</div>
 <p>Một safety cap thấp hơn được phép thắng ngay; mẫu đó được gắn
 <code>safety_override</code> để không giả vờ rằng jerk vật lý luôn được giữ khi
-an toàn đòi hỏi phanh khẩn.</p>
-<h3>14.7 Pivot và terminal servo</h3>
+an toàn đòi hỏi phanh khẩn. Biên v=0 cũng là một hard override: nếu quán tính
+gia tốc của S-curve định đưa speed magnitude xuống âm, code clip về 0, gắn cờ
+trung thực và khởi tạo lại gia tốc ở trạng thái khả thi. Trong bảy lượt cuối,
+mọi mẫu <i>nominal</i> đều có |j|≤0,90 m/s³.</p>
+<h3>14.8 Bao phanh góc, Pivot và terminal servo</h3>
+<p>Trace Gazebo cho thấy giảm tốc góc hiệu dụng của mô hình bốn điểm tiếp xúc
+chỉ khoảng 0,18 rad/s² trong khi giới hạn lệnh là 1,20 rad/s². Dùng riêng giới
+hạn lệnh khiến xe quay quá yaw đích rồi phải quay ngược. Vì vậy lệnh quay nay
+có thêm bao phanh:</p>
+<div class="eq">ω<sub>brake</sub> =
+min[ω<sub>max</sub>, √(2α<sub>eff</sub>
+max(|e<sub>ψ</sub>|−e<sub>tol</sub>,0))]</div>
+<div class="eq">ω* = sign(e<sub>ψ</sub>)
+min(K<sub>ψ</sub>|e<sub>ψ</sub>|,ω<sub>brake</sub>)</div>
 <p>Hai pose trùng vị trí nhưng khác yaw là marker Pivot. Controller dừng dịch
 chuyển, quay với tốc độ tối đa 0,70 rad/s và deadband 0,015 rad. Tại goal, xe
 phanh vào staging radius, chốt vị trí đích trong odom, cho phép servo vị trí
@@ -1617,7 +1851,9 @@ nạp và trace ground truth đã ghi. Các đường xám mờ là toàn bộ s
 =7.200 dòng. Mỗi nhóm 8 method có cùng raw_path_sha256.</li>
 <li><b>Chạy kín:</b> ma trận phân tầng 42 trial, có 24 trial chính
 8 method × 3 tốc độ, kiểm tra thêm planner/map và ca robust. Đây không phải toàn
-bộ tích 7×5×8×3.</li>
+bộ tích 7×5×8×3. Sau thay đổi động học ngày 26/07, bảy lượt đại diện mới
+(mỗi map một lượt) được chạy lại bằng Gazebo ground truth; hai ca lỗi chính có
+thêm before/after và repetition.</li>
 </ul>
 <h3>16.2 Định nghĩa metric</h3>
 <div class="eq">RMSE = √[(1/M) Σ e<sub>i</sub><sup>2</sup>]</div>
@@ -1631,13 +1867,47 @@ bộ tích 7×5×8×3.</li>
 </ul>
 {validation_table(validation)}
 <h3>16.3 Sửa lỗi đã đo được</h3>
+<h4>Ca 1 — lệch sau cong ở <code>right_rack_detour</code></h4>
 {table(
     ("Metric", "Trước", "Sau", "Cải thiện"),
     [
-        ("Thời gian (s)", fmt(baseline["execution_time_s"], 3), fmt(fixed["execution_time_s"], 3), f"{percentage_reduction(fixed['execution_time_s'], baseline['execution_time_s']):.1f}%"),
-        ("GT RMSE (cm)", fmt(100*baseline["tracking_rmse_m"], 3), fmt(100*fixed["tracking_rmse_m"], 3), f"{percentage_reduction(fixed['tracking_rmse_m'], baseline['tracking_rmse_m']):.1f}%"),
-        ("Sai số vị trí cuối (cm)", fmt(100*baseline["final_position_error_m"], 3), fmt(100*fixed["final_position_error_m"], 3), f"{percentage_reduction(fixed['final_position_error_m'], baseline['final_position_error_m']):.1f}%"),
-        ("Sai số yaw cuối (rad)", fmt(baseline["final_yaw_error_rad"], 4), fmt(fixed["final_yaw_error_rad"], 4), f"{percentage_reduction(fixed['final_yaw_error_rad'], baseline['final_yaw_error_rad']):.1f}%"),
+        ("Action time (s)", fmt(rack_before["controller_action_time_s"], 3), fmt(rack_after["controller_action_time_s"], 3), f"{percentage_reduction(rack_after['controller_action_time_s'], rack_before['controller_action_time_s']):.1f}%"),
+        ("GT RMSE (cm)", fmt(100*rack_before["tracking_rmse_m"], 3), fmt(100*rack_after["tracking_rmse_m"], 3), f"{percentage_reduction(rack_after['tracking_rmse_m'], rack_before['tracking_rmse_m']):.1f}%"),
+        ("Sai số thoát cong max (cm)", fmt(100*rack_before["curve_exit_tracking_max_error_m"], 3), fmt(100*rack_after["curve_exit_tracking_max_error_m"], 3), f"{percentage_reduction(rack_after['curve_exit_tracking_max_error_m'], rack_before['curve_exit_tracking_max_error_m']):.1f}%"),
+        ("Odometry yaw P95 (rad)", fmt(rack_before["odometry_yaw_error_p95_rad"], 5), fmt(rack_after["odometry_yaw_error_p95_rad"], 5), f"{percentage_reduction(rack_after['odometry_yaw_error_p95_rad'], rack_before['odometry_yaw_error_p95_rad']):.1f}%"),
+        ("Sai số vị trí cuối (cm)", fmt(100*rack_before["final_position_error_m"], 3), fmt(100*rack_after["final_position_error_m"], 3), f"{percentage_reduction(rack_after['final_position_error_m'], rack_before['final_position_error_m']):.1f}%"),
+    ],
+    "compact",
+)}
+<p>Nguyên nhân chính không phải xe “chạy nhanh một cách cố định”. Controller
+chỉ thấy estimated RMSE vài millimet nhưng ground truth lệch lớn hơn; fit
+odometry yaw đã chỉ ra separation hiệu dụng bị thiếu. Sau khi hiệu chuẩn 0,2834
+m, sai số yaw giảm và feedback speed envelope mới phản ánh đúng chuyển động.</p>
+
+<h4>Ca 2 — hướng đầu ở <code>lower_left_diagonal</code></h4>
+{table(
+    ("Metric", "Trước", "Sau", "Cải thiện"),
+    [
+        ("Odometry vị trí P95 (cm)", fmt(100*lower_before["odometry_position_error_p95_m"], 3), fmt(100*lower_after["odometry_position_error_p95_m"], 3), f"{percentage_reduction(lower_after['odometry_position_error_p95_m'], lower_before['odometry_position_error_p95_m']):.1f}%"),
+        ("Odometry yaw P95 (rad)", fmt(lower_before["odometry_yaw_error_p95_rad"], 5), fmt(lower_after["odometry_yaw_error_p95_rad"], 5), f"{percentage_reduction(lower_after['odometry_yaw_error_p95_rad'], lower_before['odometry_yaw_error_p95_rad']):.1f}%"),
+        ("RMSE controller nhìn thấy (cm)", fmt(100*lower_before["estimated_tracking_rmse_m"], 3), fmt(100*lower_after["estimated_tracking_rmse_m"], 3), f"{percentage_reduction(lower_after['estimated_tracking_rmse_m'], lower_before['estimated_tracking_rmse_m']):.1f}%"),
+        ("Jerk nominal max (m/s³)", fmt(lower_before["adaptive_speed_nominal_max_abs_jerk_mps3"], 3), fmt(lower_after["adaptive_speed_nominal_max_abs_jerk_mps3"], 3), "đúng trần 0,90"),
+    ],
+    "compact",
+)}
+<p>Yaw spawn map-aware là 0,050 rad, nhưng preview của path sau smoothing yêu
+cầu quay thêm 0,245 rad. Tầng alignment sau planning đã đưa sai số vào dải
+0,035 rad trước khi cho v khác 0; vì vậy vị trí không bị kéo lệch trong lúc xe
+còn quay.</p>
+
+<h4>Ca 3 — bỏ quay quá đích trong <code>narrow_aisles</code></h4>
+{table(
+    ("Metric", "Trước bao phanh góc", "Sau", "Cải thiện"),
+    [
+        ("Mẫu initial alignment", str(narrow_before["adaptive_speed_mode_sample_counts"]["initial_alignment"]), str(narrow_after["adaptive_speed_mode_sample_counts"]["initial_alignment"]), f"{percentage_reduction(narrow_after['adaptive_speed_mode_sample_counts']['initial_alignment'], narrow_before['adaptive_speed_mode_sample_counts']['initial_alignment']):.1f}%"),
+        ("Thời gian alignment xấp xỉ (s)", fmt(0.05*narrow_before["adaptive_speed_mode_sample_counts"]["initial_alignment"], 2), fmt(0.05*narrow_after["adaptive_speed_mode_sample_counts"]["initial_alignment"], 2), f"{percentage_reduction(narrow_after['adaptive_speed_mode_sample_counts']['initial_alignment'], narrow_before['adaptive_speed_mode_sample_counts']['initial_alignment']):.1f}%"),
+        ("Action time (s)", fmt(narrow_before["controller_action_time_s"], 3), fmt(narrow_after["controller_action_time_s"], 3), f"{percentage_reduction(narrow_after['controller_action_time_s'], narrow_before['controller_action_time_s']):.1f}%"),
+        ("Jerk nominal max (m/s³)", fmt(narrow_before["adaptive_speed_nominal_max_abs_jerk_mps3"], 3), fmt(narrow_after["adaptive_speed_nominal_max_abs_jerk_mps3"], 3), "đúng trần 0,90"),
     ],
     "compact",
 )}
@@ -1678,7 +1948,11 @@ Hybrid cố ý giữ Simple ở ca mà Pivot không đủ safety gain.</p>
 {primary_execution_table(execution)}
 <p>Trong scenario chính, Pivot–G2 thích nghi có GT RMSE/exit RMSE tốt nhất
 trong nhóm nổi bật, nhưng kết luận không nên chỉ dựa một scenario. Toàn ma trận
-phân tầng có 41/42 thành công.</p>
+phân tầng có 41/42 thành công. Ma trận 42 trial được ghi trước lượt hiệu chuẩn
+động học ngày 26/07; nó vẫn hợp lệ để so sánh tương đối các smoother trên cùng
+controller và cùng thời điểm, còn bảng bảy map ở Mục 16 là xác nhận riêng cho
+phiên bản controller/odometry hiện tại. Không được trộn hai tầng dữ liệu thành
+một tuyên bố tuyệt đối.</p>
 {figure(
     "figure_13_speed_comparison.png",
     "Ảnh hưởng của smoother và tốc độ đến thời gian, RMSE và sai số thoát cong.",
@@ -1711,9 +1985,13 @@ gate</b>, không nên tuyên bố pure Pivot luôn tốt nhất.</p>
 <li>Loại ứng viên đảo dấu độ cong, đảo bánh trong, không khả thi vận tốc hoặc va chạm footprint.</li>
 <li>Fallback Simple/Raw theo luật công bố trước; không xuất đường không an toàn.</li>
 <li>Tự điều chỉnh tốc độ đến 0,30 m/s theo cong, bánh, gia tốc, jerk, sai số bám và goal.</li>
+<li>Neo start/goal liên tục vào path lưới và từ chối correction vượt 0,08 m.</li>
+<li>Căn hướng hai tầng: route an toàn trước planning và tiếp tuyến path thật sau planning.</li>
+<li>Phanh góc theo giảm tốc hiệu dụng đo từ Gazebo để không quay quá yaw đích.</li>
 <li>Không nhảy nhánh projection tại đường gần tự giao; không tăng tốc sớm sau cong.</li>
 <li>Tách ground truth, odom và AMCL khi đo; so sánh công bằng bằng path hash.</li>
 <li>Chạy trên bảy môi trường, năm planner và hiển thị riêng từng phương pháp trong RViz2.</li>
+<li>Giữ một hardware contract chung cho URDF, SDF, motor GA25 và pack 4S4P.</li>
 </ul>
 <h3>18.2 Đâu là đóng góp riêng, đâu là thành phần kế thừa?</h3>
 {table(
@@ -1726,6 +2004,8 @@ gate</b>, không nên tuyên bố pure Pivot luôn tốt nhất.</p>
         ("Adaptive trim search + DP + diagnostics", "Phần phát triển của dự án", "Tự chọn candidate toàn đường"),
         ("Safety-gated Hybrid có Raw fallback", "Phần phát triển của dự án", "Độ robust của phương pháp hoàn chỉnh"),
         ("Bidirectional jerk-aware speed envelope", "Phần phát triển của dự án", "Phanh trước và tăng lại sau cong khả thi"),
+        ("Continuous endpoint anchor + two-stage heading", "Phần phát triển của dự án", "Sửa offset tâm ô và chỉ chạy tiến sau khi khớp hướng path thật"),
+        ("Measured angular-braking envelope", "Phần phát triển của dự án", "Giảm quay quá đích theo α hiệu dụng đo từ Gazebo"),
         ("Heading-aware projection + terminal servo", "Phần phát triển của dự án", "Sửa hướng sai, lệch sau cong và goal"),
         ("Ground-truth benchmark phân tầng", "Phần phát triển của dự án", "Đo vật lý, định vị và controller riêng"),
     ],
@@ -1740,6 +2020,9 @@ gate</b>, không nên tuyên bố pure Pivot luôn tốt nhất.</p>
 <li>Adaptive parameters được tuning trên cùng họ map; cần hold-out map và nhiều seed để kết luận tổng quát.</li>
 <li>Footprint hiện là rectangle bảo thủ; robot thật cần đo envelope và khoảng cách vệt lăn lại.</li>
 <li>RPP collision prediction có thể hủy ca mà footprint hình học tĩnh vẫn clear; đó là khác biệt giữa feasibility hình học và executability vòng kín.</li>
+<li>Encoder chưa có PPR, vị trí gắn và chế độ x1/x2/x4; chưa thể chuyển tick sang mét một cách đúng đắn.</li>
+<li>Điện áp 3,7/4,2 V mỗi cell là giả định Li-ion chuẩn. BMS, fuse, buck, driver và cutoff vẫn phải chọn và xác minh trên phần cứng thật.</li>
+<li>Bảy lượt ngày 26/07 xác nhận phiên bản hiện tại trên từng map nhưng chưa phải so sánh lại đủ tám smoother trên mọi map sau hiệu chuẩn.</li>
 </ul>
 
 <h2>20. Cách chạy, quan sát và debug</h2>
@@ -1808,8 +2091,12 @@ Behavior Tree.</li>
         ("Nav2 smoother", "<code>src/adaptive_pivot_g2_nav2/src/</code>"),
         ("Speed envelope", "<code>src/adaptive_pivot_g2_controller/src/adaptive_speed_profile.cpp</code>"),
         ("Maneuver-aware RPP", "<code>src/adaptive_pivot_g2_controller/src/maneuver_aware_rpp_controller.cpp</code>"),
+        ("Hướng ban đầu map-aware", "<code>src/adaptive_pivot_g2_benchmark/adaptive_pivot_g2_benchmark/initial_heading.py</code>"),
+        ("Neo start/goal", "<code>src/adaptive_pivot_g2_benchmark/adaptive_pivot_g2_benchmark/path_contract.py</code>"),
         ("Benchmark", "<code>src/adaptive_pivot_g2_benchmark/</code>"),
         ("Cấu hình", "<code>src/vacuum_robot_gazebo/config/nav2_params.yaml</code>"),
+        ("Profile robot thật", "<code>src/vacuum_robot_gazebo/config/real_robot_profile.yaml</code>"),
+        ("URDF/SDF robot", "<code>src/vacuum_robot_gazebo/urdf/vacuum_robot.urdf</code> và <code>models/vacuum_robot/model.sdf</code>"),
         ("Map/world", "<code>src/vacuum_robot_gazebo/maps/</code> và <code>worlds/</code>"),
     ],
     "compact",
@@ -1822,11 +2109,13 @@ Adaptive Hybrid Pivot–G2 mới là phương pháp hoàn chỉnh nên dùng đ�
 </body></html>"""
 
 
-def validate_inputs(summary, execution, validation):
+def validate_inputs(summary, execution, validation, current_audit, hardware):
     if summary.get("geometry_row_count") != 7200:
         raise RuntimeError("Expected the verified 7,200-row geometry matrix")
     if summary.get("geometry_pairing_group_count") != 900:
         raise RuntimeError("Expected 900 paired raw-path groups")
+    if summary.get("geometry_pairing_bad_groups"):
+        raise RuntimeError("Geometry methods did not receive paired raw paths")
     if len(execution) != 42:
         raise RuntimeError(f"Expected 42 compact execution rows, got {len(execution)}")
     if sum(row.get("success") == "True" for row in execution) != 41:
@@ -1836,8 +2125,63 @@ def validate_inputs(summary, execution, validation):
     for environment, row in validation.items():
         if not row.get("success"):
             raise RuntimeError(f"Validation failed for {environment}")
+        if not row.get("physically_settled"):
+            raise RuntimeError(f"Robot did not physically settle for {environment}")
         if not row.get("selected_path_xy") or not row.get("ground_truth_state_trace"):
             raise RuntimeError(f"Missing path/ground-truth trace for {environment}")
+        if as_float(row.get("adaptive_speed_nominal_max_abs_jerk_mps3")) > 0.900001:
+            raise RuntimeError(f"Nominal jerk exceeded 0.9 m/s^3 for {environment}")
+        for key in (
+            "planner_start_anchor_adjustment_m",
+            "selected_start_anchor_adjustment_m",
+        ):
+            if as_float(row.get(key), 0.0) > 0.080001:
+                raise RuntimeError(f"Start anchoring exceeded contract in {environment}")
+
+    if set(current_audit) != set(CURRENT_AUDIT_PATHS):
+        raise RuntimeError("Before/after audit dataset is incomplete")
+    for label, row in current_audit.items():
+        if not row.get("success") or not row.get("physically_settled"):
+            raise RuntimeError(f"Audit trace is not a settled success: {label}")
+
+    drive = hardware["drive"]
+    power = hardware["power"]
+    expected_drive = {
+        "rated_voltage_v": 12.0,
+        "gearbox_ratio": 45.0,
+        "armature_speed_rpm": 6000.0,
+        "nominal_output_rpm": 130.0,
+        "no_load_current_per_motor_a": 0.060,
+        "rated_load_output_rpm": 100.0,
+        "rated_load_current_per_motor_a": 0.300,
+        "rated_output_torque_kgf_cm": 1.0,
+        "stall_current_per_motor_a": 1.3,
+        "stall_output_torque_kgf_cm": 3.6,
+        "motor_body_length_m": 0.068,
+        "motor_body_diameter_m": 0.025,
+    }
+    for key, expected in expected_drive.items():
+        if not math.isclose(as_float(drive.get(key)), expected, rel_tol=1.0e-9):
+            raise RuntimeError(f"Hardware profile mismatch: drive.{key}")
+    encoder = drive["encoder"]
+    if any(
+        encoder.get(key) is not None
+        for key in (
+            "pulses_per_revolution",
+            "quadrature_decode",
+            "encoder_ticks_per_rev",
+            "radians_per_tick",
+            "metres_per_tick",
+        )
+    ):
+        raise RuntimeError("Unknown encoder resolution must not be guessed")
+    if (
+        power.get("topology") != "4S4P"
+        or power.get("total_cell_count") != 16
+        or not math.isclose(as_float(power["pack"]["capacity_ah"]), 10.4)
+        or not power["motor_rail"].get("regulator_required")
+    ):
+        raise RuntimeError("4S4P power contract is inconsistent")
 
 
 def main():
@@ -1848,10 +2192,12 @@ def main():
         help="Validate all source datasets without writing report artifacts.",
     )
     args = parser.parse_args()
-    summary = load_json(REPORT_DATA)
+    summary = load_geometry_summary()
     execution = load_execution_rows()
     validation = load_validation()
-    validate_inputs(summary, execution, validation)
+    current_audit = load_current_audit()
+    hardware = load_hardware_profile()
+    validate_inputs(summary, execution, validation, current_audit, hardware)
     if args.check_only:
         print("tutorial report inputs: OK")
         return
@@ -1868,7 +2214,7 @@ def main():
     for environment in ENVIRONMENTS:
         save_map_detail(environment, validation[environment])
     OUTPUT.write_text(
-        tutorial_html(summary, execution, validation),
+        tutorial_html(summary, execution, validation, current_audit, hardware),
         encoding="utf-8",
     )
     print(

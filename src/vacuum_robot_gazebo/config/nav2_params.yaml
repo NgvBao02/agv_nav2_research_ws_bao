@@ -167,8 +167,19 @@ controller_server:
       pivot_stopped_angular_velocity: 0.02
       pivot_max_angular_speed: 0.70
       pivot_max_angular_acceleration: 1.20
+      # Ground-truth trace in the four-contact Gazebo model decelerated at
+      # ~0.18 rad/s² while reversing an initial alignment. This conservative
+      # physical-response value feeds a sqrt(2*alpha*remaining_yaw) braking
+      # envelope so the base does not overshoot and counter-rotate.
+      pivot_effective_angular_deceleration: 0.18
       pivot_heading_gain: 1.8
       pivot_control_period: 0.05
+      # The map-aware spawn yaw is only a pre-planning estimate. Once the
+      # selected path exists, stop and align to its 0.30 m preview chord if
+      # the mismatch exceeds 0.15 rad; release with 0.035 rad hysteresis.
+      initial_alignment_preview_distance: 0.30
+      initial_alignment_enter_angle: 0.15
+      initial_alignment_exit_angle: 0.035
       # Latch a low-speed terminal pose servo before localization error can
       # let RPP pass the endpoint.  It holds XY, then aligns final yaw.
       terminal_position_tolerance: 0.15

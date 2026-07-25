@@ -25,8 +25,12 @@ from adaptive_pivot_g2_benchmark.compare_paths import (
     Point,
     resample_polyline,
 )
+from adaptive_pivot_g2_benchmark.initial_heading import (
+    resolve_scenario_start_heading,
+)
 from adaptive_pivot_g2_benchmark.path_contract import (
     anchor_path_goal,
+    anchor_path_start,
     canonicalize_planner_path,
 )
 from ament_index_python.packages import get_package_share_directory
@@ -179,6 +183,9 @@ class BatchBenchmark(Node):
         self.latest_pivot_diagnostics: Optional[Dict] = None
         self.latest_hybrid_diagnostics: Optional[Dict] = None
         self.environment = 'unknown'
+        self.map_directory = (
+            Path(get_package_share_directory('vacuum_robot_gazebo')) / 'maps'
+        )
         self.create_subscription(
             String,
             '/research/pivot_g2/diagnostics',
@@ -284,10 +291,13 @@ class BatchBenchmark(Node):
         start = scenario['start']
         goal = scenario['goal']
         default_yaw = math.atan2(goal[1] - start[1], goal[0] - start[0])
+        start_heading = resolve_scenario_start_heading(
+            scenario, self.environment, self.map_directory
+        )
         request = ComputePathToPose.Goal()
         request.start = _pose(
             'map', float(start[0]), float(start[1]),
-            float(start[2]) if len(start) > 2 else default_yaw,
+            start_heading.yaw,
         )
         request.goal = _pose(
             'map', float(goal[0]), float(goal[1]),
@@ -455,8 +465,18 @@ class BatchBenchmark(Node):
                         'map', float(goal[0]), float(goal[1]),
                         float(goal[2]) if len(goal) > 2 else default_yaw,
                     )
+                    start_heading = resolve_scenario_start_heading(
+                        scenario, self.environment, self.map_directory
+                    )
+                    requested_start = _pose(
+                        'map', float(start[0]), float(start[1]),
+                        start_heading.yaw,
+                    )
+                    anchored_planner_path, _ = anchor_path_start(
+                        planner_output_path, requested_start
+                    )
                     anchored_planner_path, _ = anchor_path_goal(
-                        planner_output_path, requested_goal
+                        anchored_planner_path, requested_goal
                     )
                     raw_path, removed_duplicates = (
                         canonicalize_planner_path(anchored_planner_path)
@@ -497,8 +517,11 @@ class BatchBenchmark(Node):
                                 }
                             )
                             continue
+                        anchored_smoothed_path, _ = anchor_path_start(
+                            result.path, requested_start
+                        )
                         anchored_smoothed_path, _ = anchor_path_goal(
-                            result.path, requested_goal
+                            anchored_smoothed_path, requested_goal
                         )
                         rows.append(
                             self._success_row(

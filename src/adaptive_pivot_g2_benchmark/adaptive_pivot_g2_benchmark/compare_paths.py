@@ -11,6 +11,7 @@ from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 from action_msgs.msg import GoalStatus
 from adaptive_pivot_g2_benchmark.path_contract import (
     anchor_path_goal,
+    anchor_path_start,
     canonicalize_planner_path,
 )
 from geometry_msgs.msg import PoseStamped
@@ -464,6 +465,7 @@ class PathComparisonNode(Node):
         self._smoother_generation = 0
         self._pending_futures = set()
         self._planning_planner_id = self._planner_id
+        self._planning_start_pose: Optional[PoseStamped] = None
         self._last_goal_pose: Optional[PoseStamped] = None
         self._active_planner_goal = None
         self._active_smoother_goal = None
@@ -667,6 +669,29 @@ class PathComparisonNode(Node):
         generation = self._generation
         self._smoother_generation += 1
         self._planning_planner_id = self._planner_id
+        try:
+            transform = self._tf_buffer.lookup_transform(
+                'map', 'base_link', Time()
+            )
+            self._planning_start_pose = PoseStamped()
+            self._planning_start_pose.header.frame_id = 'map'
+            self._planning_start_pose.header.stamp = (
+                transform.header.stamp
+            )
+            self._planning_start_pose.pose.position.x = (
+                transform.transform.translation.x
+            )
+            self._planning_start_pose.pose.position.y = (
+                transform.transform.translation.y
+            )
+            self._planning_start_pose.pose.position.z = (
+                transform.transform.translation.z
+            )
+            self._planning_start_pose.pose.orientation = (
+                transform.transform.rotation
+            )
+        except TransformException:
+            self._planning_start_pose = None
         self._published_methods.clear()
         self._method_path_cache.clear()
         self._pending_smoothers = []
@@ -732,8 +757,14 @@ class PathComparisonNode(Node):
             return
 
         try:
+            anchored_path = result.path
+            start_adjustment = 0.0
+            if self._planning_start_pose is not None:
+                anchored_path, start_adjustment = anchor_path_start(
+                    anchored_path, self._planning_start_pose
+                )
             anchored_path, goal_adjustment = anchor_path_goal(
-                result.path, self._last_goal_pose
+                anchored_path, self._last_goal_pose
             )
             raw_path, removed_duplicates = canonicalize_planner_path(
                 anchored_path
@@ -751,6 +782,11 @@ class PathComparisonNode(Node):
             self.get_logger().info(
                 f'Anchored planner endpoint to the requested RViz goal '
                 f'({goal_adjustment:.3f} m grid offset).'
+            )
+        if start_adjustment > 1.0e-9:
+            self.get_logger().info(
+                f'Anchored planner start to the current robot pose '
+                f'({start_adjustment:.3f} m grid offset).'
             )
         self._publish_path_and_metrics(
             'raw', raw_path, duration_seconds(result.planning_time), 'planning'
@@ -867,8 +903,13 @@ class PathComparisonNode(Node):
             self._send_next_smoother(generation, smoother_generation)
             return
         try:
+            anchored_path = result.path
+            if self._planning_start_pose is not None:
+                anchored_path, _ = anchor_path_start(
+                    anchored_path, self._planning_start_pose
+                )
             anchored_path, _ = anchor_path_goal(
-                result.path, self._last_goal_pose
+                anchored_path, self._last_goal_pose
             )
         except ValueError as error:
             self.get_logger().error(f'{method}: invalid smoothed endpoint: {error}')

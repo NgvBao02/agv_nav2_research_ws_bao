@@ -820,13 +820,21 @@ JerkLimitedSpeedResult update_jerk_limited_speed(
     std::min(
       parameters.max_linear_acceleration,
       previous_acceleration + jerk_step));
-  const double shaped_speed = std::max(
-    0.0, previous_speed + command_acceleration * time_step);
+  const double unconstrained_speed =
+    previous_speed + command_acceleration * time_step;
+  const double shaped_speed = std::max(0.0, unconstrained_speed);
 
   JerkLimitedSpeedResult result;
   result.speed = std::min(shaped_speed, target_speed);
-  const bool instantaneous_safety_override =
+  const bool upper_cap_override =
     target_speed + kEpsilon < shaped_speed;
+  // Speed magnitude cannot cross below zero. Near a stop, an earlier hard
+  // cap can leave the S-curve with negative acceleration but insufficient
+  // speed to unwind it at the nominal jerk. Report that viability-boundary
+  // clip as a hard override instead of misclassifying its jerk as nominal.
+  const bool zero_speed_override = unconstrained_speed < -kEpsilon;
+  const bool instantaneous_safety_override =
+    upper_cap_override || zero_speed_override;
   result.safety_override =
     instantaneous_safety_override || recovering_from_safety_override;
   result.feedback_limited = feedback_limited;
@@ -836,7 +844,10 @@ JerkLimitedSpeedResult update_jerk_limited_speed(
   // An instantaneous lower safety cap may intentionally violate the nominal
   // jerk bound.  Keep the reported result truthful, but do not feed an
   // out-of-range acceleration back into the next S-curve update.
-  state.acceleration = std::clamp(
+  state.acceleration =
+    result.speed <= kEpsilon ?
+    0.0 :
+    std::clamp(
     result.acceleration,
     -parameters.max_linear_deceleration,
     parameters.max_linear_acceleration);

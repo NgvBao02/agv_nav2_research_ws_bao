@@ -15,6 +15,7 @@
 #ifndef ADAPTIVE_PIVOT_G2_CONTROLLER__MANEUVER_PATH_HPP_
 #define ADAPTIVE_PIVOT_G2_CONTROLLER__MANEUVER_PATH_HPP_
 
+#include <optional>
 #include <vector>
 
 #include "geometry_msgs/msg/pose_stamped.hpp"
@@ -44,6 +45,18 @@ std::vector<ManeuverSegment> split_path_at_pivots(
 
 /// Select forward or reverse motion requiring at most a 90 degree turn.
 TerminalDriveGeometry shortest_terminal_drive(double bearing_error);
+
+/// Heading from the first path point toward an arc-length preview point.
+std::optional<double> preview_path_heading(
+  const nav_msgs::msg::Path & path,
+  double preview_distance);
+
+/// Maximum angular speed that can stop inside the remaining yaw error.
+double angular_braking_speed_limit(
+  double heading_error,
+  double yaw_tolerance,
+  double effective_angular_deceleration,
+  double maximum_angular_speed);
 
 }  // namespace adaptive_pivot_g2_controller
 

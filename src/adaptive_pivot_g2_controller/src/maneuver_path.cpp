@@ -14,7 +14,10 @@
 
 #include "adaptive_pivot_g2_controller/maneuver_path.hpp"
 
+#include <algorithm>
+#include <array>
 #include <cmath>
+#include <optional>
 #include <stdexcept>
 #include <vector>
 
@@ -56,6 +59,70 @@ TerminalDriveGeometry shortest_terminal_drive(double bearing_error)
       std::copysign(3.14159265358979323846, output.heading_error));
   }
   return output;
+}
+
+std::optional<double> preview_path_heading(
+  const nav_msgs::msg::Path & path,
+  double preview_distance)
+{
+  if (!std::isfinite(preview_distance) || preview_distance <= 0.0) {
+    throw std::invalid_argument(
+            "path-heading preview distance must be finite and positive");
+  }
+  if (path.poses.size() < 2U) {
+    return std::nullopt;
+  }
+  const auto & origin = path.poses.front().pose.position;
+  double accumulated_distance = 0.0;
+  for (std::size_t index = 1U; index < path.poses.size(); ++index) {
+    const auto & first = path.poses[index - 1U].pose.position;
+    const auto & last = path.poses[index].pose.position;
+    const double delta_x = last.x - first.x;
+    const double delta_y = last.y - first.y;
+    const double segment_length = std::hypot(delta_x, delta_y);
+    if (segment_length <= 1.0e-12) {
+      continue;
+    }
+    const double ratio = std::clamp(
+      (preview_distance - accumulated_distance) / segment_length,
+      0.0, 1.0);
+    const double target_x = first.x + ratio * delta_x;
+    const double target_y = first.y + ratio * delta_y;
+    if (accumulated_distance + segment_length >= preview_distance) {
+      return std::atan2(target_y - origin.y, target_x - origin.x);
+    }
+    accumulated_distance += segment_length;
+  }
+  const auto & endpoint = path.poses.back().pose.position;
+  if (std::hypot(endpoint.x - origin.x, endpoint.y - origin.y) <= 1.0e-12) {
+    return std::nullopt;
+  }
+  return std::atan2(endpoint.y - origin.y, endpoint.x - origin.x);
+}
+
+double angular_braking_speed_limit(
+  double heading_error,
+  double yaw_tolerance,
+  double effective_angular_deceleration,
+  double maximum_angular_speed)
+{
+  const std::array<double, 4> values = {
+    heading_error, yaw_tolerance, effective_angular_deceleration,
+    maximum_angular_speed};
+  if (!std::all_of(
+      values.begin(), values.end(),
+      [](double value) {return std::isfinite(value);}) ||
+    yaw_tolerance < 0.0 ||
+    effective_angular_deceleration <= 0.0 ||
+    maximum_angular_speed <= 0.0)
+  {
+    throw std::invalid_argument("angular braking inputs are invalid");
+  }
+  const double available_angle = std::max(
+    0.0, std::abs(heading_error) - yaw_tolerance);
+  return std::min(
+    maximum_angular_speed,
+    std::sqrt(2.0 * effective_angular_deceleration * available_angle));
 }
 
 std::vector<ManeuverSegment> split_path_at_pivots(

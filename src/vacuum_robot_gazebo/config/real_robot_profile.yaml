@@ -11,23 +11,103 @@ robot:
   # value must still be calibrated with repeated rotate-in-place trials.
   wheel_separation_m: 0.2548
 
+simulation_calibration:
+  # This is a Gazebo contact/odometry calibration, not the physical CAD track.
+  # Weighted least squares over two independent 2026-07-26 ground-truth runs
+  # gave 0.283385 m; runtime uses the rounded reproducible value below.
+  effective_wheel_separation_m: 0.2834
+  wheel_separation_multiplier: 1.1122448980
+  calibration_source: >-
+    Weighted least-squares fit of odometry yaw increments to Gazebo
+    ground-truth yaw increments on lower_left_diagonal and right_rack_detour.
+
 drive:
-  motor_model: GA25_encoder
+  motor_model: GA25_encoder_130rpm
+  motor_count: 2
+  rated_voltage_v: 12.0
+  rotation_direction: CW_CCW
+  gearbox_ratio: 45.0
+  armature_speed_rpm: 6000.0
   nominal_output_rpm: 130.0
-  theoretical_no_load_linear_speed_mps: 0.5786
-  motor_supply_voltage_v: null
+  no_load_output_speed_tolerance_percent: 10.0
+  no_load_current_per_motor_a: 0.060
+  rated_load_output_rpm: 100.0
+  rated_load_output_speed_tolerance_percent: 10.0
+  rated_load_current_per_motor_a: 0.300
+  rated_output_torque_kgf_cm: 1.0
+  rated_output_torque_nm: 0.0980665
+  stall_current_per_motor_a: 1.3
+  stall_output_torque_kgf_cm: 3.6
+  stall_output_torque_nm: 0.3530394
+  motor_body_length_m: 0.068
+  motor_body_diameter_m: 0.025
+  no_load_output_angular_speed_radps: 13.6135681656
+  rated_load_output_angular_speed_radps: 10.4719755120
+  theoretical_no_load_linear_speed_mps: 0.5785766470
+  theoretical_rated_load_linear_speed_mps: 0.4450589593
+  maximum_joint_velocity_radps: 13.6135681656
+  maximum_joint_effort_nm: 0.3530394
+  two_motor_no_load_current_a: 0.120
+  two_motor_rated_load_current_a: 0.600
+  two_motor_stall_current_a: 2.600
+  motor_supply_voltage_v: 12.0
   motor_driver_model: null
   controller_board: null
   control_rate_hz: 50.0
   command_timeout_s: 0.25
+  safety_warning: >-
+    Do not operate either motor under stalled or locked-rotor conditions.
   encoder:
-    location: null             # Physical encoder location is still unknown
+    # The supplied motor name says "encoder", but no resolution or decode
+    # convention was supplied. These values must remain unknown until the
+    # exact motor datasheet or a measured one-revolution count is available.
+    location: null
     pulses_per_revolution: null
-    gearbox_ratio: null
-    quadrature_decode: null    # x1, x2, or x4
-    encoder_ticks_per_rev: 1320.0
-    radians_per_tick: 0.0047599889
-    metres_per_tick: 0.0002022995269
+    quadrature_decode: null
+    encoder_ticks_per_rev: null
+    radians_per_tick: null
+    metres_per_tick: null
+
+power:
+  topology: 4S4P
+  total_cell_count: 16
+  series_cell_count: 4
+  parallel_cell_count: 4
+  cell:
+    type: 18650
+    capacity_mah: 2600.0
+    capacity_ah: 2.6
+    discharge_rate_c: 5.0
+    stated_discharge_current_a: 13.0
+    # These voltage values are a standard Li-ion assumption, not values
+    # supplied with the cell. Verify the exact purchased cell datasheet.
+    chemistry_assumption: Li-ion
+    nominal_voltage_assumption_v: 3.7
+    full_voltage_assumption_v: 4.2
+    cutoff_voltage_v: null
+  pack:
+    nominal_voltage_assumption_v: 14.8
+    full_voltage_assumption_v: 16.8
+    capacity_ah: 10.4
+    nominal_energy_assumption_wh: 153.92
+    theoretical_continuous_discharge_current_a: 52.0
+  motor_rail:
+    regulated_voltage_v: 12.0
+    regulator_required: true
+    reason: >-
+      A full 4S Li-ion pack is 16.8 V, which exceeds the GA25 rated 12 V.
+      Use a suitably rated 12 V buck regulator before the motor driver.
+  protection:
+    bms_model: null
+    fuse_rating_a: null
+    regulator_model: null
+    regulator_continuous_current_rating_a: null
+    motor_driver_continuous_current_per_channel_a: null
+    motor_driver_peak_current_per_channel_a: null
+    warning: >-
+      The 52 A value is only the ideal cell-array limit. The safe vehicle
+      limit is the lowest verified rating among cells, BMS, fuse, wiring,
+      connectors, regulator, motor driver, thermal design, and PCB traces.
 
 lidar:
   model: RPLIDAR_A1M8

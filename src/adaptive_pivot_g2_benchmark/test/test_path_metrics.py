@@ -36,6 +36,7 @@ from adaptive_pivot_g2_benchmark.execution_matrix import (
 )
 from adaptive_pivot_g2_benchmark.path_contract import (
     anchor_path_goal,
+    anchor_path_start,
     canonicalize_planner_path,
 )
 from geometry_msgs.msg import PoseStamped
@@ -168,6 +169,28 @@ class TestPathMetrics(unittest.TestCase):
         self.assertEqual(path.poses[-1].pose.position.x, 0.975)
         with self.assertRaises(ValueError):
             anchor_path_goal(path, self._pose(2.0, 2.0, 0.0))
+
+    def test_path_contract_anchors_grid_cell_start_to_requested_pose(self):
+        path = Path()
+        path.header.frame_id = 'map'
+        path.poses = [
+            self._pose(0.025, -0.025, 0.3),
+            self._pose(1.0, 1.0, 0.8),
+        ]
+        start = self._pose(0.0, 0.0, 0.1)
+        start.header.frame_id = 'map'
+
+        anchored, adjustment = anchor_path_start(path, start)
+
+        self.assertAlmostEqual(adjustment, math.hypot(0.025, 0.025))
+        self.assertEqual(anchored.poses[0].pose.position.x, 0.0)
+        self.assertEqual(anchored.poses[0].pose.position.y, 0.0)
+        self.assertAlmostEqual(
+            anchored.poses[0].pose.orientation.z, math.sin(0.05)
+        )
+        self.assertEqual(path.poses[0].pose.position.x, 0.025)
+        with self.assertRaises(ValueError):
+            anchor_path_start(path, self._pose(-2.0, -2.0, 0.0))
 
     def test_planner_selector_accepts_only_configured_exact_ids(self):
         for planner_id in PLANNER_IDS:

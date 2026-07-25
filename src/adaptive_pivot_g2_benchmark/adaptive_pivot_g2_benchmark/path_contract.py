@@ -3,10 +3,51 @@
 
 """Common geometric input contract for planner and smoother comparisons."""
 
-from copy import deepcopy
 import math
+from copy import deepcopy
 
 from nav_msgs.msg import Path
+
+
+def anchor_path_start(
+    path: Path,
+    start_pose,
+    maximum_adjustment: float = 0.08,
+):
+    """
+    Restore the exact requested start after grid-based planning/smoothing.
+
+    A planner may return the centre of the start grid cell instead of the
+    continuous robot pose. Starting FollowPath from that shifted point creates
+    an artificial cross-track error before the controller has moved.
+    """
+    if not math.isfinite(maximum_adjustment) or maximum_adjustment < 0.0:
+        raise ValueError(
+            'maximum start adjustment must be finite and non-negative'
+        )
+    if len(path.poses) < 2:
+        raise ValueError('cannot anchor a path with fewer than two poses')
+    path_frame = path.header.frame_id or path.poses[0].header.frame_id
+    start_frame = start_pose.header.frame_id
+    if path_frame and start_frame and path_frame != start_frame:
+        raise ValueError(
+            f'path/start frame mismatch: {path_frame!r} != {start_frame!r}'
+        )
+    endpoint = path.poses[0].pose.position
+    start = start_pose.pose.position
+    adjustment = math.hypot(start.x - endpoint.x, start.y - endpoint.y)
+    if not math.isfinite(adjustment):
+        raise ValueError('path start adjustment is non-finite')
+    if adjustment > maximum_adjustment:
+        raise ValueError(
+            f'planner start is {adjustment:.3f} m from requested start '
+            f'(limit {maximum_adjustment:.3f} m)'
+        )
+    anchored = deepcopy(path)
+    anchored.poses[0].pose = deepcopy(start_pose.pose)
+    if start_frame:
+        anchored.poses[0].header.frame_id = start_frame
+    return anchored, adjustment
 
 
 def anchor_path_goal(

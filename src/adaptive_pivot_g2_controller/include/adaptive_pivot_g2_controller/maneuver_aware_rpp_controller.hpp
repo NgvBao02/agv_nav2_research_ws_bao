@@ -95,6 +95,9 @@ private:
     const geometry_msgs::msg::PoseStamped & pose,
     const geometry_msgs::msg::Twist & velocity,
     double heading_error);
+  std::optional<geometry_msgs::msg::TwistStamped> initial_alignment_command(
+    const geometry_msgs::msg::PoseStamped & pose,
+    const geometry_msgs::msg::Twist & velocity);
   geometry_msgs::msg::TwistStamped terminal_pose_command(
     const geometry_msgs::msg::PoseStamped & pose,
     const geometry_msgs::msg::Twist & velocity,
@@ -127,6 +130,9 @@ private:
   std::size_t projection_hint_segment_{0};
   double projection_hint_distance_{0.0};
   bool rotating_at_pivot_{false};
+  bool initial_alignment_pending_{false};
+  bool initial_alignment_active_{false};
+  std::optional<geometry_msgs::msg::PoseStamped> initial_alignment_target_;
   bool terminal_maneuver_active_{false};
   bool terminal_aligning_goal_{false};
   bool terminal_driving_to_goal_{false};
@@ -150,8 +156,12 @@ private:
   double stopped_angular_velocity_{0.02};
   double pivot_angular_speed_{0.425};
   double pivot_angular_acceleration_{0.80};
+  double pivot_effective_angular_deceleration_{0.18};
   double pivot_heading_gain_{1.8};
   double control_period_{0.10};
+  double initial_alignment_preview_distance_{0.30};
+  double initial_alignment_enter_angle_{0.15};
+  double initial_alignment_exit_angle_{0.035};
   double terminal_position_tolerance_{0.15};
   double terminal_hold_position_tolerance_{0.015};
   double terminal_hold_entry_margin_{0.005};

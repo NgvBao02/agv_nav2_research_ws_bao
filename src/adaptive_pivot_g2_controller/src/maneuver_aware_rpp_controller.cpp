@@ -108,10 +108,18 @@ void ManeuverAwareRPPController::configure(
     node, prefix + "pivot_max_angular_speed", 0.425);
   pivot_angular_acceleration_ = declare_and_get<double>(
     node, prefix + "pivot_max_angular_acceleration", 0.80);
+  pivot_effective_angular_deceleration_ = declare_and_get<double>(
+    node, prefix + "pivot_effective_angular_deceleration", 0.18);
   pivot_heading_gain_ = declare_and_get<double>(
     node, prefix + "pivot_heading_gain", 1.8);
   control_period_ = declare_and_get<double>(
     node, prefix + "pivot_control_period", 0.10);
+  initial_alignment_preview_distance_ = declare_and_get<double>(
+    node, prefix + "initial_alignment_preview_distance", 0.30);
+  initial_alignment_enter_angle_ = declare_and_get<double>(
+    node, prefix + "initial_alignment_enter_angle", 0.15);
+  initial_alignment_exit_angle_ = declare_and_get<double>(
+    node, prefix + "initial_alignment_exit_angle", 0.035);
   terminal_position_tolerance_ = declare_and_get<double>(
     node, prefix + "terminal_position_tolerance", 0.15);
   terminal_hold_position_tolerance_ = declare_and_get<double>(
@@ -190,7 +198,10 @@ void ManeuverAwareRPPController::configure(
   const double values[]{
     duplicate_position_tolerance_, minimum_pivot_angle_, pivot_position_tolerance_,
     pivot_yaw_tolerance_, stopped_linear_velocity_, stopped_angular_velocity_,
-    pivot_angular_speed_, pivot_angular_acceleration_, pivot_heading_gain_, control_period_,
+    pivot_angular_speed_, pivot_angular_acceleration_,
+    pivot_effective_angular_deceleration_, pivot_heading_gain_, control_period_,
+    initial_alignment_preview_distance_, initial_alignment_enter_angle_,
+    initial_alignment_exit_angle_,
     terminal_position_tolerance_, terminal_hold_position_tolerance_,
     terminal_hold_entry_margin_,
     terminal_release_position_tolerance_,
@@ -206,7 +217,14 @@ void ManeuverAwareRPPController::configure(
     pivot_position_tolerance_ <= 0.0 || pivot_yaw_tolerance_ <= 0.0 ||
     minimum_pivot_angle_ > 3.14159265358979323846 ||
     pivot_angular_speed_ <= 0.0 || pivot_angular_acceleration_ <= 0.0 ||
+    pivot_effective_angular_deceleration_ <= 0.0 ||
+    pivot_effective_angular_deceleration_ > pivot_angular_acceleration_ ||
     pivot_heading_gain_ <= 0.0 || control_period_ <= 0.0 ||
+    initial_alignment_preview_distance_ <= 0.0 ||
+    initial_alignment_enter_angle_ <= 0.0 ||
+    initial_alignment_enter_angle_ > 3.14159265358979323846 ||
+    initial_alignment_exit_angle_ <= 0.0 ||
+    initial_alignment_exit_angle_ >= initial_alignment_enter_angle_ ||
     terminal_position_tolerance_ <= 0.0 ||
     terminal_hold_position_tolerance_ >= terminal_position_tolerance_ ||
     terminal_hold_entry_margin_ <= 0.0 ||
@@ -296,6 +314,20 @@ void ManeuverAwareRPPController::setPlan(const nav_msgs::msg::Path & path)
   projection_hint_segment_ = 0;
   projection_hint_distance_ = 0.0;
   rotating_at_pivot_ = false;
+  initial_alignment_pending_ = false;
+  initial_alignment_active_ = false;
+  initial_alignment_target_.reset();
+  const auto initial_heading = preview_path_heading(
+    segments_.front().path, initial_alignment_preview_distance_);
+  if (initial_heading.has_value()) {
+    initial_alignment_target_ = segments_.front().path.poses.front();
+    auto & orientation = initial_alignment_target_->pose.orientation;
+    orientation.x = 0.0;
+    orientation.y = 0.0;
+    orientation.z = std::sin(0.5 * *initial_heading);
+    orientation.w = std::cos(0.5 * *initial_heading);
+    initial_alignment_pending_ = true;
+  }
   reset_pose_servo_state();
   linear_speed_state_ = JerkLimitedSpeedState();
   last_control_time_.reset();
@@ -612,8 +644,12 @@ geometry_msgs::msg::TwistStamped ManeuverAwareRPPController::stop_or_rotate(
     return command;
   }
 
-  double desired_angular_speed = std::clamp(
-    pivot_heading_gain_ * heading_error, -pivot_angular_speed_, pivot_angular_speed_);
+  const double braking_speed = angular_braking_speed_limit(
+    heading_error, pivot_yaw_tolerance_,
+    pivot_effective_angular_deceleration_, pivot_angular_speed_);
+  double desired_angular_speed = std::copysign(
+    std::min(pivot_heading_gain_ * std::abs(heading_error), braking_speed),
+    heading_error);
   if (std::abs(heading_error) <= pivot_yaw_tolerance_) {
     desired_angular_speed = 0.0;
   }
@@ -630,6 +666,64 @@ geometry_msgs::msg::TwistStamped ManeuverAwareRPPController::stop_or_rotate(
   {
     throw nav2_core::NoValidControl("Predicted pivot command is in collision");
   }
+  return command;
+}
+
+std::optional<geometry_msgs::msg::TwistStamped>
+ManeuverAwareRPPController::initial_alignment_command(
+  const geometry_msgs::msg::PoseStamped & pose,
+  const geometry_msgs::msg::Twist & velocity)
+{
+  if (!initial_alignment_pending_ ||
+    active_segment_ != 0U ||
+    !initial_alignment_target_.has_value())
+  {
+    return std::nullopt;
+  }
+  const auto target = transform_for_control(*initial_alignment_target_, pose);
+  const double heading_error = normalized_angle(
+    tf2::getYaw(target.pose.orientation) -
+    tf2::getYaw(pose.pose.orientation));
+  if (!initial_alignment_active_ &&
+    std::abs(heading_error) < initial_alignment_enter_angle_)
+  {
+    initial_alignment_pending_ = false;
+    initial_alignment_target_.reset();
+    return std::nullopt;
+  }
+  if (!initial_alignment_active_) {
+    initial_alignment_active_ = true;
+    RCLCPP_INFO(
+      logger_,
+      "Starting initial path alignment: error=%.3f rad, preview=%.3f m",
+      heading_error, initial_alignment_preview_distance_);
+  }
+
+  geometry_msgs::msg::TwistStamped command;
+  command.header = pose.header;
+  const bool settled =
+    std::abs(heading_error) <= initial_alignment_exit_angle_ &&
+    std::abs(velocity.linear.x) <= stopped_linear_velocity_ &&
+    std::abs(velocity.angular.z) <= stopped_angular_velocity_;
+  if (settled) {
+    initial_alignment_pending_ = false;
+    initial_alignment_active_ = false;
+    initial_alignment_target_.reset();
+    RCLCPP_INFO(
+      logger_, "Initial path alignment settled at %.4f rad error",
+      heading_error);
+  } else {
+    command = stop_or_rotate(pose, velocity, heading_error);
+  }
+  linear_speed_state_ = JerkLimitedSpeedState();
+  SpeedTelemetry telemetry;
+  telemetry.mode = "initial_alignment";
+  telemetry.controller_phase = settled ? "settled" : "aligning";
+  telemetry.limiting_constraint =
+    settled ? "initial_heading_settled" : "initial_path_heading";
+  telemetry.measured_speed = std::abs(velocity.linear.x);
+  telemetry.command_speed = std::abs(command.twist.linear.x);
+  publish_speed_telemetry(telemetry);
   return command;
 }
 
@@ -892,6 +986,10 @@ geometry_msgs::msg::TwistStamped ManeuverAwareRPPController::computeVelocityComm
   if (segments_.empty() || active_segment_ >= segments_.size()) {
     throw nav2_core::InvalidPath("Maneuver-aware RPP has no active path segment");
   }
+  const auto alignment = initial_alignment_command(pose, velocity);
+  if (alignment.has_value()) {
+    return *alignment;
+  }
   const auto & segment = segments_[active_segment_];
   const bool is_terminal_segment =
     active_segment_ + 1U == segments_.size() && !segment.ends_with_pivot;
@@ -1013,6 +1111,9 @@ void ManeuverAwareRPPController::reset()
   projection_hint_segment_ = 0;
   projection_hint_distance_ = 0.0;
   rotating_at_pivot_ = false;
+  initial_alignment_pending_ = false;
+  initial_alignment_active_ = false;
+  initial_alignment_target_.reset();
   reset_pose_servo_state();
   linear_speed_state_ = JerkLimitedSpeedState();
   last_control_time_.reset();

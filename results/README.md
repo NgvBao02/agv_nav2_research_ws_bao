@@ -11,11 +11,35 @@
   thí nghiệm nhưng không lặp lại trong summary.
 - `closed_loop_audit_20260725/`: các trace chẩn đoán dùng để tái hiện và sửa
   lỗi hướng terminal, projection nhảy nhánh và lệch sau đường cong.
-- `docs/rev_ecit_2026_assets/report_data_summary.json`: snapshot số liệu đã
-  dùng để sinh bài báo và phụ lục.
+- `tools/generate_full_algorithm_tutorial_report.py` tự tổng hợp trực tiếp bảy
+  CSV trên; repo không giữ thêm snapshot JSON trùng lặp chỉ để sinh báo cáo.
 
 Phần chạy kín là thiết kế phân tầng, không phải toàn bộ tích Descartes 7 map ×
 5 planner × 8 smoother × 3 tốc độ. Báo cáo phải giữ rõ giới hạn này.
+
+## Audit controller và động học ngày 26/07/2026
+
+`current_full_audit_20260726/` là dữ liệu Gazebo ground truth của phiên bản
+hiện tại sau khi neo start/goal liên tục, căn hướng theo path sau planning,
+hiệu chuẩn wheel separation hiệu dụng, thêm bao phanh góc và sửa phân loại
+jerk tại biên vận tốc bằng 0.
+
+- Bảy file `*_final.json.gz` tương ứng bảy môi trường đều có
+  `success=true`, `physically_settled=true`; jerk danh nghĩa cực đại không vượt
+  0,90 m/s³.
+- `right_rack_detour_pivot_g2_baseline.json.gz` và
+  `lower_left_diagonal_pivot_g2_baseline.json.gz` là hai mốc trước sửa dùng cho
+  bảng before/after.
+- `narrow_aisles_pivot_g2_optimized.json.gz` là mốc ngay trước khi thêm bao phanh
+  góc; nó được giữ để tái lập thời gian căn hướng 209→93 mẫu.
+- Các file được nén gzip lossless; bộ tạo báo cáo đọc trực tiếp, không cần giải
+  nén ra repo.
+- Các trace tối ưu trung gian không được báo cáo sử dụng đã bị xóa, tránh trộn
+  chúng với kết quả cuối.
+
+Ma trận 42 trial ở ngày 25/07 dùng để so sánh tương đối các smoother trên cùng
+phiên bản khi đó. Bảy trial ngày 26/07 xác nhận controller hiện tại trên từng
+map; không được ghép hai tầng thành một ma trận đầy đủ sau hiệu chuẩn.
 
 ## Pilot ngày 23/07/2026
 
