@@ -176,6 +176,8 @@ colcon test-result --verbose
 
 ## Tài liệu
 
+- [Báo cáo toàn diện cho người mới: từ ROS 2, robot vi sai đến Adaptive Hybrid Pivot–G2 (PDF)](docs/BAO_CAO_TOAN_DIEN_ADAPTIVE_HYBRID_PIVOT_G2.pdf)
+- [Bản Word có thể chỉnh sửa của báo cáo toàn diện](docs/BAO_CAO_TOAN_DIEN_ADAPTIVE_HYBRID_PIVOT_G2.docx)
 - [Luồng ROS 2/Gazebo và các giới hạn hiện tại](docs/ROS2_GAZEBO_PIPELINE.md)
 - [Kiểm tra chi tiết URDF/SDF và hình học CAD](docs/URDF_VALIDATION.md)
 - [Kiến trúc tích hợp GA25 encoder, A1M8 và BNO055](docs/HARDWARE_INTEGRATION.md)

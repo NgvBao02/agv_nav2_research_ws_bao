@@ -19,7 +19,7 @@ from docx import Document
 from docx.enum.section import WD_SECTION
 from docx.enum.style import WD_STYLE_TYPE
 from docx.enum.table import WD_CELL_VERTICAL_ALIGNMENT, WD_TABLE_ALIGNMENT
-from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_BREAK
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.shared import Inches, Mm, Pt
@@ -38,6 +38,13 @@ def set_cell_text_size(cell, size):
 
 def set_cell_shading(cell, fill):
     properties = cell._tc.get_or_add_tcPr()
+    shading = OxmlElement("w:shd")
+    shading.set(qn("w:fill"), fill)
+    properties.append(shading)
+
+
+def set_paragraph_shading(paragraph, fill):
+    properties = paragraph._p.get_or_add_pPr()
     shading = OxmlElement("w:shd")
     shading.set(qn("w:fill"), fill)
     properties.append(shading)
@@ -133,6 +140,9 @@ def configure_styles(document, paper):
 
     for style_name, size, alignment in (
         ("Report Title", 14 if paper else 18, WD_ALIGN_PARAGRAPH.CENTER),
+        ("Report Subtitle", 10 if paper else 12, WD_ALIGN_PARAGRAPH.CENTER),
+        ("Report Meta", 8 if paper else 9, WD_ALIGN_PARAGRAPH.CENTER),
+        ("Report Callout", 9 if paper else 10, WD_ALIGN_PARAGRAPH.LEFT),
         ("Report Authors", 10 if paper else 10, WD_ALIGN_PARAGRAPH.CENTER),
         ("Report Heading 1", 10 if paper else 13, WD_ALIGN_PARAGRAPH.CENTER),
         ("Report Heading 2", 10 if paper else 11, WD_ALIGN_PARAGRAPH.LEFT),
@@ -249,9 +259,17 @@ def add_table(document, element, paper):
 
 
 def add_list(document, element, ordered):
-    style = "List Number" if ordered else "List Bullet"
-    for item in element.find_all("li", recursive=False):
-        add_text_element(document, item, list_style=style)
+    # Word/LibreOffice may continue the same built-in list numbering across
+    # unrelated <ol> elements.  Emit the marker explicitly so every HTML list
+    # restarts deterministically and the PDF matches the source document.
+    start = int(element.get("start", 1)) if ordered else 1
+    for offset, item in enumerate(element.find_all("li", recursive=False)):
+        paragraph = document.add_paragraph(style=document.styles["Normal"])
+        paragraph.paragraph_format.left_indent = Mm(6)
+        paragraph.paragraph_format.first_line_indent = Mm(-4)
+        marker = f"{start + offset}. " if ordered else "• "
+        paragraph.add_run(marker)
+        add_inline(paragraph, item)
 
 
 def add_children(document, container, base_directory, paper):
@@ -268,6 +286,10 @@ def add_children(document, container, base_directory, paper):
             add_text_element(document, element, style="Report Heading 1")
         elif element.name == "h3":
             add_text_element(document, element, style="Report Heading 2")
+        elif element.name == "h4":
+            paragraph = add_text_element(document, element)
+            paragraph.runs[0].bold = True
+            paragraph.paragraph_format.keep_with_next = True
         elif element.name == "p":
             style = "Report References" if in_references else None
             add_text_element(document, element, style=style)
@@ -275,6 +297,19 @@ def add_children(document, container, base_directory, paper):
             classes = element.get("class") or []
             if "title" in classes:
                 add_text_element(document, element, style="Report Title")
+            elif "subtitle" in classes:
+                add_text_element(document, element, style="Report Subtitle")
+            elif "meta" in classes:
+                add_text_element(document, element, style="Report Meta")
+            elif "mine" in classes:
+                paragraph = add_text_element(
+                    document, element, style="Report Callout"
+                )
+                paragraph.paragraph_format.left_indent = Mm(5)
+                paragraph.paragraph_format.right_indent = Mm(5)
+                paragraph.paragraph_format.space_before = Pt(4)
+                paragraph.paragraph_format.space_after = Pt(4)
+                set_paragraph_shading(paragraph, "E8F1FB")
             elif "authors" in classes:
                 add_text_element(document, element, style="Report Authors")
             elif "abstract" in classes:
@@ -283,6 +318,9 @@ def add_children(document, container, base_directory, paper):
                 paragraph.paragraph_format.right_indent = Mm(4)
             elif "eq" in classes:
                 add_text_element(document, element, style="Report Equation")
+            elif "page-break" in classes:
+                paragraph = document.add_paragraph()
+                paragraph.add_run().add_break(WD_BREAK.PAGE)
             else:
                 add_children(document, element, base_directory, paper)
         elif element.name == "figure":
