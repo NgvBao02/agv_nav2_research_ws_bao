@@ -7,7 +7,7 @@
 	<meta name="author" content="Phạm Hải Linh"/>
 	<meta name="created" content="2013-12-23T23:15:00"/>
 	<meta name="changed" content="2013-12-23T23:15:00"/>
-	<meta name="classification" content="Giải thích từ nền tảng đến thuật toán, ROS 2/Nav2, Gazebo, GA25, nguồn 4S4P và kết quả kiểm chứng ngày 26/07/2026"/>
+	<meta name="classification" content="Giải thích từ nền tảng đến thuật toán, ROS 2/Nav2, Gazebo, GA25, nguồn 4S4P và kết quả kiểm chứng đến ngày 27/07/2026"/>
 	<meta name="description" content="Bản mở rộng trực tiếp từ tài liệu gốc 53 trang; không phải conference paper và không phải supplement."/>
 	<meta name="keywords" content="Adaptive, Hybrid, Pivot-G2, ROS, 2, Nav2, Gazebo, differential, drive, GA25, 4S4P, path, smoothing"/>
 	<meta name="AppVersion" content="14.0000"/>
@@ -24,6 +24,10 @@
 		h2.western { font-family: "Calibri", serif; font-size: 14pt; font-weight: bold }
 		h2.cjk { font-family: "ＭＳ ゴシック"; font-size: 14pt; font-weight: bold }
 		h2.ctl { font-family: ; font-size: 13pt; font-weight: bold }
+		h3 { color: #000000; line-height: 128%; text-align: justify; page-break-inside: avoid; orphans: 2; widows: 2; text-indent: 0.75cm; margin-top: 0.35cm; margin-bottom: 0.21cm; direction: ltr; background: transparent; page-break-after: avoid }
+		h3.western { font-family: "Calibri", serif; font-size: 12pt; font-weight: bold }
+		h3.cjk { font-family: "ＭＳ ゴシック"; font-size: 12pt; font-weight: bold }
+		h3.ctl { font-family: ; font-weight: bold }
 	</style>
 </head>
 <body lang="en-US" text="#000000" link="#000080" vlink="#800000" dir="ltr"><p class="western" align="center" style="margin-top: 2.82cm; margin-bottom: 0.18cm">
@@ -52,12 +56,12 @@ lại toàn bộ quá trình suy luận để sau này nhìn lại
 vẫn hiểu tại sao từng thành phần có mặt trong hệ
 thống.</span></font></font></p>
 <p class="western" style="margin-bottom: 0.18cm">Bản đang đọc
-là bản rà soát toàn diện ngày 26/07/2026. Toàn bộ nội
-dung của bản gốc được giữ nguyên để không làm mất
-mạch suy luận đã hình thành trong quá trình nghiên cứu.
-Những phần được bổ sung tập trung vào bốn vấn đề
-đã bộc lộ khi quan sát đồng thời RViz2, Gazebo và dữ
-liệu trace: neo chính xác start–goal của path, xác định
+là bản rà soát toàn diện đến ngày 27/07/2026. Toàn bộ
+nội dung của bản gốc được giữ nguyên để không làm
+mất mạch suy luận đã hình thành trong quá trình nghiên
+cứu. Những phần được bổ sung tập trung vào bốn vấn
+đề đã bộc lộ khi quan sát đồng thời RViz2, Gazebo và
+dữ liệu trace: neo chính xác start–goal của path, xác định
 hướng xuất phát, phanh khi quay, và hợp đồng phần cứng
 của hai động cơ GA25 cùng bộ nguồn 4S4P. Kết quả cũ
 ngày 25/07 vẫn được giữ như dấu vết phát triển; kết
@@ -1232,45 +1236,199 @@ họa lý do kiểm tra tâm robot là chưa đủ và mọi shortcut
 hoặc transition phải kiểm tra swept footprint.</font></font></i></font></p>
 <h2 class="western" style="text-indent: 0cm"><font color="#000000"><font face="Times New Roman, serif">6.9
 Cổng an toàn Adaptive Hybrid</font></font></h2>
-<p class="western" style="margin-bottom: 0.18cm"><font color="#000000"><font face="Times New Roman, serif"><span style="font-style: normal">Pure
-Pivot–G² có thể cho Eκ rất thấp nhưng điều đó chưa
-bảo đảm controller thực hiện tốt trong một hành lang
-sát vật cản. Trong một số trường hợp Nav2 Simple tạo
-ra clearance tốt hơn hoặc phù hợp hơn với dự báo
-collision của RPP. Vì vậy phương pháp hoàn chỉnh dùng
-Simple làm nhánh bảo thủ và chỉ nhận Pivot–G² khi có
-lợi ích an toàn đủ rõ hoặc khi Simple không an toàn.</span></font></font></p>
-<p class="western" style="margin-bottom: 0.18cm"><font color="#000000"><font face="Times New Roman, serif"><span style="font-style: normal">Hai
-gate hiện tại so sánh chênh lệch cost và ngân sách năng
-lượng độ cong. Nếu cả Simple và Pivot an toàn nhưng
-Pivot không tạo đủ safety gain, hệ thống giữ Simple. Nếu
-Simple không an toàn còn Pivot an toàn, hệ thống chọn
-Pivot. Nếu cả hai không an toàn nhưng Raw vẫn an toàn, hệ
-thống fallback Raw. Nếu Raw, Simple và Pivot đều không an
-toàn, smoother trả fail thay vì xuất một path nguy hiểm.</span></font></font></p>
+<p class="western" style="margin-bottom: 0.18cm">Pure Pivot–G² có
+thể cho Eκ thấp nhưng có thể phát sinh quay tại chỗ;
+Nav2 Simple đôi khi giữ peak cost tốt hơn. Vì vậy Hybrid
+không lấy tên thuật toán làm prior. Hai candidate được
+đánh giá bằng cùng swept footprint, peak cost, maneuver effort
+và chiều dài. Chỉ khi mọi metric đã công bố hòa nhau,
+hệ thống mới dùng nhãn Simple làm tie-break ổn định để
+tránh output dao động.</p>
+<p class="western" style="margin-bottom: 0.18cm">Luật mới là
+lexicographic hai chiều. Nếu chỉ một candidate an toàn thì
+chọn candidate đó. Nếu cả hai an toàn, bên có peak cost
+thấp hơn ít nhất 20 đơn vị thắng, bất kể đó là
+Simple hay Pivot. Trong vùng chết cost, bên có maneuver effort
+thấp hơn ít nhất 5% thắng; sau đó mới xét cost dư,
+chiều dài và tie-break ổn định. Raw chỉ là fallback khi
+cả hai candidate làm mượt đều không an toàn.</p>
 <p align="center" style="line-height: 115%; text-indent: 0cm; margin-top: 0.11cm; margin-bottom: 0.18cm">
-<font face="Cambria Math, serif"><font color="#000000"><font face="Times New Roman, serif">Δcost
-= costSimple - costPivot ≥ 20</font></font></font></p>
-<p class="western" style="text-indent: 0cm; margin-bottom: 0.07cm"><font color="#000000"><font face="Times New Roman, serif"><b>Trong
-đó: </b></font></font><font color="#000000"><font face="Times New Roman, serif">Δcost
-là lợi ích proximity của Pivot so với Simple; 20 là ngưỡng
-safety gain.</font></font></p>
-<p class="western"><font color="#000000"><font face="Times New Roman, serif"><b>Ý
-nghĩa và lý do sử dụng: </b></font></font><font color="#000000"><font face="Times New Roman, serif">Hybrid
-chỉ chọn Pivot khi nhánh đó cải thiện khoảng gần vật
-cản đủ rõ, tránh đổi đường chỉ vì một khác biệt
-cost nhỏ.</font></font></p>
+<font face="Cambria Math, serif">|costSimple − costPivot| ≥ 20 ⇒
+chọn candidate có peak cost thấp hơn</font></p>
+<p class="western" style="text-indent: 0cm; margin-bottom: 0.07cm">Ngưỡng
+20 bây giờ là deadband đối xứng, không còn là điều
+kiện một chiều buộc riêng Pivot phải chứng minh lợi
+ích.</p>
+<p class="western">Trong vùng |Δcost| &lt; 20, thuật toán so
+sánh cùng một effort cho cả hai nhánh. Sai khác tương đối
+phải đạt 5% để tránh đổi candidate vì nhiễu số rất
+nhỏ.</p>
 <p align="center" style="line-height: 115%; text-indent: 0cm; margin-top: 0.11cm; margin-bottom: 0.18cm">
-<font face="Cambria Math, serif"><font color="#000000"><font face="Times New Roman, serif">EPivot
-≤ 2(ESimple + 0,25)</font></font></font></p>
-<p class="western" style="text-indent: 0cm; margin-bottom: 0.07cm"><font color="#000000"><font face="Times New Roman, serif"><b>Trong
-đó: </b></font></font><font color="#000000"><font face="Times New Roman, serif">EPivot
-và ESimple là năng lượng độ cong của hai nhánh; 0,25 là
-hệ số ổn định; 2 là ngân sách cho phép.</font></font></p>
-<p class="western"><font color="#000000"><font face="Times New Roman, serif"><b>Ý
-nghĩa và lý do sử dụng: </b></font></font><font color="#000000"><font face="Times New Roman, serif">Điều
-kiện ngăn Pivot đạt safety gain nhưng làm độ cong xấu
-quá mức so với Simple.</font></font></p>
+<font face="Cambria Math, serif">Em = ∫κ²ds + Σ|Δψpivot| / L;
+L = 0,2548 m</font></p>
+<p class="western" style="text-indent: 0cm; margin-bottom: 0.07cm">Em
+là maneuver effort áp dụng giống nhau cho Simple và Pivot; số
+hạng đầu đo độ cong khi tịnh tiến, số hạng sau quy
+đổi toàn bộ góc quay tại chỗ theo khoảng cách tâm bánh
+L. Vì vậy Pivot không còn được miễn chi phí quay.</p>
+<p class="western">Simple và Pivot mỗi nhánh nhận đúng 50%
+max_time. Cổng nội bộ Pivot và bộ đánh giá Hybrid cùng
+yêu cầu center cost tối đa 252, tức nằm dưới
+INSCRIBED_INFLATED_OBSTACLE=253; lethal, unknown hoặc
+swept-footprint collision đều bị loại.</p>
+<h3 class="western">6.9.1 Audit trung lập bằng Gazebo/Nav2 ngày
+27/07/2026</h3>
+<p class="western" style="margin-bottom: 0.18cm">Audit ghép cặp
+dùng 320 hàng trên narrow_aisles và giữ đúng 320/320
+raw_path_sha256 giữa hai phiên bản. Cả trước và sau đều
+thành công 320/320; riêng adaptive_hybrid đổi từ Simple/Pivot
+= 38/2 sang 29/11. Đây không phải ép tỷ lệ 50/50: mỗi
+nhánh thắng bằng cùng metric.</p>
+<table width="616" cellpadding="7" cellspacing="0">
+	<col width="108"/>
+	<col width="109"/>
+	<col width="109"/>
+	<col width="109"/>
+	<col width="108"/>
+	<thead>
+		<tr>
+			<td width="108" bgcolor="#d9e2f3" style="background: #d9e2f3; border: 1px solid #000000; padding: 0cm 0.19cm"><p class="western" align="left" style="orphans: 2; widows: 2">
+				<font face="Times New Roman, serif"><font size="1" style="font-size: 8pt"><b>Phiên
+				bản</b></font></font></p>
+			</td>
+			<td width="109" bgcolor="#d9e2f3" style="background: #d9e2f3; border: 1px solid #000000; padding: 0cm 0.19cm"><p class="western" align="left" style="orphans: 2; widows: 2">
+				<font face="Times New Roman, serif"><font size="1" style="font-size: 8pt"><b>Simple/Pivot</b></font></font></p>
+			</td>
+			<td width="109" bgcolor="#d9e2f3" style="background: #d9e2f3; border: 1px solid #000000; padding: 0cm 0.19cm"><p class="western" align="left" style="orphans: 2; widows: 2">
+				<font face="Times New Roman, serif"><font size="1" style="font-size: 8pt"><b>Eκ
+				TB (1/m)</b></font></font></p>
+			</td>
+			<td width="109" bgcolor="#d9e2f3" style="background: #d9e2f3; border: 1px solid #000000; padding: 0cm 0.19cm"><p class="western" align="left" style="orphans: 2; widows: 2">
+				<font face="Times New Roman, serif"><font size="1" style="font-size: 8pt"><b>Clearance
+				min TB (m)</b></font></font></p>
+			</td>
+			<td width="108" bgcolor="#d9e2f3" style="background: #d9e2f3; border: 1px solid #000000; padding: 0cm 0.19cm"><p class="western" align="left" style="orphans: 2; widows: 2">
+				<font face="Times New Roman, serif"><font size="1" style="font-size: 8pt"><b>Runtime
+				TB (ms)</b></font></font></p>
+			</td>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td width="108" style="border: 1px solid #000000; padding: 0cm 0.19cm"><p class="western" align="left" style="orphans: 2; widows: 2">
+				<font face="Times New Roman, serif"><font size="1" style="font-size: 8pt">Trước:
+				gate một chiều</font></font></p>
+			</td>
+			<td width="109" style="border: 1px solid #000000; padding: 0cm 0.19cm"><p class="western" align="left" style="orphans: 2; widows: 2">
+				<font face="Times New Roman, serif"><font size="1" style="font-size: 8pt">38/2</font></font></p>
+			</td>
+			<td width="109" style="border: 1px solid #000000; padding: 0cm 0.19cm"><p class="western" align="left" style="orphans: 2; widows: 2">
+				<font face="Times New Roman, serif"><font size="1" style="font-size: 8pt">34,683</font></font></p>
+			</td>
+			<td width="109" style="border: 1px solid #000000; padding: 0cm 0.19cm"><p class="western" align="left" style="orphans: 2; widows: 2">
+				<font face="Times New Roman, serif"><font size="1" style="font-size: 8pt">0,292</font></font></p>
+			</td>
+			<td width="108" style="border: 1px solid #000000; padding: 0cm 0.19cm"><p class="western" align="left" style="orphans: 2; widows: 2">
+				<font face="Times New Roman, serif"><font size="1" style="font-size: 8pt">9,975</font></font></p>
+			</td>
+		</tr>
+		<tr>
+			<td width="108" style="border: 1px solid #000000; padding: 0cm 0.19cm"><p class="western" align="left" style="orphans: 2; widows: 2">
+				<font face="Times New Roman, serif"><font size="1" style="font-size: 8pt">Sau:
+				selector đối xứng</font></font></p>
+			</td>
+			<td width="109" style="border: 1px solid #000000; padding: 0cm 0.19cm"><p class="western" align="left" style="orphans: 2; widows: 2">
+				<font face="Times New Roman, serif"><font size="1" style="font-size: 8pt">29/11</font></font></p>
+			</td>
+			<td width="109" style="border: 1px solid #000000; padding: 0cm 0.19cm"><p class="western" align="left" style="orphans: 2; widows: 2">
+				<font face="Times New Roman, serif"><font size="1" style="font-size: 8pt">33,495</font></font></p>
+			</td>
+			<td width="109" style="border: 1px solid #000000; padding: 0cm 0.19cm"><p class="western" align="left" style="orphans: 2; widows: 2">
+				<font face="Times New Roman, serif"><font size="1" style="font-size: 8pt">0,293</font></font></p>
+			</td>
+			<td width="108" style="border: 1px solid #000000; padding: 0cm 0.19cm"><p class="western" align="left" style="orphans: 2; widows: 2">
+				<font face="Times New Roman, serif"><font size="1" style="font-size: 8pt">10,350</font></font></p>
+			</td>
+		</tr>
+	</tbody>
+</table>
+<p class="western" style="margin-bottom: 0.18cm">Closed-loop dùng
+NavFnDijkstra/bottom_alternating_cross trên đúng raw hash. Gate cũ
+chọn đường Simple; gate mới chọn đúng đường Pivot. Cả
+hai lượt Hybrid đều tới đích, settled và không có can
+thiệp collision monitor.</p>
+<table width="616" cellpadding="7" cellspacing="0">
+	<col width="108"/>
+	<col width="109"/>
+	<col width="109"/>
+	<col width="109"/>
+	<col width="108"/>
+	<thead>
+		<tr>
+			<td width="108" bgcolor="#d9e2f3" style="background: #d9e2f3; border: 1px solid #000000; padding: 0cm 0.19cm"><p class="western" align="left" style="orphans: 2; widows: 2">
+				<font face="Times New Roman, serif"><font size="1" style="font-size: 8pt"><b>Hybrid</b></font></font></p>
+			</td>
+			<td width="109" bgcolor="#d9e2f3" style="background: #d9e2f3; border: 1px solid #000000; padding: 0cm 0.19cm"><p class="western" align="left" style="orphans: 2; widows: 2">
+				<font face="Times New Roman, serif"><font size="1" style="font-size: 8pt"><b>Đường
+				được chọn</b></font></font></p>
+			</td>
+			<td width="109" bgcolor="#d9e2f3" style="background: #d9e2f3; border: 1px solid #000000; padding: 0cm 0.19cm"><p class="western" align="left" style="orphans: 2; widows: 2">
+				<font face="Times New Roman, serif"><font size="1" style="font-size: 8pt"><b>Thời
+				gian (s)</b></font></font></p>
+			</td>
+			<td width="109" bgcolor="#d9e2f3" style="background: #d9e2f3; border: 1px solid #000000; padding: 0cm 0.19cm"><p class="western" align="left" style="orphans: 2; widows: 2">
+				<font face="Times New Roman, serif"><font size="1" style="font-size: 8pt"><b>Tracking
+				RMSE ước lượng (m)</b></font></font></p>
+			</td>
+			<td width="108" bgcolor="#d9e2f3" style="background: #d9e2f3; border: 1px solid #000000; padding: 0cm 0.19cm"><p class="western" align="left" style="orphans: 2; widows: 2">
+				<font face="Times New Roman, serif"><font size="1" style="font-size: 8pt"><b>Sai
+				số cuối (m)</b></font></font></p>
+			</td>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td width="108" style="border: 1px solid #000000; padding: 0cm 0.19cm"><p class="western" align="left" style="orphans: 2; widows: 2">
+				<font face="Times New Roman, serif"><font size="1" style="font-size: 8pt">Trước</font></font></p>
+			</td>
+			<td width="109" style="border: 1px solid #000000; padding: 0cm 0.19cm"><p class="western" align="left" style="orphans: 2; widows: 2">
+				<font face="Times New Roman, serif"><font size="1" style="font-size: 8pt">Simple</font></font></p>
+			</td>
+			<td width="109" style="border: 1px solid #000000; padding: 0cm 0.19cm"><p class="western" align="left" style="orphans: 2; widows: 2">
+				<font face="Times New Roman, serif"><font size="1" style="font-size: 8pt">43,557</font></font></p>
+			</td>
+			<td width="109" style="border: 1px solid #000000; padding: 0cm 0.19cm"><p class="western" align="left" style="orphans: 2; widows: 2">
+				<font face="Times New Roman, serif"><font size="1" style="font-size: 8pt">0,0076</font></font></p>
+			</td>
+			<td width="108" style="border: 1px solid #000000; padding: 0cm 0.19cm"><p class="western" align="left" style="orphans: 2; widows: 2">
+				<font face="Times New Roman, serif"><font size="1" style="font-size: 8pt">0,0295</font></font></p>
+			</td>
+		</tr>
+		<tr>
+			<td width="108" style="border: 1px solid #000000; padding: 0cm 0.19cm"><p class="western" align="left" style="orphans: 2; widows: 2">
+				<font face="Times New Roman, serif"><font size="1" style="font-size: 8pt">Sau</font></font></p>
+			</td>
+			<td width="109" style="border: 1px solid #000000; padding: 0cm 0.19cm"><p class="western" align="left" style="orphans: 2; widows: 2">
+				<font face="Times New Roman, serif"><font size="1" style="font-size: 8pt">Pivot–G²</font></font></p>
+			</td>
+			<td width="109" style="border: 1px solid #000000; padding: 0cm 0.19cm"><p class="western" align="left" style="orphans: 2; widows: 2">
+				<font face="Times New Roman, serif"><font size="1" style="font-size: 8pt">30,678</font></font></p>
+			</td>
+			<td width="109" style="border: 1px solid #000000; padding: 0cm 0.19cm"><p class="western" align="left" style="orphans: 2; widows: 2">
+				<font face="Times New Roman, serif"><font size="1" style="font-size: 8pt">0,0047</font></font></p>
+			</td>
+			<td width="108" style="border: 1px solid #000000; padding: 0cm 0.19cm"><p class="western" align="left" style="orphans: 2; widows: 2">
+				<font face="Times New Roman, serif"><font size="1" style="font-size: 8pt">0,0323</font></font></p>
+			</td>
+		</tr>
+	</tbody>
+</table>
+<p class="western" style="margin-bottom: 0.18cm">Đây là một
+closed-loop repetition dùng để xác nhận cơ chế, không phải
+bằng chứng thống kê rằng Pivot luôn nhanh hơn. Bảng 320
+hàng là đánh giá hình học; bảng closed-loop là phép chạy
+robot vật lý mô phỏng Gazebo và hai loại bằng chứng
+không được trộn thành cùng một sample size.</p>
 <center>
 	<table width="616" cellpadding="4" cellspacing="0">
 		<col width="196"/>
@@ -2851,12 +3009,12 @@ chính</h2>
 					<font color="#000000"><font face="Times New Roman, serif"><font size="2" style="font-size: 9pt">Footprint
 					cost tối đa</font></font></font></p>
 				</td>
-				<td width="197" style="border: 1px solid #000000; padding: 0.11cm 0.14cm"><p class="western" align="left" style="orphans: 2; widows: 2; text-indent: 0cm">
-					<font color="#000000"><font face="Times New Roman, serif"><font size="2" style="font-size: 9pt">200</font></font></font></p>
+				<td width="197" style="border: 1px solid #000000; padding: 0.11cm 0.14cm"><p class="western" align="left" style="orphans: 2; widows: 2">
+					<font face="Times New Roman, serif"><font size="2" style="font-size: 9pt">252</font></font></p>
 				</td>
-				<td width="196" style="border: 1px solid #000000; padding: 0.11cm 0.14cm"><p class="western" align="left" style="orphans: 2; widows: 2; text-indent: 0cm">
-					<font color="#000000"><font face="Times New Roman, serif"><font size="2" style="font-size: 9pt">Gate
-					center cost trước footprint</font></font></font></p>
+				<td width="196" style="border: 1px solid #000000; padding: 0.11cm 0.14cm"><p class="western" align="left" style="orphans: 2; widows: 2">
+					<font face="Times New Roman, serif"><font size="2" style="font-size: 9pt">Center
+					phải dưới INSCRIBED=253; footprint kiểm lethal riêng</font></font></p>
 				</td>
 			</tr>
 			<tr>
@@ -6726,6 +6884,15 @@ B, Vị trí source chính và tài liệu tham khảo</font></font></h1>
 			</tr>
 			<tr>
 				<td width="299" style="border: 1px solid #000000; padding: 0cm 0.19cm"><p class="western" align="left" style="orphans: 2; widows: 2">
+					<font face="Times New Roman, serif"><font size="1" style="font-size: 8pt">Audit
+					selector đối xứng</font></font></p>
+				</td>
+				<td width="299" style="border: 1px solid #000000; padding: 0cm 0.19cm"><p class="western" align="left" style="orphans: 2; widows: 2">
+					<font face="Times New Roman, serif"><font size="1" style="font-size: 8pt">results/neutral_hybrid_20260727/</font></font></p>
+				</td>
+			</tr>
+			<tr>
+				<td width="299" style="border: 1px solid #000000; padding: 0cm 0.19cm"><p class="western" align="left" style="orphans: 2; widows: 2">
 					<font face="Times New Roman, serif"><font size="1" style="font-size: 8pt">Manifest
 					hình theo dữ liệu hiện tại</font></font></p>
 				</td>
@@ -6798,12 +6965,13 @@ Behavior Tree.</span></font></font></p>
 <p class="western" style="margin-bottom: 0.18cm">Nguồn dữ liệu,
 hình ảnh và các kết quả định lượng trong báo cáo này
 được tổng hợp từ ma trận nghiên cứu ngày 25/07/2026,
-đợt kiểm chứng current_full_audit_20260726 và mã nguồn
-hiện tại của workspace agv_nav2_research_ws. Các bảng lịch
-sử được ghi rõ phiên bản; bảng bảy map hiện tại lấy
-trực tiếp từ các trace *_pivot_g2_final.json.gz.</p>
+đợt kiểm chứng current_full_audit_20260726, audit selector
+neutral_hybrid_20260727 và mã nguồn hiện tại của workspace
+agv_nav2_research_ws. Các bảng lịch sử được ghi rõ phiên
+bản; không trộn gate một chiều ngày 25/07 với selector
+đối xứng ngày 27/07.</p>
 <div title="footer"><p align="center" style="line-height: 100%; margin-top: 0.63cm; margin-bottom: 0cm">
-	<span style="background: #c0c0c0"><sdfield type=PAGE subtype=RANDOM format=PAGE>46</sdfield></span></p>
+	<span style="background: #c0c0c0"><sdfield type=PAGE subtype=RANDOM format=PAGE>47</sdfield></span></p>
 </div>
 </body>
 </html>

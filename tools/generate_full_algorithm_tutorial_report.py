@@ -1343,7 +1343,7 @@ def parameters_table():
         ("R thích nghi", "0,10…1,50 m", "Miền bán kính thiết kế"),
         ("Đánh giá mỗi góc", "6 đầu, tối đa 20", "Ngân sách coarse-to-fine"),
         ("Ứng viên giữ lại", "5/góc + Pivot", "Trạng thái cho DP"),
-        ("Footprint cost tối đa", "200", "Gate center cost trước kiểm tra footprint"),
+        ("Center cost tối đa", "252", "Dưới INSCRIBED=253; footprint kiểm lethal riêng"),
     ]
     return table(("Tham số", "Giá trị", "Vai trò"), rows, "compact")
 
@@ -1985,15 +1985,21 @@ hơn để deterministic. Backtracking lấy chuỗi trạng thái cuối cùng.
 <h2>13. Cổng an toàn Adaptive Hybrid</h2>
 <h3>13.1 Vì sao pure Pivot–G2 chưa phải toàn bộ phương pháp?</h3>
 <p>Giảm Eκ không đảm bảo controller chạy tốt trong hành lang sát vật cản.
-Simple đôi khi cho clearance tốt hơn. Do đó phương pháp hoàn chỉnh lấy Simple
-làm mặc định và chỉ nhận Pivot khi có safety gain đủ rõ.</p>
-<div class="eq">Δcost = cost<sub>Simple</sub> − cost<sub>Pivot</sub> ≥ 20</div>
-<div class="eq">E<sub>Pivot</sub> ≤ 2·(E<sub>Simple</sub> + 0,25)</div>
+Simple đôi khi cho clearance tốt hơn, còn Pivot có thể giảm effort. Do đó hai
+candidate dùng cùng luật thay vì lấy tên thuật toán làm mặc định.</p>
+<div class="eq">|cost<sub>Simple</sub> − cost<sub>Pivot</sub>| ≥ 20
+⇒ chọn candidate có peak cost thấp hơn</div>
+<div class="eq">E<sub>m</sub>=∫κ²ds+
+Σ|Δψ<sub>pivot</sub>|/0,2548</div>
+<p>Trong deadband cost, candidate có E<sub>m</sub> thấp hơn ít nhất 5% thắng.
+Mỗi nhánh nhận 50% max_time; quay tại chỗ được tính giống nhau cho cả hai.</p>
 {table(
     ("Tình trạng", "Đường được chọn", "Lý do"),
     [
-        ("Simple và Pivot an toàn; Pivot qua hai gate", "Pivot–G2", "Có lợi proximity mà không tăng Eκ quá ngân sách"),
-        ("Cả hai an toàn nhưng Pivot không qua gate", "Simple", "Default bảo thủ"),
+        ("Cả hai an toàn; |Δcost| ≥ 20", "Cost thấp hơn", "Luật peak cost hai chiều"),
+        ("Cả hai an toàn; trong cost deadband", "Maneuver effort thấp hơn", "Phải hơn ít nhất 5%"),
+        ("Cost và effort hòa trong deadband", "Cost dư rồi path ngắn hơn", "Tie-break hình học"),
+        ("Mọi metric hòa", "Simple", "Nhãn ổn định, không có utility bias"),
         ("Simple không an toàn, Pivot an toàn", "Pivot–G2", "simple_unsafe"),
         ("Pivot không an toàn, Simple an toàn", "Simple", "pivot_unsafe"),
         ("Cả hai không an toàn, Raw an toàn", "Raw", "raw fallback"),
@@ -2193,8 +2199,10 @@ còn quay.</p>
 Raw. Adaptive Hybrid giảm
 <b>{percentage_reduction(hybrid['energy'], raw['energy']):.1f}%</b>, đạt
 <b>{hybrid['successes']}/{hybrid['attempts']}</b> và clearance trung bình
-<b>{100*hybrid['clearance']:.2f} cm</b>. Pure Pivot có Eκ thấp hơn Hybrid vì
-Hybrid cố ý giữ Simple ở ca mà Pivot không đủ safety gain.</p>
+<b>{100*hybrid['clearance']:.2f} cm</b>. Các số Hybrid trong ma trận ngày
+25/07 dùng gate một chiều cũ và được giữ như baseline lịch sử; selector đối
+xứng hiện tại được audit riêng trong
+<code>results/neutral_hybrid_20260727/</code>.</p>
 {figure(
     "figure_12_map_energy_comparison.png",
     "Mức giảm năng lượng độ cong theo từng môi trường.",

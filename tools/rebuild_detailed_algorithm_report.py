@@ -4,8 +4,8 @@
 
 The supplied DOCX is the source of truth for prose, layout, figures, tables and
 writing voice.  This script does not recreate or shorten that document.  It
-copies the master and then inserts the verified 2026-07-26 controller, hardware
-and Gazebo-audit material into the relevant chapters.
+copies the master and then inserts the verified 2026-07-26 controller/hardware
+material plus the 2026-07-27 neutral-selector audit into the relevant chapters.
 
 The script intentionally depends only on python-docx and the Python standard
 library so that the report can be regenerated without a browser renderer.
@@ -14,6 +14,7 @@ library so that the report can be regenerated without a browser renderer.
 from __future__ import annotations
 
 import argparse
+import csv
 import gzip
 import hashlib
 import json
@@ -38,6 +39,7 @@ EXPECTED_MASTER_SHA256 = (
 AUDIT_DIR = ROOT / "results" / "current_full_audit_20260726"
 ASSETS_DIR = ROOT / "docs" / "bao_cao_toan_dien_assets"
 CURRENT_FIGURE_MANIFEST = ASSETS_DIR / "current_figure_manifest.json"
+NEUTRAL_SELECTOR_DIR = ROOT / "results" / "neutral_hybrid_20260727"
 
 ENVIRONMENTS = (
     "research_warehouse",
@@ -91,6 +93,14 @@ MUTATED_MASTER_PARAGRAPH_PREFIXES = (
     "Scenario đại diện full_replenishment chạy",
     "Scenario đại diện diagonal_replenishment chạy",
     "11.2 Định nghĩa metric",
+    "Pure Pivot–G² có thể cho Eκ rất thấp",
+    "Hai gate hiện tại so sánh chênh lệch cost",
+    "Δcost = costSimple - costPivot ≥ 20",
+    "Trong đó: Δcost là lợi ích proximity",
+    "Ý nghĩa và lý do sử dụng: Hybrid chỉ chọn Pivot",
+    "EPivot ≤ 2(ESimple + 0,25)",
+    "Trong đó: EPivot và ESimple",
+    "Ý nghĩa và lý do sử dụng: Điều kiện ngăn Pivot",
     "12.2 Những lỗi đã sửa được bằng dữ liệu",
     "Bảng này cho thấy việc sửa projection",
     "12.3 So sánh hình học trên 7.200 dòng",
@@ -126,6 +136,76 @@ def load_json(path: Path) -> dict:
         with gzip.open(path, "rt", encoding="utf-8") as stream:
             return json.load(stream)
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def load_csv(path: Path) -> list[dict[str, str]]:
+    if not path.exists():
+        raise FileNotFoundError(f"Thiếu dữ liệu kiểm chứng: {path}")
+    with path.open(newline="", encoding="utf-8") as stream:
+        return list(csv.DictReader(stream))
+
+
+def neutral_selector_audit() -> dict:
+    before = load_csv(NEUTRAL_SELECTOR_DIR / "baseline_narrow_aisles.csv")
+    after = load_csv(NEUTRAL_SELECTOR_DIR / "neutral_narrow_aisles.csv")
+    if len(before) != 320 or len(after) != 320:
+        raise RuntimeError("Audit selector phải có đúng 320 hàng trước và sau")
+    if not all(row.get("success") == "True" for row in before + after):
+        raise RuntimeError("Audit selector có hàng benchmark thất bại")
+
+    key = lambda row: (
+        row["planner"], row["scenario"], row["method"], row["repetition"]
+    )
+    before_by_key = {key(row): row for row in before}
+    after_by_key = {key(row): row for row in after}
+    if before_by_key.keys() != after_by_key.keys():
+        raise RuntimeError("Hai vế audit selector không có cùng khóa ghép cặp")
+    same_raw = sum(
+        before_by_key[item]["raw_path_sha256"] ==
+        after_by_key[item]["raw_path_sha256"]
+        for item in before_by_key
+    )
+    if same_raw != 320:
+        raise RuntimeError(f"Audit selector chỉ ghép đúng {same_raw}/320 raw path")
+
+    def summarize(rows: list[dict[str, str]]) -> dict:
+        selected = [
+            row for row in rows if row.get("method") == "adaptive_hybrid"
+        ]
+        return {
+            "rows": len(selected),
+            "simple": sum(row.get("hybrid_selected") == "simple" for row in selected),
+            "pivot": sum(row.get("hybrid_selected") == "pivot_g2" for row in selected),
+            "energy": sum(
+                float(row["translation_curvature_energy_1pm"]) for row in selected
+            ) / len(selected),
+            "clearance": sum(
+                float(row["footprint_clearance_min_m"]) for row in selected
+            ) / len(selected),
+            "runtime_ms": 1000.0 * sum(
+                float(row["algorithm_time_s"]) for row in selected
+            ) / len(selected),
+        }
+
+    closed_before = load_json(
+        NEUTRAL_SELECTOR_DIR / "baseline_closed_loop" /
+        "bottom_alternating_cross_summary.json"
+    )
+    closed_after = load_json(
+        NEUTRAL_SELECTOR_DIR / "neutral_closed_loop" /
+        "bottom_alternating_cross_summary.json"
+    )
+    find_hybrid = lambda payload: next(
+        row for row in payload["records"]
+        if row.get("method") == "adaptive_hybrid"
+    )
+    return {
+        "before": summarize(before),
+        "after": summarize(after),
+        "same_raw": same_raw,
+        "closed_before": find_hybrid(closed_before),
+        "closed_after": find_hybrid(closed_after),
+    }
 
 
 def cm(value_m: float) -> str:
@@ -401,7 +481,7 @@ def master_preservation_snapshot(document: Document) -> dict:
     preserved_tables = []
     # Tables 7, 15, 18, 19, 24 and 25 are intentionally extended, refreshed,
     # or have their metric headers made more explicit.
-    mutable_table_indices = {6, 14, 17, 18, 23, 24}
+    mutable_table_indices = {6, 10, 14, 17, 18, 23, 24}
     for index, table in enumerate(document.tables):
         if index in mutable_table_indices:
             continue
@@ -579,7 +659,7 @@ def insert_revision_note(document: Document) -> None:
         [
             (
                 "Normal",
-                "Bản đang đọc là bản rà soát toàn diện ngày 26/07/2026. "
+                "Bản đang đọc là bản rà soát toàn diện đến ngày 27/07/2026. "
                 "Toàn bộ nội dung của bản gốc được giữ nguyên để không làm mất "
                 "mạch suy luận đã hình thành trong quá trình nghiên cứu. Những "
                 "phần được bổ sung tập trung vào bốn vấn đề đã bộc lộ khi quan "
@@ -588,6 +668,165 @@ def insert_revision_note(document: Document) -> None:
                 "và hợp đồng phần cứng của hai động cơ GA25 cùng bộ nguồn 4S4P. "
                 "Kết quả cũ ngày 25/07 vẫn được giữ như dấu vết phát triển; kết "
                 "quả hiện tại được ghi riêng để người đọc không nhầm hai phiên bản."
+            ),
+        ],
+    )
+
+
+def insert_neutral_hybrid_update(document: Document, audit: dict) -> None:
+    parameter_row_found = False
+    for table in document.tables:
+        for row in table.rows:
+            if normalized_text(row.cells[0].text) == "Footprint cost tối đa":
+                row.cells[1].text = "252"
+                row.cells[2].text = (
+                    "Center phải dưới INSCRIBED=253; footprint kiểm lethal riêng"
+                )
+                parameter_row_found = True
+    if not parameter_row_found:
+        raise RuntimeError("Không tìm thấy hàng Footprint cost tối đa")
+
+    set_paragraph_text(
+        find_paragraph_prefix(
+            document, "Pure Pivot–G² có thể cho Eκ rất thấp"
+        ),
+        "Pure Pivot–G² có thể cho Eκ thấp nhưng có thể phát sinh quay tại chỗ; "
+        "Nav2 Simple đôi khi giữ peak cost tốt hơn. Vì vậy Hybrid không lấy tên "
+        "thuật toán làm prior. Hai candidate được đánh giá bằng cùng swept "
+        "footprint, peak cost, maneuver effort và chiều dài. Chỉ khi mọi metric "
+        "đã công bố hòa nhau, hệ thống mới dùng nhãn Simple làm tie-break ổn "
+        "định để tránh output dao động."
+    )
+    set_paragraph_text(
+        find_paragraph_prefix(
+            document, "Hai gate hiện tại so sánh chênh lệch cost"
+        ),
+        "Luật mới là lexicographic hai chiều. Nếu chỉ một candidate an toàn thì "
+        "chọn candidate đó. Nếu cả hai an toàn, bên có peak cost thấp hơn ít "
+        "nhất 20 đơn vị thắng, bất kể đó là Simple hay Pivot. Trong vùng chết "
+        "cost, bên có maneuver effort thấp hơn ít nhất 5% thắng; sau đó mới xét "
+        "cost dư, chiều dài và tie-break ổn định. Raw chỉ là fallback khi cả hai "
+        "candidate làm mượt đều không an toàn."
+    )
+    set_paragraph_text(
+        find_paragraph(document, "Δcost = costSimple - costPivot ≥ 20"),
+        "|costSimple − costPivot| ≥ 20 ⇒ chọn candidate có peak cost thấp hơn"
+    )
+    set_paragraph_text(
+        find_paragraph_prefix(
+            document, "Trong đó: Δcost là lợi ích proximity"
+        ),
+        "Ngưỡng 20 bây giờ là deadband đối xứng, không còn là điều kiện một "
+        "chiều buộc riêng Pivot phải chứng minh lợi ích."
+    )
+    set_paragraph_text(
+        find_paragraph_prefix(
+            document, "Ý nghĩa và lý do sử dụng: Hybrid chỉ chọn Pivot"
+        ),
+        "Trong vùng |Δcost| < 20, thuật toán so sánh cùng một effort cho cả hai "
+        "nhánh. Sai khác tương đối phải đạt 5% để tránh đổi candidate vì nhiễu "
+        "số rất nhỏ."
+    )
+    set_paragraph_text(
+        find_paragraph(document, "EPivot ≤ 2(ESimple + 0,25)"),
+        "Em = ∫κ²ds + Σ|Δψpivot| / L;  L = 0,2548 m"
+    )
+    set_paragraph_text(
+        find_paragraph_prefix(document, "Trong đó: EPivot và ESimple"),
+        "Em là maneuver effort áp dụng giống nhau cho Simple và Pivot; số hạng "
+        "đầu đo độ cong khi tịnh tiến, số hạng sau quy đổi toàn bộ góc quay tại "
+        "chỗ theo khoảng cách tâm bánh L. Vì vậy Pivot không còn được miễn chi "
+        "phí quay."
+    )
+    anchor = find_paragraph_prefix(
+        document, "Ý nghĩa và lý do sử dụng: Điều kiện ngăn Pivot"
+    )
+    set_paragraph_text(
+        anchor,
+        "Simple và Pivot mỗi nhánh nhận đúng 50% max_time. Cổng nội bộ Pivot và "
+        "bộ đánh giá Hybrid cùng yêu cầu center cost tối đa 252, tức nằm dưới "
+        "INSCRIBED_INFLATED_OBSTACLE=253; lethal, unknown hoặc swept-footprint "
+        "collision đều bị loại."
+    )
+
+    before = audit["before"]
+    after = audit["after"]
+    closed_before = audit["closed_before"]
+    closed_after = audit["closed_after"]
+    add_sequence(
+        document,
+        anchor,
+        [
+            ("Heading 3", "6.9.1 Audit trung lập bằng Gazebo/Nav2 ngày 27/07/2026"),
+            (
+                "Normal",
+                f"Audit ghép cặp dùng 320 hàng trên narrow_aisles và giữ đúng "
+                f"{audit['same_raw']}/320 raw_path_sha256 giữa hai phiên bản. "
+                "Cả trước và sau đều thành công 320/320; riêng adaptive_hybrid "
+                f"đổi từ Simple/Pivot = {before['simple']}/{before['pivot']} "
+                f"sang {after['simple']}/{after['pivot']}. Đây không phải ép "
+                "tỷ lệ 50/50: mỗi nhánh thắng bằng cùng metric."
+            ),
+            {
+                "headers": (
+                    "Phiên bản", "Simple/Pivot", "Eκ TB (1/m)",
+                    "Clearance min TB (m)", "Runtime TB (ms)"
+                ),
+                "rows": [
+                    (
+                        "Trước: gate một chiều",
+                        f"{before['simple']}/{before['pivot']}",
+                        dec(before["energy"], 3),
+                        dec(before["clearance"], 3),
+                        dec(before["runtime_ms"], 3),
+                    ),
+                    (
+                        "Sau: selector đối xứng",
+                        f"{after['simple']}/{after['pivot']}",
+                        dec(after["energy"], 3),
+                        dec(after["clearance"], 3),
+                        dec(after["runtime_ms"], 3),
+                    ),
+                ],
+                "font_size": 8.0,
+            },
+            (
+                "Normal",
+                "Closed-loop dùng NavFnDijkstra/bottom_alternating_cross trên "
+                "đúng raw hash. Gate cũ chọn đường Simple; gate mới chọn đúng "
+                "đường Pivot. Cả hai lượt Hybrid đều tới đích, settled và không "
+                "có can thiệp collision monitor."
+            ),
+            {
+                "headers": (
+                    "Hybrid", "Đường được chọn", "Thời gian (s)",
+                    "Tracking RMSE ước lượng (m)", "Sai số cuối (m)"
+                ),
+                "rows": [
+                    (
+                        "Trước",
+                        "Simple",
+                        dec(closed_before["execution_time_s"], 3),
+                        dec(closed_before["estimated_tracking_rmse_m"], 4),
+                        dec(closed_before["final_position_error_m"], 4),
+                    ),
+                    (
+                        "Sau",
+                        "Pivot–G²",
+                        dec(closed_after["execution_time_s"], 3),
+                        dec(closed_after["estimated_tracking_rmse_m"], 4),
+                        dec(closed_after["final_position_error_m"], 4),
+                    ),
+                ],
+                "font_size": 8.0,
+            },
+            (
+                "Normal",
+                "Đây là một closed-loop repetition dùng để xác nhận cơ chế, "
+                "không phải bằng chứng thống kê rằng Pivot luôn nhanh hơn. Bảng "
+                "320 hàng là đánh giá hình học; bảng closed-loop là phép chạy "
+                "robot vật lý mô phỏng Gazebo và hai loại bằng chứng không được "
+                "trộn thành cùng một sample size."
             ),
         ],
     )
@@ -1610,9 +1849,10 @@ def update_conclusion_and_limits(document: Document) -> None:
         final_source,
         "Nguồn dữ liệu, hình ảnh và các kết quả định lượng trong báo cáo này "
         "được tổng hợp từ ma trận nghiên cứu ngày 25/07/2026, đợt kiểm chứng "
-        "current_full_audit_20260726 và mã nguồn hiện tại của workspace "
-        "agv_nav2_research_ws. Các bảng lịch sử được ghi rõ phiên bản; bảng bảy "
-        "map hiện tại lấy trực tiếp từ các trace *_pivot_g2_final.json.gz."
+        "current_full_audit_20260726, audit selector "
+        "neutral_hybrid_20260727 và mã nguồn hiện tại của workspace "
+        "agv_nav2_research_ws. Các bảng lịch sử được ghi rõ phiên bản; không "
+        "trộn gate một chiều ngày 25/07 với selector đối xứng ngày 27/07."
     )
 
 
@@ -1654,6 +1894,7 @@ def update_appendices(document: Document) -> None:
             ("Mô hình URDF", "src/vacuum_robot_gazebo/urdf/vacuum_robot.urdf"),
             ("Mô hình SDF và DiffDrive", "src/vacuum_robot_gazebo/models/vacuum_robot/model.sdf"),
             ("Dữ liệu kiểm chứng hiện tại", "results/current_full_audit_20260726/*.json.gz"),
+            ("Audit selector đối xứng", "results/neutral_hybrid_20260727/"),
             ("Manifest hình theo dữ liệu hiện tại", "docs/bao_cao_toan_dien_assets/current_figure_manifest.json"),
             ("Ma trận hình học lịch sử", "results/conference_geometry_20260725/*.csv"),
             ("Ma trận chạy kín lịch sử", "results/conference_execution_20260725/conference_execution_compact.csv"),
@@ -1670,7 +1911,7 @@ def set_document_metadata(document: Document) -> None:
     props.title = "Báo cáo toàn diện Adaptive Hybrid Pivot–G²"
     props.subject = (
         "Giải thích từ nền tảng đến thuật toán, ROS 2/Nav2, Gazebo, GA25, "
-        "nguồn 4S4P và kết quả kiểm chứng ngày 26/07/2026"
+        "nguồn 4S4P và kết quả kiểm chứng đến ngày 27/07/2026"
     )
     props.author = "Phạm Hải Linh"
     props.keywords = (
@@ -1693,6 +1934,7 @@ def validate_output(document: Document, final_data: dict[str, dict]) -> dict:
         "9.2 Đọc đúng thông số của động cơ GA25",
         "9.6 Bộ nguồn 16 cell 18650 mắc 4S4P",
         "12.3 Rà soát kín ngày 26/07/2026",
+        "6.9.1 Audit trung lập bằng Gazebo/Nav2 ngày 27/07/2026",
         "0,2834 m",
         "16,8 V",
         "0,18 rad/s²",
@@ -1728,6 +1970,7 @@ def main() -> None:
 
     final_data = {name: load_json(path) for name, path in FINAL_TRACES.items()}
     audit_data = {name: load_json(path) for name, path in BEFORE_AFTER_TRACES.items()}
+    selector_audit = neutral_selector_audit()
     validate_audit(final_data, audit_data)
     validate_source_contract()
     validate_current_figure_manifest()
@@ -1736,6 +1979,7 @@ def main() -> None:
     validate_master(document, args.master)
     preservation_snapshot = master_preservation_snapshot(document)
     insert_revision_note(document)
+    insert_neutral_hybrid_update(document, selector_audit)
     insert_controller_update(document)
     insert_hardware_update(document)
     update_map_results(document, final_data)

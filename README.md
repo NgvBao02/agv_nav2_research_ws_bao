@@ -10,9 +10,10 @@ luồng nghiên cứu chính chạy hoàn toàn trong ROS 2.
 - `adaptive_pivot_g2`: thư viện C++ lõi cho hình học G2 và time-parameterization.
 - `adaptive_pivot_g2_nav2`: plugin `nav2_core::Smoother` đã load và chạy trong
   Nav2 Smoother Server; gồm Pivot–G2 và phương pháp lai có safety gate. Nhánh
-  lai chỉ nhận chi phí pivot khi proximity cost cải thiện đủ ngưỡng và năng
-  lượng độ cong vẫn nằm trong ngân sách công bố trước; nếu cả hai nhánh làm
-  mượt không an toàn nhưng raw path an toàn, nó fallback về raw.
+  lai so sánh Simple/Pivot bằng cùng luật hai chiều: peak cost ngoài deadband,
+  rồi maneuver effort có tính cả quay tại chỗ; mỗi nhánh nhận nửa time budget.
+  Nếu cả hai nhánh làm mượt không an toàn nhưng raw path an toàn, nó fallback
+  về raw.
 - `adaptive_pivot_g2_benchmark`: lập kế hoạch một lần, tuần tự đưa đúng cùng
   `nav_msgs/Path` vào Nav2 Simple, Savitzky–Golay, Constrained, Pivot–G2 và
   adaptive hybrid; xuất CSV/JSON, metric full-footprint, và chạy ma trận vòng
@@ -182,3 +183,4 @@ colcon test-result --verbose
   [PDF](docs/BAO_CAO_TOAN_DIEN_ADAPTIVE_HYBRID_PIVOT_G2.pdf)
 - [Bài báo REV-ECIT 2026](docs/REV_ECIT_2026_ADAPTIVE_HYBRID_PIVOT_G2_PAPER.html)
 - [Phụ lục kết quả đầy đủ](docs/REV_ECIT_2026_ADAPTIVE_HYBRID_PIVOT_G2_SUPPLEMENT.html)
+- [Audit selector Hybrid trung lập: Gazebo, closed-loop và RViz2](results/neutral_hybrid_20260727/README.md)

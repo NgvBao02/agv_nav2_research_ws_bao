@@ -1,5 +1,17 @@
 # Phân loại kết quả nghiên cứu
 
+## Audit selector Hybrid trung lập ngày 27/07/2026
+
+- `neutral_hybrid_20260727/` chứa ma trận trước–sau 320 + 320 hàng trên
+  narrow_aisles, closed-loop Gazebo ghép cùng raw path và ảnh RViz2 của selector
+  mới. Cả hai ma trận hình học đạt 320/320; Adaptive Hybrid đổi từ
+  Simple/Pivot = 38/2 sang 29/11 bằng luật cost/effort hai chiều.
+- Đây là audit riêng cho selector hiện tại. Không trộn 40 hàng Adaptive Hybrid
+  này vào ma trận hội nghị 7.200 hàng ngày 25/07 vì hai dataset dùng hai phiên
+  bản gate khác nhau.
+- Xem công thức, lệnh chạy, phân bố lý do chọn và cả metric xấu đi tại
+  `neutral_hybrid_20260727/README.md`.
+
 ## Dataset hội nghị ngày 25/07/2026
 
 - `conference_geometry_20260725/`: ma trận hình học đầy đủ gồm 7 môi trường,

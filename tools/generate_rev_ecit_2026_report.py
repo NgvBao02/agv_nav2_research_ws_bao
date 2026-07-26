@@ -47,6 +47,7 @@ GEOMETRY = ROOT / "results" / "conference_geometry_20260725"
 EXECUTION = ROOT / "results" / "conference_execution_20260725"
 AUDIT = ROOT / "results" / "closed_loop_audit_20260725"
 GUI = ROOT / "results" / "gui_validation_20260724"
+NEUTRAL_SELECTOR = ROOT / "results" / "neutral_hybrid_20260727"
 FONT_REGULAR = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
 FONT_BOLD = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
 
@@ -210,6 +211,113 @@ def load_geometry():
     if not rows:
         raise RuntimeError(f"No conference geometry CSV files found in {GEOMETRY}")
     return rows
+
+
+def load_neutral_selector_audit():
+    def read_csv(name):
+        path = NEUTRAL_SELECTOR / name
+        with path.open(newline="", encoding="utf-8") as stream:
+            return list(csv.DictReader(stream))
+
+    before = read_csv("baseline_narrow_aisles.csv")
+    after = read_csv("neutral_narrow_aisles.csv")
+    if len(before) != 320 or len(after) != 320:
+        raise RuntimeError("Neutral selector audit must contain 320 rows per side")
+    key = lambda row: (
+        row["planner"], row["scenario"], row["method"], row["repetition"]
+    )
+    before_by_key = {key(row): row for row in before}
+    after_by_key = {key(row): row for row in after}
+    if before_by_key.keys() != after_by_key.keys():
+        raise RuntimeError("Neutral selector audit pairing keys differ")
+    same_raw = sum(
+        before_by_key[item]["raw_path_sha256"] ==
+        after_by_key[item]["raw_path_sha256"]
+        for item in before_by_key
+    )
+    if same_raw != 320:
+        raise RuntimeError(f"Only {same_raw}/320 neutral-audit raw hashes match")
+
+    def summarize(rows):
+        selected = [row for row in rows if row["method"] == "adaptive_hybrid"]
+        return {
+            "simple": sum(row["hybrid_selected"] == "simple" for row in selected),
+            "pivot": sum(row["hybrid_selected"] == "pivot_g2" for row in selected),
+            "energy": mean(
+                as_float(row["translation_curvature_energy_1pm"])
+                for row in selected
+            ),
+            "clearance": mean(
+                as_float(row["footprint_clearance_min_m"]) for row in selected
+            ),
+            "runtime_ms": 1000.0 * mean(
+                as_float(row["algorithm_time_s"]) for row in selected
+            ),
+            "reasons": collections.Counter(row["hybrid_reason"] for row in selected),
+        }
+
+    def closed(name):
+        payload = json.loads(
+            (
+                NEUTRAL_SELECTOR / name /
+                "bottom_alternating_cross_summary.json"
+            ).read_text(encoding="utf-8")
+        )
+        if not payload.get("all_successful") or not payload.get("same_raw_path"):
+            raise RuntimeError(f"Closed-loop neutral audit is invalid: {name}")
+        return next(
+            row for row in payload["records"]
+            if row.get("method") == "adaptive_hybrid"
+        )
+
+    return {
+        "before": summarize(before),
+        "after": summarize(after),
+        "same_raw": same_raw,
+        "closed_before": closed("baseline_closed_loop"),
+        "closed_after": closed("neutral_closed_loop"),
+    }
+
+
+def neutral_selector_audit_html(audit, heading="Audit selector trung lập 27/07/2026"):
+    before = audit["before"]
+    after = audit["after"]
+    old_run = audit["closed_before"]
+    new_run = audit["closed_after"]
+    return f"""
+<h3>{html.escape(heading)}</h3>
+<p>Audit narrow_aisles ghép đúng {audit['same_raw']}/320
+<code>raw_path_sha256</code>; cả hai phiên bản đều thành công 320/320.
+Adaptive Hybrid đổi từ Simple/Pivot={before['simple']}/{before['pivot']} sang
+{after['simple']}/{after['pivot']}. Selector mới không ép tỷ lệ 50/50:
+candidate nào thắng cùng luật cost/effort thì được chọn.</p>
+{table(
+    ("Phiên bản", "Simple/Pivot", "Eκ TB", "clear. min TB", "runtime ms"),
+    (
+        (
+            "Gate một chiều",
+            f"{before['simple']}/{before['pivot']}",
+            fmt(before["energy"], 3),
+            fmt(before["clearance"], 3),
+            fmt(before["runtime_ms"], 3),
+        ),
+        (
+            "Selector đối xứng",
+            f"{after['simple']}/{after['pivot']}",
+            fmt(after["energy"], 3),
+            fmt(after["clearance"], 3),
+            fmt(after["runtime_ms"], 3),
+        ),
+    ),
+    "compact",
+)}
+<p>Closed-loop NavFnDijkstra/bottom_alternating_cross giữ cùng raw hash:
+gate cũ chọn Simple và hoàn thành trong {old_run['execution_time_s']:.3f} s;
+gate mới chọn đúng path Pivot và hoàn thành trong
+{new_run['execution_time_s']:.3f} s. Hai lượt đều settled, tới đích và có
+0 can thiệp collision monitor. Đây là một repetition xác nhận cơ chế, không
+phải kiểm định thống kê thời gian.</p>
+"""
 
 
 def load_execution():
@@ -1243,6 +1351,7 @@ def paper_html(geometry, execution, validation, overall, pairing_count, paired):
     pivot = overall[("pivot_g2",)]
     hybrid = overall[("adaptive_hybrid",)]
     simple = overall[("simple",)]
+    selector_audit = load_neutral_selector_audit()
     geometry_claim = (
         f"Pivot–G2 thích nghi giảm {abs(percent_change(pivot['energy'], raw['energy'])):.1f}% "
         f"năng lượng độ cong trung bình so với Raw; Hybrid thích nghi giảm "
@@ -1349,8 +1458,10 @@ kiện trim hai góc kề không chồng lấn. Trong ma trận, DP chọn
 {100.0 * radius_summary.get("outside_legacy_fraction", 0.0):.1f}% bán kính
 không thuộc bank cố định legacy, xác nhận tìm kiếm không bị lượng tử hóa.</p>
 <h3>B. Cổng Hybrid và profile vận tốc</h3>
-<p>Hybrid lấy Simple làm mặc định; Pivot–G2 chỉ được chọn khi cải thiện cost
-an toàn đủ lớn và năng lượng độ cong nằm trong ngân sách; Raw là fallback cuối.
+<p>Hybrid dùng cùng luật cho hai candidate. Bên có lợi thế peak cost ít nhất
+20 đơn vị thắng; trong deadband đó, bên có maneuver effort thấp hơn ít nhất 5%
+thắng. Effort E<sub>m</sub>=∫κ²ds+Σ|Δψ<sub>pivot</sub>|/L tính cả quay tại chỗ
+cho cả Simple và Pivot. Mỗi candidate nhận 50% max_time; Raw là fallback cuối.
 Mỗi điểm có trần tức thời:</p>
 <div class="eq">v̄(s)=min[v<sub>max</sub>, √(a<sub>y,max</sub>/|κ|),
 ω<sub>max</sub>/|κ|, v<sub>w,max</sub>/(1+L|κ|/2)].</div>
@@ -1359,6 +1470,7 @@ giới hạn jerk. Khoảng chuyển từ v₀ đến v₁ dùng profile tam gi�
 Δv≤a²/j và hình thang trong trường hợp còn lại. Sau đó, cặp nút được giảm đồng
 thời đến khi |Δ(vκ)|/Δt≤α<sub>max</sub>. Cách này khắc phục lỗi cũ chỉ phanh
 nhìn về phía trước nhưng tăng tốc ngay sau cong.</p>
+{neutral_selector_audit_html(selector_audit, "B.1 Kiểm tra bất đối xứng và kết quả sửa")}
 <h3>C. Điều khiển bám và đích</h3>
 <p>Tiến độ s được chiếu trong cửa sổ cục bộ bằng
 J=e<sub>xy</sub>²+(w<sub>ψ</sub>e<sub>ψ</sub>)², giới hạn lùi 3 cm và ưu tiên
@@ -1385,6 +1497,9 @@ TF map→base_link, cmd_vel và telemetry; vì vậy sai số điều khiển kh
 
 <h2>IV. KẾT QUẢ VÀ THẢO LUẬN</h2>
 {figure("figure_02_geometry_overview.png", "Hình 3. Tổng hợp đánh giá hình học trên toàn bộ ma trận.")}
+<p class="note">Ma trận 7.200 dòng được thu ngày 25/07 với gate Hybrid một
+chiều cũ và được giữ làm baseline lịch sử. Kết quả selector đối xứng hiện tại
+được báo riêng trong audit 27/07 ở Mục II-B.1; không trộn hai phiên bản.</p>
 <p>Raw chỉ thất bại ở 3 ca planner không sinh được đường. Pivot–G2 độc lập đạt
 {pivot['successes']}/{pivot['attempts']}; Hybrid đạt {hybrid['successes']}/{hybrid['attempts']}
 và không có mẫu footprint va chạm trong các đường thành công. So với Raw,
@@ -1455,6 +1570,7 @@ def supplement_html(
     pairing_count,
     paired,
 ):
+    selector_audit = load_neutral_selector_audit()
     by_map_sections = []
     for environment in ENV_LABEL:
         rows = []
@@ -1595,7 +1711,14 @@ refinement ưu tiên biên feasible/infeasible, safe/unsafe rồi lân cận obj
 tốt. Chi phí ổn định chuẩn hóa risk costmap, |ω|max và Eκ. DP chọn một trạng
 thái cho mỗi góc với ràng buộc dᵢ+dᵢ₊₁+m≤ℓᵢ, tránh quyết định tham lam làm hai
 chuyển tiếp kề chồng nhau.</p>
-<h3>2.4 Profile vận tốc và vòng kín</h3>
+<h3>2.4 Selector Hybrid đối xứng</h3>
+<p>Hai nhánh Simple và Pivot chịu cùng swept-footprint gate và cùng phép so
+sánh. Nếu |cost<sub>S</sub>−cost<sub>P</sub>|≥20 thì chọn cost thấp hơn; trong
+deadband, chọn maneuver effort thấp hơn khi chênh ít nhất 5%. Maneuver effort
+E<sub>m</sub>=∫κ²ds+Σ|Δψ<sub>pivot</sub>|/L với L=0,2548 m nên không bỏ qua
+quay tại chỗ. Hai nhánh nhận ngân sách thời gian 50/50; Raw chỉ fallback khi
+cả hai nhánh làm mượt đều không an toàn.</p>
+<h3>2.5 Profile vận tốc và vòng kín</h3>
 <p>Trần cục bộ là min của vận tốc thân, gia tốc ngang, ω và vận tốc bánh. Với
 Δv≤a²/j, khoảng S-curve bằng (v₀+v₁)√(Δv/j); nếu đạt a cực đại, khoảng bằng
 0,5(v₀+v₁)(Δv/a+a/j). Hai phép nghịch đảo bằng chia đôi tạo bao đạt được theo
@@ -1628,10 +1751,10 @@ trace ground truth, odom, TF/AMCL và command được lưu cùng JSON.</p>
 {figure("figure_02_geometry_overview.png", "Hình 6. Tổng hợp 7.200 phép đo.")}
 {overall_table(overall)}
 <p>Pivot–G2 độc lập tối ưu trực tiếp hình dạng cong nên cho Eκ thấp nhất nhưng
-có thể không sinh ứng viên ở góc quá hẹp; Hybrid ưu tiên độ bền và an toàn nên
-thường dùng Simple, chỉ đổi sang Pivot–G2 khi có lợi ích costmap đủ lớn. Vì vậy
-không nên kết luận Hybrid luôn có Eκ thấp nhất; ưu thế của nó là trade-off an
-toàn–mượt–khả dụng.</p>
+có thể không sinh ứng viên ở góc quá hẹp. Ma trận 7.200 dòng ngày 25/07 dùng
+gate một chiều cũ nên được giữ như baseline lịch sử, không đại diện selector
+hiện tại. Audit 27/07 dưới đây kiểm tra riêng thay đổi selector trên dữ liệu mới.</p>
+{neutral_selector_audit_html(selector_audit)}
 {figure("figure_03_map_energy_ratio.png", "Hình 7. Giảm Eκ theo từng map.")}
 {table(("So sánh cặp","n","số thắng","tỷ số TB","tỷ số trung vị"), pair_rows, "compact")}
 <h3>5.1 Phân bố bán kính thích nghi được DP chọn</h3>
@@ -1667,8 +1790,9 @@ trạng thái và được báo riêng.</p>
 <ul>
 <li><b>So với Raw:</b> giảm Eκ và chiều dài trung bình, tăng khoảng hở; đổi lại
 runtime hậu xử lý và độ lệch hình học tăng nhưng bị chặn bởi swept-footprint.</li>
-<li><b>So với Simple:</b> Hybrid giữ đường Simple ở đa số ca, chỉ dùng Pivot–G2
-khi lợi ích an toàn đủ lớn; vì thế giảm Eκ trung bình mà vẫn có fallback.</li>
+<li><b>So với Simple:</b> Hybrid không dùng Simple làm mặc định. Hai nhánh cùng
+luật; Simple vẫn được chọn nhiều hơn khi cost/effort đo được tốt hơn hoặc các
+metric hòa tuyệt đối, còn Pivot thắng khi có lợi ích thực đo.</li>
 <li><b>So với Savitzky–Golay/Constrained:</b> Pivot–G2 có điều kiện nối rõ ràng,
 marker pivot và profile động học liên kết trực tiếp; các bộ kia là baseline
 hình học, không mã hóa quyết định quay tại chỗ của robot vi sai.</li>
@@ -1685,8 +1809,9 @@ Wilcoxon trước camera-ready.</li>
 <code>ros2 run adaptive_pivot_g2_benchmark execution_matrix -- --help</code></p>
 <p>Dữ liệu nguồn: <code>results/conference_geometry_20260725/</code>,
 <code>results/conference_execution_20260725/</code> và
-<code>results/closed_loop_audit_20260725/</code>. Script hiện tại tái sinh toàn
-bộ bảng và hình, tránh sao chép số liệu bằng tay.</p>
+<code>results/closed_loop_audit_20260725/</code>. Audit selector mới nằm tại
+<code>results/neutral_hybrid_20260727/</code>. Script hiện tại tái sinh toàn bộ
+bảng và hình, tránh sao chép số liệu bằng tay.</p>
 
 <h2>12. Tài liệu tham khảo</h2>
 <ol>

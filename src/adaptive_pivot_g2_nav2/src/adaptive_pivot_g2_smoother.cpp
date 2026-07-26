@@ -568,7 +568,7 @@ void AdaptivePivotG2Smoother::configure(
     node, prefix + "oscillation_minimum_sign_changes", 2);
   output_spacing_ = declare_and_get<double>(node, prefix + "output_spacing", 0.05);
   const int64_t max_footprint_cost = declare_and_get<int64_t>(
-    node, prefix + "max_footprint_cost", 200);
+    node, prefix + "max_footprint_cost", 252);
   max_footprint_cost_ = static_cast<unsigned char>(
     std::clamp<int64_t>(max_footprint_cost, 0, 252));
   line_of_sight_pruning_ = declare_and_get<bool>(

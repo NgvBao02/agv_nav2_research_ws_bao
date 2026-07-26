@@ -24,7 +24,20 @@ struct HybridCandidate
 {
   bool safe{false};
   double maximum_proximity_cost{0.0};
-  double translational_curvature_energy{0.0};
+  double maneuver_effort{0.0};
+  double path_length{0.0};
+};
+
+struct HybridSelectionPolicy
+{
+  /// A cost advantage at least this large takes priority over effort.
+  double peak_cost_deadband{20.0};
+  /// Inside the cost deadband, require this symmetric relative effort gap.
+  double relative_effort_deadband{0.05};
+  /// Stabilizes the relative comparison for nearly straight candidates.
+  double effort_floor{0.25};
+  /// Final deterministic geometric tie-break tolerance.
+  double path_length_tolerance{1.0e-6};
 };
 
 struct HybridSelection
@@ -35,23 +48,19 @@ struct HybridSelection
   bool use_raw{false};
 };
 
-/// Apply the declared safety-gain and curvature-budget decision rule.
+/// Compare Simple and Pivot with the same safety, cost, effort and length rule.
 HybridSelection select_hybrid_candidate(
   const HybridCandidate & simple,
   const HybridCandidate & pivot,
-  double minimum_cost_improvement,
-  double maximum_curvature_energy_ratio,
-  double curvature_energy_floor);
+  const HybridSelectionPolicy & policy);
 
-/// Apply the same Simple/Pivot rule and use raw only when both smoothed
+/// Apply the same symmetric rule and use raw only when both smoothed
 /// candidates are unsafe.
 HybridSelection select_hybrid_candidate_with_raw_fallback(
   const HybridCandidate & raw,
   const HybridCandidate & simple,
   const HybridCandidate & pivot,
-  double minimum_cost_improvement,
-  double maximum_curvature_energy_ratio,
-  double curvature_energy_floor);
+  const HybridSelectionPolicy & policy);
 
 }  // namespace adaptive_pivot_g2
 

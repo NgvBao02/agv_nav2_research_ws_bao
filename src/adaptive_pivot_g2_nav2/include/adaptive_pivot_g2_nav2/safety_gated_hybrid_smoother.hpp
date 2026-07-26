@@ -31,8 +31,7 @@
 namespace adaptive_pivot_g2_nav2
 {
 
-/// Select a global Simple path unless Pivot-G2 earns its maneuver overhead
-/// with a declared safety improvement inside a bounded curvature budget.
+/// Select between Simple and Pivot-G2 with a symmetric safety/cost/effort rule.
 class SafetyGatedHybridSmoother : public nav2_core::Smoother
 {
 public:
@@ -62,12 +61,15 @@ private:
     diagnostics_publisher_;
   rclcpp::Logger logger_{rclcpp::get_logger("SafetyGatedHybridSmoother")};
 
-  double minimum_cost_improvement_{20.0};
-  double maximum_curvature_energy_ratio_{2.0};
-  double curvature_energy_floor_{0.25};
+  double peak_cost_deadband_{20.0};
+  double relative_effort_deadband_{0.05};
+  double effort_floor_{0.25};
+  double path_length_tolerance_{1.0e-6};
+  double pivot_rotation_characteristic_length_{0.2548};
   double evaluation_spacing_{0.025};
   double pivot_duplicate_position_tolerance_{1.0e-4};
   double minimum_pivot_angle_{0.0872664626};
+  unsigned char maximum_center_cost_{252};
   std::vector<geometry_msgs::msg::Point> fallback_footprint_;
 };
 

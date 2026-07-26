@@ -62,7 +62,14 @@ refinement ưu tiên biên feasible/infeasible, safe/unsafe rồi lân cận obj
 tốt. Chi phí ổn định chuẩn hóa risk costmap, |ω|max và Eκ. DP chọn một trạng
 thái cho mỗi góc với ràng buộc dᵢ+dᵢ₊₁+m≤ℓᵢ, tránh quyết định tham lam làm hai
 chuyển tiếp kề chồng nhau.</p>
-<h3>2.4 Profile vận tốc và vòng kín</h3>
+<h3>2.4 Selector Hybrid đối xứng</h3>
+<p>Hai nhánh Simple và Pivot chịu cùng swept-footprint gate và cùng phép so
+sánh. Nếu |cost<sub>S</sub>−cost<sub>P</sub>|≥20 thì chọn cost thấp hơn; trong
+deadband, chọn maneuver effort thấp hơn khi chênh ít nhất 5%. Maneuver effort
+E<sub>m</sub>=∫κ²ds+Σ|Δψ<sub>pivot</sub>|/L với L=0,2548 m nên không bỏ qua
+quay tại chỗ. Hai nhánh nhận ngân sách thời gian 50/50; Raw chỉ fallback khi
+cả hai nhánh làm mượt đều không an toàn.</p>
+<h3>2.5 Profile vận tốc và vòng kín</h3>
 <p>Trần cục bộ là min của vận tốc thân, gia tốc ngang, ω và vận tốc bánh. Với
 Δv≤a²/j, khoảng S-curve bằng (v₀+v₁)√(Δv/j); nếu đạt a cực đại, khoảng bằng
 0,5(v₀+v₁)(Δv/a+a/j). Hai phép nghịch đảo bằng chia đôi tạo bao đạt được theo
@@ -95,10 +102,24 @@ trace ground truth, odom, TF/AMCL và command được lưu cùng JSON.</p>
 <figure class=""><img src="rev_ecit_2026_assets/figure_02_geometry_overview.png" alt="Hình 6. Tổng hợp 7.200 phép đo."><figcaption>Hình 6. Tổng hợp 7.200 phép đo.</figcaption></figure>
 <table class=""><thead><tr><th>Phương pháp</th><th>OK</th><th>Eκ</th><th>clear. (m)</th><th>L (m)</th><th>dev. (m)</th><th>ms</th></tr></thead><tbody><tr><td>Raw</td><td>897/900</td><td>30.39</td><td>0.283</td><td>8.217</td><td>0.000</td><td>4.0</td></tr><tr><td>Simple</td><td>894/900</td><td>8.79</td><td>0.309</td><td>8.162</td><td>0.006</td><td>0.7</td></tr><tr><td>Savitzky–Golay</td><td>888/900</td><td>15.07</td><td>0.309</td><td>8.158</td><td>0.001</td><td>0.1</td></tr><tr><td>Constrained</td><td>894/900</td><td>15.00</td><td>0.306</td><td>8.218</td><td>0.006</td><td>10.9</td></tr><tr><td>Pivot–G2 cố định</td><td>882/900</td><td>2.07</td><td>0.310</td><td>8.087</td><td>0.018</td><td>2.9</td></tr><tr><td>Pivot–G2 thích nghi</td><td>882/900</td><td>2.38</td><td>0.308</td><td>8.082</td><td>0.019</td><td>6.1</td></tr><tr><td>Hybrid cố định</td><td>897/900</td><td>7.71</td><td>0.311</td><td>8.171</td><td>0.007</td><td>3.9</td></tr><tr><td>Hybrid thích nghi</td><td>897/900</td><td>7.82</td><td>0.312</td><td>8.170</td><td>0.007</td><td>7.1</td></tr></tbody></table>
 <p>Pivot–G2 độc lập tối ưu trực tiếp hình dạng cong nên cho Eκ thấp nhất nhưng
-có thể không sinh ứng viên ở góc quá hẹp; Hybrid ưu tiên độ bền và an toàn nên
-thường dùng Simple, chỉ đổi sang Pivot–G2 khi có lợi ích costmap đủ lớn. Vì vậy
-không nên kết luận Hybrid luôn có Eκ thấp nhất; ưu thế của nó là trade-off an
-toàn–mượt–khả dụng.</p>
+có thể không sinh ứng viên ở góc quá hẹp. Ma trận 7.200 dòng ngày 25/07 dùng
+gate một chiều cũ nên được giữ như baseline lịch sử, không đại diện selector
+hiện tại. Audit 27/07 dưới đây kiểm tra riêng thay đổi selector trên dữ liệu mới.</p>
+
+<h3>Audit selector trung lập 27/07/2026</h3>
+<p>Audit narrow_aisles ghép đúng 320/320
+<code>raw_path_sha256</code>; cả hai phiên bản đều thành công 320/320.
+Adaptive Hybrid đổi từ Simple/Pivot=38/2 sang
+29/11. Selector mới không ép tỷ lệ 50/50:
+candidate nào thắng cùng luật cost/effort thì được chọn.</p>
+<table class="compact"><thead><tr><th>Phiên bản</th><th>Simple/Pivot</th><th>Eκ TB</th><th>clear. min TB</th><th>runtime ms</th></tr></thead><tbody><tr><td>Gate một chiều</td><td>38/2</td><td>34.683</td><td>0.292</td><td>9.975</td></tr><tr><td>Selector đối xứng</td><td>29/11</td><td>33.495</td><td>0.293</td><td>10.350</td></tr></tbody></table>
+<p>Closed-loop NavFnDijkstra/bottom_alternating_cross giữ cùng raw hash:
+gate cũ chọn Simple và hoàn thành trong 43.557 s;
+gate mới chọn đúng path Pivot và hoàn thành trong
+30.678 s. Hai lượt đều settled, tới đích và có
+0 can thiệp collision monitor. Đây là một repetition xác nhận cơ chế, không
+phải kiểm định thống kê thời gian.</p>
+
 <figure class=""><img src="rev_ecit_2026_assets/figure_03_map_energy_ratio.png" alt="Hình 7. Giảm Eκ theo từng map."><figcaption>Hình 7. Giảm Eκ theo từng map.</figcaption></figure>
 <table class="compact"><thead><tr><th>So sánh cặp</th><th>n</th><th>số thắng</th><th>tỷ số TB</th><th>tỷ số trung vị</th></tr></thead><tbody><tr><td>Hybrid thích nghi / Raw — Eκ</td><td>897</td><td>894</td><td>0.199</td><td>0.108</td></tr><tr><td>Pivot–G2 thích nghi / Raw — Eκ</td><td>882</td><td>867</td><td>0.171</td><td>0.062</td></tr><tr><td>Hybrid thích nghi / Simple — Eκ</td><td>894</td><td>45</td><td>0.983</td><td>1.000</td></tr><tr><td>Hybrid thích nghi / Raw — clearance</td><td>897</td><td>474</td><td>1.241</td><td>1.081</td></tr></tbody></table>
 <h3>5.1 Phân bố bán kính thích nghi được DP chọn</h3>
@@ -150,8 +171,9 @@ và cổng Hybrid là thành phần an toàn cần thiết của phương pháp 
 <ul>
 <li><b>So với Raw:</b> giảm Eκ và chiều dài trung bình, tăng khoảng hở; đổi lại
 runtime hậu xử lý và độ lệch hình học tăng nhưng bị chặn bởi swept-footprint.</li>
-<li><b>So với Simple:</b> Hybrid giữ đường Simple ở đa số ca, chỉ dùng Pivot–G2
-khi lợi ích an toàn đủ lớn; vì thế giảm Eκ trung bình mà vẫn có fallback.</li>
+<li><b>So với Simple:</b> Hybrid không dùng Simple làm mặc định. Hai nhánh cùng
+luật; Simple vẫn được chọn nhiều hơn khi cost/effort đo được tốt hơn hoặc các
+metric hòa tuyệt đối, còn Pivot thắng khi có lợi ích thực đo.</li>
 <li><b>So với Savitzky–Golay/Constrained:</b> Pivot–G2 có điều kiện nối rõ ràng,
 marker pivot và profile động học liên kết trực tiếp; các bộ kia là baseline
 hình học, không mã hóa quyết định quay tại chỗ của robot vi sai.</li>
@@ -168,8 +190,9 @@ Wilcoxon trước camera-ready.</li>
 <code>ros2 run adaptive_pivot_g2_benchmark execution_matrix -- --help</code></p>
 <p>Dữ liệu nguồn: <code>results/conference_geometry_20260725/</code>,
 <code>results/conference_execution_20260725/</code> và
-<code>results/closed_loop_audit_20260725/</code>. Script hiện tại tái sinh toàn
-bộ bảng và hình, tránh sao chép số liệu bằng tay.</p>
+<code>results/closed_loop_audit_20260725/</code>. Audit selector mới nằm tại
+<code>results/neutral_hybrid_20260727/</code>. Script hiện tại tái sinh toàn bộ
+bảng và hình, tránh sao chép số liệu bằng tay.</p>
 
 <h2>12. Tài liệu tham khảo</h2>
 <ol>

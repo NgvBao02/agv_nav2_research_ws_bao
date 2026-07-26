@@ -77,8 +77,10 @@ kiện trim hai góc kề không chồng lấn. Trong ma trận, DP chọn
 43.7% bán kính
 không thuộc bank cố định legacy, xác nhận tìm kiếm không bị lượng tử hóa.</p>
 <h3>B. Cổng Hybrid và profile vận tốc</h3>
-<p>Hybrid lấy Simple làm mặc định; Pivot–G2 chỉ được chọn khi cải thiện cost
-an toàn đủ lớn và năng lượng độ cong nằm trong ngân sách; Raw là fallback cuối.
+<p>Hybrid dùng cùng luật cho hai candidate. Bên có lợi thế peak cost ít nhất
+20 đơn vị thắng; trong deadband đó, bên có maneuver effort thấp hơn ít nhất 5%
+thắng. Effort E<sub>m</sub>=∫κ²ds+Σ|Δψ<sub>pivot</sub>|/L tính cả quay tại chỗ
+cho cả Simple và Pivot. Mỗi candidate nhận 50% max_time; Raw là fallback cuối.
 Mỗi điểm có trần tức thời:</p>
 <div class="eq">v̄(s)=min[v<sub>max</sub>, √(a<sub>y,max</sub>/|κ|),
 ω<sub>max</sub>/|κ|, v<sub>w,max</sub>/(1+L|κ|/2)].</div>
@@ -87,6 +89,21 @@ giới hạn jerk. Khoảng chuyển từ v₀ đến v₁ dùng profile tam gi�
 Δv≤a²/j và hình thang trong trường hợp còn lại. Sau đó, cặp nút được giảm đồng
 thời đến khi |Δ(vκ)|/Δt≤α<sub>max</sub>. Cách này khắc phục lỗi cũ chỉ phanh
 nhìn về phía trước nhưng tăng tốc ngay sau cong.</p>
+
+<h3>B.1 Kiểm tra bất đối xứng và kết quả sửa</h3>
+<p>Audit narrow_aisles ghép đúng 320/320
+<code>raw_path_sha256</code>; cả hai phiên bản đều thành công 320/320.
+Adaptive Hybrid đổi từ Simple/Pivot=38/2 sang
+29/11. Selector mới không ép tỷ lệ 50/50:
+candidate nào thắng cùng luật cost/effort thì được chọn.</p>
+<table class="compact"><thead><tr><th>Phiên bản</th><th>Simple/Pivot</th><th>Eκ TB</th><th>clear. min TB</th><th>runtime ms</th></tr></thead><tbody><tr><td>Gate một chiều</td><td>38/2</td><td>34.683</td><td>0.292</td><td>9.975</td></tr><tr><td>Selector đối xứng</td><td>29/11</td><td>33.495</td><td>0.293</td><td>10.350</td></tr></tbody></table>
+<p>Closed-loop NavFnDijkstra/bottom_alternating_cross giữ cùng raw hash:
+gate cũ chọn Simple và hoàn thành trong 43.557 s;
+gate mới chọn đúng path Pivot và hoàn thành trong
+30.678 s. Hai lượt đều settled, tới đích và có
+0 can thiệp collision monitor. Đây là một repetition xác nhận cơ chế, không
+phải kiểm định thống kê thời gian.</p>
+
 <h3>C. Điều khiển bám và đích</h3>
 <p>Tiến độ s được chiếu trong cửa sổ cục bộ bằng
 J=e<sub>xy</sub>²+(w<sub>ψ</sub>e<sub>ψ</sub>)², giới hạn lùi 3 cm và ưu tiên
@@ -113,6 +130,9 @@ TF map→base_link, cmd_vel và telemetry; vì vậy sai số điều khiển kh
 
 <h2>IV. KẾT QUẢ VÀ THẢO LUẬN</h2>
 <figure class=""><img src="rev_ecit_2026_assets/figure_02_geometry_overview.png" alt="Hình 3. Tổng hợp đánh giá hình học trên toàn bộ ma trận."><figcaption>Hình 3. Tổng hợp đánh giá hình học trên toàn bộ ma trận.</figcaption></figure>
+<p class="note">Ma trận 7.200 dòng được thu ngày 25/07 với gate Hybrid một
+chiều cũ và được giữ làm baseline lịch sử. Kết quả selector đối xứng hiện tại
+được báo riêng trong audit 27/07 ở Mục II-B.1; không trộn hai phiên bản.</p>
 <p>Raw chỉ thất bại ở 3 ca planner không sinh được đường. Pivot–G2 độc lập đạt
 882/900; Hybrid đạt 897/900
 và không có mẫu footprint va chạm trong các đường thành công. So với Raw,

@@ -14,65 +14,124 @@
 
 #include <gtest/gtest.h>
 
+#include <limits>
+
 #include "adaptive_pivot_g2/hybrid_selection.hpp"
 
 namespace adaptive_pivot_g2
 {
-
-TEST(HybridSelection, UsesPivotWhenSimpleIsUnsafe)
+namespace
 {
+
+const HybridSelectionPolicy kPolicy{};
+
+HybridCandidate candidate(
+  bool safe, double cost, double effort, double length = 5.0)
+{
+  return {safe, cost, effort, length};
+}
+
+}  // namespace
+
+TEST(HybridSelection, UsesOnlySafeCandidateInEitherDirection)
+{
+  const auto pivot_result = select_hybrid_candidate(
+    candidate(false, 0.0, 0.0), candidate(true, 150.0, 2.0), kPolicy);
+  ASSERT_TRUE(pivot_result.valid);
+  EXPECT_TRUE(pivot_result.use_pivot);
+  EXPECT_EQ(pivot_result.reason, "simple_unsafe");
+
+  const auto simple_result = select_hybrid_candidate(
+    candidate(true, 150.0, 2.0), candidate(false, 0.0, 0.0), kPolicy);
+  ASSERT_TRUE(simple_result.valid);
+  EXPECT_FALSE(simple_result.use_pivot);
+  EXPECT_EQ(simple_result.reason, "pivot_unsafe");
+}
+
+TEST(HybridSelection, PeakCostDeadbandIsSymmetric)
+{
+  const auto pivot_result = select_hybrid_candidate(
+    candidate(true, 202.0, 1.0), candidate(true, 182.0, 20.0), kPolicy);
+  ASSERT_TRUE(pivot_result.valid);
+  EXPECT_TRUE(pivot_result.use_pivot);
+  EXPECT_EQ(pivot_result.reason, "pivot_lower_peak_cost");
+
+  const auto simple_result = select_hybrid_candidate(
+    candidate(true, 182.0, 20.0), candidate(true, 202.0, 1.0), kPolicy);
+  ASSERT_TRUE(simple_result.valid);
+  EXPECT_FALSE(simple_result.use_pivot);
+  EXPECT_EQ(simple_result.reason, "simple_lower_peak_cost");
+}
+
+TEST(HybridSelection, ManeuverEffortComparisonIsSymmetricInsideCostDeadband)
+{
+  const auto pivot_result = select_hybrid_candidate(
+    candidate(true, 177.0, 2.65), candidate(true, 177.0, 0.43), kPolicy);
+  ASSERT_TRUE(pivot_result.valid);
+  EXPECT_TRUE(pivot_result.use_pivot);
+  EXPECT_EQ(pivot_result.reason, "pivot_lower_maneuver_effort");
+
+  const auto simple_result = select_hybrid_candidate(
+    candidate(true, 177.0, 0.43), candidate(true, 177.0, 2.65), kPolicy);
+  ASSERT_TRUE(simple_result.valid);
+  EXPECT_FALSE(simple_result.use_pivot);
+  EXPECT_EQ(simple_result.reason, "simple_lower_maneuver_effort");
+}
+
+TEST(HybridSelection, ResidualCostBreaksAnEffortDeadbandTie)
+{
+  const HybridSelectionPolicy policy{20.0, 0.05, 0.25, 1.0e-6};
   const auto result = select_hybrid_candidate(
-    {false, 0.0, 0.0}, {true, 150.0, 2.0}, 20.0, 2.0, 0.25);
+    candidate(true, 190.0, 1.00), candidate(true, 189.0, 1.02), policy);
   ASSERT_TRUE(result.valid);
   EXPECT_TRUE(result.use_pivot);
-  EXPECT_EQ(result.reason, "simple_unsafe");
+  EXPECT_EQ(result.reason, "pivot_lower_residual_cost");
 }
 
-TEST(HybridSelection, UsesPivotForSafetyGainInsideEnergyBudget)
+TEST(HybridSelection, PathLengthBreaksAnExactCostAndEffortTie)
 {
   const auto result = select_hybrid_candidate(
-    {true, 202.0, 1.8}, {true, 177.0, 3.2}, 20.0, 2.0, 0.25);
+    candidate(true, 177.0, 1.0, 5.0),
+    candidate(true, 177.0, 1.0, 4.9), kPolicy);
   ASSERT_TRUE(result.valid);
   EXPECT_TRUE(result.use_pivot);
-  EXPECT_EQ(result.reason, "safety_gain_within_energy_budget");
+  EXPECT_EQ(result.reason, "pivot_shorter_path");
 }
 
-TEST(HybridSelection, KeepsSimpleWhenSafetyGainIsTooSmall)
+TEST(HybridSelection, ExactMetricTieIsStable)
 {
   const auto result = select_hybrid_candidate(
-    {true, 202.0, 1.8}, {true, 190.0, 2.0}, 20.0, 2.0, 0.25);
+    candidate(true, 177.0, 1.0), candidate(true, 177.0, 1.0), kPolicy);
   ASSERT_TRUE(result.valid);
   EXPECT_FALSE(result.use_pivot);
-  EXPECT_EQ(result.reason, "simple_default");
-}
-
-TEST(HybridSelection, KeepsSimpleWhenPivotExceedsEnergyBudget)
-{
-  const auto result = select_hybrid_candidate(
-    {true, 253.0, 1.0}, {true, 150.0, 3.0}, 20.0, 2.0, 0.25);
-  ASSERT_TRUE(result.valid);
-  EXPECT_FALSE(result.use_pivot);
+  EXPECT_EQ(result.reason, "metric_tie_stable_simple");
 }
 
 TEST(HybridSelection, RejectsTwoUnsafeCandidates)
 {
   const auto result = select_hybrid_candidate(
-    {false, 0.0, 0.0}, {false, 0.0, 0.0}, 20.0, 2.0, 0.25);
+    candidate(false, 0.0, 0.0), candidate(false, 0.0, 0.0), kPolicy);
   EXPECT_FALSE(result.valid);
 }
 
-TEST(HybridSelection, RejectsInvalidParameters)
+TEST(HybridSelection, RejectsInvalidParametersAndCandidateMetrics)
 {
-  const auto result = select_hybrid_candidate(
-    {true, 202.0, 1.0}, {true, 177.0, 1.5}, -1.0, 2.0, 0.25);
-  EXPECT_FALSE(result.valid);
+  HybridSelectionPolicy invalid_policy = kPolicy;
+  invalid_policy.relative_effort_deadband = 1.1;
+  EXPECT_FALSE(select_hybrid_candidate(
+      candidate(true, 202.0, 1.0), candidate(true, 177.0, 1.5),
+      invalid_policy).valid);
+
+  EXPECT_FALSE(select_hybrid_candidate(
+      candidate(true, 202.0, std::numeric_limits<double>::infinity()),
+      candidate(true, 177.0, 1.5), kPolicy).valid);
 }
 
 TEST(HybridSelection, UsesRawFallbackWhenBothSmoothedCandidatesAreUnsafe)
 {
   const auto result = select_hybrid_candidate_with_raw_fallback(
-    {true, 180.0, 2.0}, {false, 0.0, 0.0}, {false, 0.0, 0.0},
-    20.0, 2.0, 0.25);
+    candidate(true, 180.0, 2.0),
+    candidate(false, 0.0, 0.0), candidate(false, 0.0, 0.0), kPolicy);
 
   ASSERT_TRUE(result.valid);
   EXPECT_TRUE(result.use_raw);
@@ -83,8 +142,8 @@ TEST(HybridSelection, UsesRawFallbackWhenBothSmoothedCandidatesAreUnsafe)
 TEST(HybridSelection, RejectsWhenRawAndSmoothedCandidatesAreUnsafe)
 {
   const auto result = select_hybrid_candidate_with_raw_fallback(
-    {false, 0.0, 0.0}, {false, 0.0, 0.0}, {false, 0.0, 0.0},
-    20.0, 2.0, 0.25);
+    candidate(false, 0.0, 0.0),
+    candidate(false, 0.0, 0.0), candidate(false, 0.0, 0.0), kPolicy);
   EXPECT_FALSE(result.valid);
 }
 

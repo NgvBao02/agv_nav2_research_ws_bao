@@ -467,7 +467,7 @@ smoother_server:
       clearance_weight: 0.15
       angular_speed_weight: 0.10
       curvature_energy_weight: 0.75
-      max_footprint_cost: 200
+      max_footprint_cost: 252
       corner_angle_threshold: 0.0872664626
       # Collapse planner-grid staircase noise only inside a 1.5-cell corridor;
       # every shortcut is swept-footprint checked before it is accepted.
@@ -515,7 +515,7 @@ smoother_server:
       curvature_energy_weight: 0.75
       # Inflation-cost gate at the robot center. The full swept footprint is
       # checked separately against lethal cells, avoiding double inflation.
-      max_footprint_cost: 200
+      max_footprint_cost: 252
       corner_angle_threshold: 0.0872664626
       path_conditioning_max_deviation: 0.0
       path_conditioning_resolution_ratio: 1.5
@@ -546,9 +546,12 @@ smoother_server:
       fallback_footprint_width: 0.34
     adaptive_hybrid_fixed:
       plugin: "adaptive_pivot_g2_nav2/SafetyGatedHybridSmoother"
-      minimum_cost_improvement: 20.0
-      maximum_curvature_energy_ratio: 2.0
-      curvature_energy_floor: 0.25
+      peak_cost_deadband: 20.0
+      relative_effort_deadband: 0.05
+      effort_floor: 0.25
+      path_length_tolerance: 1.0e-6
+      pivot_rotation_characteristic_length: 0.2548
+      maximum_center_cost: 252
       evaluation_spacing: 0.025
       pivot_duplicate_position_tolerance: 0.0001
       minimum_pivot_angle: 0.0872664626
@@ -566,7 +569,7 @@ smoother_server:
         clearance_weight: 0.15
         angular_speed_weight: 0.10
         curvature_energy_weight: 0.75
-        max_footprint_cost: 200
+        max_footprint_cost: 252
         corner_angle_threshold: 0.0872664626
         path_conditioning_max_deviation: 0.0
         path_conditioning_resolution_ratio: 1.5
@@ -594,12 +597,15 @@ smoother_server:
       fallback_footprint_width: 0.34
     adaptive_hybrid:
       plugin: "adaptive_pivot_g2_nav2/SafetyGatedHybridSmoother"
-      # Select Pivot-G2 only when its worst proximity cost improves by at
-      # least 20 cost units and its translational curvature energy stays
-      # within 2x the Simple candidate (with a small straight-path floor).
-      minimum_cost_improvement: 20.0
-      maximum_curvature_energy_ratio: 2.0
-      curvature_energy_floor: 0.25
+      # Symmetric lexicographic policy: either candidate wins a >=20 peak-cost
+      # advantage. Inside that deadband, compare full maneuver effort with a
+      # 5% relative deadband; effort includes in-place rotation for both paths.
+      peak_cost_deadband: 20.0
+      relative_effort_deadband: 0.05
+      effort_floor: 0.25
+      path_length_tolerance: 1.0e-6
+      pivot_rotation_characteristic_length: 0.2548
+      maximum_center_cost: 252
       evaluation_spacing: 0.025
       pivot_duplicate_position_tolerance: 0.0001
       minimum_pivot_angle: 0.0872664626
@@ -626,7 +632,7 @@ smoother_server:
         clearance_weight: 0.15
         angular_speed_weight: 0.10
         curvature_energy_weight: 0.75
-        max_footprint_cost: 200
+        max_footprint_cost: 252
         corner_angle_threshold: 0.0872664626
         path_conditioning_max_deviation: 0.0
         path_conditioning_resolution_ratio: 1.5

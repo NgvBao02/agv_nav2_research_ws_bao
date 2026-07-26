@@ -15,9 +15,9 @@
 #include "adaptive_pivot_g2_nav2/safety_gated_hybrid_smoother.hpp"
 
 #include <algorithm>
-#include <chrono>
 #include <cmath>
 #include <cstddef>
+#include <cstdint>
 #include <exception>
 #include <limits>
 #include <memory>
@@ -65,7 +65,10 @@ struct PathEvaluation
 {
   bool safe{false};
   double maximum_proximity_cost{std::numeric_limits<double>::infinity()};
-  double curvature_energy{std::numeric_limits<double>::infinity()};
+  double translational_curvature_energy{std::numeric_limits<double>::infinity()};
+  double pivot_rotation{std::numeric_limits<double>::infinity()};
+  double maneuver_effort{std::numeric_limits<double>::infinity()};
+  double path_length{std::numeric_limits<double>::infinity()};
   std::size_t pivot_count{0};
 };
 
@@ -85,6 +88,7 @@ bool evaluate_pose(
   const std::shared_ptr<Costmap> & costmap,
   CollisionChecker & checker,
   const std::vector<geometry_msgs::msg::Point> & footprint,
+  unsigned char maximum_center_cost,
   double & maximum_proximity_cost)
 {
   unsigned int map_x = 0;
@@ -94,7 +98,8 @@ bool evaluate_pose(
   }
   const double center_cost = static_cast<double>(costmap->getCost(map_x, map_y));
   const double footprint_cost = checker.footprintCostAtPose(x, y, yaw, footprint);
-  if (!std::isfinite(footprint_cost) || footprint_cost < 0.0 ||
+  if (center_cost > static_cast<double>(maximum_center_cost) ||
+    !std::isfinite(footprint_cost) || footprint_cost < 0.0 ||
     footprint_cost >= nav2_costmap_2d::LETHAL_OBSTACLE)
   {
     return false;
@@ -107,11 +112,13 @@ bool evaluate_pose(
 std::vector<std::vector<std::pair<double, double>>> translation_segments(
   const nav_msgs::msg::Path & path,
   std::size_t & pivot_count,
+  double & pivot_rotation,
   double duplicate_position_tolerance,
   double minimum_pivot_angle)
 {
   std::vector<std::vector<std::pair<double, double>>> segments;
   pivot_count = 0;
+  pivot_rotation = 0.0;
   if (path.poses.empty()) {
     return segments;
   }
@@ -129,6 +136,7 @@ std::vector<std::vector<std::pair<double, double>>> translation_segments(
       yaw_change >= minimum_pivot_angle)
     {
       ++pivot_count;
+      pivot_rotation += yaw_change;
       segments.push_back({{current.position.x, current.position.y}});
     } else if (distance > duplicate_position_tolerance) {
       segments.back().emplace_back(current.position.x, current.position.y);
@@ -177,12 +185,14 @@ double curvature_energy(
   const nav_msgs::msg::Path & path,
   double spacing,
   std::size_t & pivot_count,
+  double & pivot_rotation,
   double duplicate_position_tolerance,
   double minimum_pivot_angle)
 {
   double energy = 0.0;
   for (const auto & segment : translation_segments(
-      path, pivot_count, duplicate_position_tolerance, minimum_pivot_angle))
+      path, pivot_count, pivot_rotation,
+      duplicate_position_tolerance, minimum_pivot_angle))
   {
     const auto sampled = resample(segment, spacing);
     for (std::size_t index = 1; index + 1 < sampled.size(); ++index) {
@@ -206,6 +216,17 @@ double curvature_energy(
   return energy;
 }
 
+double path_length(const nav_msgs::msg::Path & path)
+{
+  double length = 0.0;
+  for (std::size_t index = 1; index < path.poses.size(); ++index) {
+    length += std::hypot(
+      path.poses[index].pose.position.x - path.poses[index - 1].pose.position.x,
+      path.poses[index].pose.position.y - path.poses[index - 1].pose.position.y);
+  }
+  return length;
+}
+
 PathEvaluation evaluate_path(
   const nav_msgs::msg::Path & path,
   const std::shared_ptr<Costmap> & costmap,
@@ -213,7 +234,9 @@ PathEvaluation evaluate_path(
   const std::vector<geometry_msgs::msg::Point> & footprint,
   double spacing,
   double duplicate_position_tolerance,
-  double minimum_pivot_angle)
+  double minimum_pivot_angle,
+  double pivot_rotation_characteristic_length,
+  unsigned char maximum_center_cost)
 {
   PathEvaluation evaluation;
   if (path.poses.empty()) {
@@ -225,7 +248,8 @@ PathEvaluation evaluate_path(
     if (index == 0) {
       if (!evaluate_pose(
           current.position.x, current.position.y, tf2::getYaw(current.orientation),
-          costmap, checker, footprint, evaluation.maximum_proximity_cost))
+          costmap, checker, footprint, maximum_center_cost,
+          evaluation.maximum_proximity_cost))
       {
         return evaluation;
       }
@@ -253,16 +277,25 @@ PathEvaluation evaluate_path(
           previous.position.x + fraction * dx,
           previous.position.y + fraction * dy,
           previous_yaw + fraction * yaw_change,
-          costmap, checker, footprint, evaluation.maximum_proximity_cost))
+          costmap, checker, footprint, maximum_center_cost,
+          evaluation.maximum_proximity_cost))
       {
         return evaluation;
       }
     }
   }
-  evaluation.curvature_energy = curvature_energy(
-    path, 0.05, evaluation.pivot_count,
+  evaluation.translational_curvature_energy = curvature_energy(
+    path, 0.05, evaluation.pivot_count, evaluation.pivot_rotation,
     duplicate_position_tolerance, minimum_pivot_angle);
-  evaluation.safe = std::isfinite(evaluation.curvature_energy);
+  evaluation.path_length = path_length(path);
+  evaluation.maneuver_effort =
+    evaluation.translational_curvature_energy +
+    evaluation.pivot_rotation / pivot_rotation_characteristic_length;
+  evaluation.safe =
+    std::isfinite(evaluation.translational_curvature_energy) &&
+    std::isfinite(evaluation.pivot_rotation) &&
+    std::isfinite(evaluation.maneuver_effort) &&
+    std::isfinite(evaluation.path_length);
   return evaluation;
 }
 
@@ -285,12 +318,20 @@ void SafetyGatedHybridSmoother::configure(
   costmap_subscriber_ = costmap_subscriber;
   footprint_subscriber_ = footprint_subscriber;
   const std::string prefix = plugin_name_ + ".";
-  minimum_cost_improvement_ = declare_and_get<double>(
-    node, prefix + "minimum_cost_improvement", 20.0);
-  maximum_curvature_energy_ratio_ = declare_and_get<double>(
-    node, prefix + "maximum_curvature_energy_ratio", 2.0);
-  curvature_energy_floor_ = declare_and_get<double>(
-    node, prefix + "curvature_energy_floor", 0.25);
+  peak_cost_deadband_ = declare_and_get<double>(
+    node, prefix + "peak_cost_deadband", 20.0);
+  relative_effort_deadband_ = declare_and_get<double>(
+    node, prefix + "relative_effort_deadband", 0.05);
+  effort_floor_ = declare_and_get<double>(
+    node, prefix + "effort_floor", 0.25);
+  path_length_tolerance_ = declare_and_get<double>(
+    node, prefix + "path_length_tolerance", 1.0e-6);
+  pivot_rotation_characteristic_length_ = declare_and_get<double>(
+    node, prefix + "pivot_rotation_characteristic_length", 0.2548);
+  const int64_t maximum_center_cost = declare_and_get<int64_t>(
+    node, prefix + "maximum_center_cost", 252);
+  maximum_center_cost_ = static_cast<unsigned char>(
+    std::clamp<int64_t>(maximum_center_cost, 0, 252));
   evaluation_spacing_ = declare_and_get<double>(
     node, prefix + "evaluation_spacing", 0.025);
   pivot_duplicate_position_tolerance_ = declare_and_get<double>(
@@ -301,10 +342,13 @@ void SafetyGatedHybridSmoother::configure(
     node, prefix + "fallback_footprint_length", 0.44);
   const double footprint_width = declare_and_get<double>(
     node, prefix + "fallback_footprint_width", 0.34);
-  if (!std::isfinite(minimum_cost_improvement_) || minimum_cost_improvement_ < 0.0 ||
-    !std::isfinite(maximum_curvature_energy_ratio_) ||
-    maximum_curvature_energy_ratio_ < 1.0 ||
-    !std::isfinite(curvature_energy_floor_) || curvature_energy_floor_ < 0.0 ||
+  if (!std::isfinite(peak_cost_deadband_) || peak_cost_deadband_ < 0.0 ||
+    !std::isfinite(relative_effort_deadband_) ||
+    relative_effort_deadband_ < 0.0 || relative_effort_deadband_ > 1.0 ||
+    !std::isfinite(effort_floor_) || effort_floor_ <= 0.0 ||
+    !std::isfinite(path_length_tolerance_) || path_length_tolerance_ < 0.0 ||
+    !std::isfinite(pivot_rotation_characteristic_length_) ||
+    pivot_rotation_characteristic_length_ <= 0.0 ||
     !std::isfinite(evaluation_spacing_) || evaluation_spacing_ <= 0.0 ||
     !std::isfinite(pivot_duplicate_position_tolerance_) ||
     pivot_duplicate_position_tolerance_ < 0.0 ||
@@ -387,23 +431,21 @@ bool SafetyGatedHybridSmoother::smooth(
     footprint = fallback_footprint_;
   }
   CollisionChecker checker(costmap);
-  const auto started = std::chrono::steady_clock::now();
   nav_msgs::msg::Path simple_path = path;
   nav_msgs::msg::Path pivot_path = path;
   bool simple_completed = false;
   bool pivot_completed = false;
-  try {
-    simple_completed = simple_smoother_->smooth(simple_path, max_time);
-  } catch (const std::exception & error) {
-    RCLCPP_WARN(logger_, "Embedded Simple candidate failed: %s", error.what());
-  }
-  const std::chrono::duration<double> first_elapsed =
-    std::chrono::steady_clock::now() - started;
-  const double remaining_seconds = max_time.seconds() - first_elapsed.count();
-  if (remaining_seconds > 0.0) {
+  const double candidate_seconds = 0.5 * max_time.seconds();
+  if (candidate_seconds > 0.0) {
+    try {
+      simple_completed = simple_smoother_->smooth(
+        simple_path, rclcpp::Duration::from_seconds(candidate_seconds));
+    } catch (const std::exception & error) {
+      RCLCPP_WARN(logger_, "Embedded Simple candidate failed: %s", error.what());
+    }
     try {
       pivot_completed = pivot_smoother_->smooth(
-        pivot_path, rclcpp::Duration::from_seconds(remaining_seconds));
+        pivot_path, rclcpp::Duration::from_seconds(candidate_seconds));
     } catch (const std::exception & error) {
       RCLCPP_WARN(logger_, "Embedded Pivot-G2 candidate failed: %s", error.what());
     }
@@ -412,27 +454,30 @@ bool SafetyGatedHybridSmoother::smooth(
   const PathEvaluation simple_evaluation = simple_completed ?
     evaluate_path(
     simple_path, costmap, checker, footprint, evaluation_spacing_,
-    pivot_duplicate_position_tolerance_, minimum_pivot_angle_) :
+    pivot_duplicate_position_tolerance_, minimum_pivot_angle_,
+    pivot_rotation_characteristic_length_, maximum_center_cost_) :
     PathEvaluation{};
   const PathEvaluation pivot_evaluation = pivot_completed ?
     evaluate_path(
     pivot_path, costmap, checker, footprint, evaluation_spacing_,
-    pivot_duplicate_position_tolerance_, minimum_pivot_angle_) :
+    pivot_duplicate_position_tolerance_, minimum_pivot_angle_,
+    pivot_rotation_characteristic_length_, maximum_center_cost_) :
     PathEvaluation{};
   const PathEvaluation raw_evaluation =
     evaluate_path(
     path, costmap, checker, footprint, evaluation_spacing_,
-    pivot_duplicate_position_tolerance_, minimum_pivot_angle_);
+    pivot_duplicate_position_tolerance_, minimum_pivot_angle_,
+    pivot_rotation_characteristic_length_, maximum_center_cost_);
   const auto selection =
     adaptive_pivot_g2::select_hybrid_candidate_with_raw_fallback(
     {raw_evaluation.safe, raw_evaluation.maximum_proximity_cost,
-      raw_evaluation.curvature_energy},
+      raw_evaluation.maneuver_effort, raw_evaluation.path_length},
     {simple_evaluation.safe, simple_evaluation.maximum_proximity_cost,
-      simple_evaluation.curvature_energy},
+      simple_evaluation.maneuver_effort, simple_evaluation.path_length},
     {pivot_evaluation.safe, pivot_evaluation.maximum_proximity_cost,
-      pivot_evaluation.curvature_energy},
-    minimum_cost_improvement_, maximum_curvature_energy_ratio_,
-    curvature_energy_floor_);
+      pivot_evaluation.maneuver_effort, pivot_evaluation.path_length},
+    {peak_cost_deadband_, relative_effort_deadband_, effort_floor_,
+      path_length_tolerance_});
   if (!selection.valid) {
     throw nav2_core::FailedToSmoothPath(
             "Hybrid smoother found no swept-footprint-safe candidate or raw fallback");
@@ -462,12 +507,33 @@ bool SafetyGatedHybridSmoother::smooth(
   diagnostics << ",\"pivot_max_cost\":";
   append_json_number(diagnostics, pivot_evaluation.maximum_proximity_cost);
   diagnostics << ",\"raw_energy\":";
-  append_json_number(diagnostics, raw_evaluation.curvature_energy);
+  append_json_number(diagnostics, raw_evaluation.translational_curvature_energy);
   diagnostics << ",\"simple_energy\":";
-  append_json_number(diagnostics, simple_evaluation.curvature_energy);
+  append_json_number(diagnostics, simple_evaluation.translational_curvature_energy);
   diagnostics << ",\"pivot_energy\":";
-  append_json_number(diagnostics, pivot_evaluation.curvature_energy);
-  diagnostics << ",\"pivot_markers\":" << pivot_evaluation.pivot_count << "}";
+  append_json_number(diagnostics, pivot_evaluation.translational_curvature_energy);
+  diagnostics << ",\"raw_pivot_rotation_rad\":";
+  append_json_number(diagnostics, raw_evaluation.pivot_rotation);
+  diagnostics << ",\"simple_pivot_rotation_rad\":";
+  append_json_number(diagnostics, simple_evaluation.pivot_rotation);
+  diagnostics << ",\"pivot_pivot_rotation_rad\":";
+  append_json_number(diagnostics, pivot_evaluation.pivot_rotation);
+  diagnostics << ",\"raw_maneuver_effort\":";
+  append_json_number(diagnostics, raw_evaluation.maneuver_effort);
+  diagnostics << ",\"simple_maneuver_effort\":";
+  append_json_number(diagnostics, simple_evaluation.maneuver_effort);
+  diagnostics << ",\"pivot_maneuver_effort\":";
+  append_json_number(diagnostics, pivot_evaluation.maneuver_effort);
+  diagnostics << ",\"raw_path_length_m\":";
+  append_json_number(diagnostics, raw_evaluation.path_length);
+  diagnostics << ",\"simple_path_length_m\":";
+  append_json_number(diagnostics, simple_evaluation.path_length);
+  diagnostics << ",\"pivot_path_length_m\":";
+  append_json_number(diagnostics, pivot_evaluation.path_length);
+  diagnostics << ",\"candidate_time_budget_s\":" << candidate_seconds
+              << ",\"maximum_center_cost\":"
+              << static_cast<int>(maximum_center_cost_)
+              << ",\"pivot_markers\":" << pivot_evaluation.pivot_count << "}";
   if (diagnostics_publisher_ && diagnostics_publisher_->is_activated()) {
     std_msgs::msg::String message;
     message.data = diagnostics.str();

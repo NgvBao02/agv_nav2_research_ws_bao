@@ -154,7 +154,7 @@ private:
   double oscillation_minimum_turn_angle_{0.20};
   std::size_t oscillation_minimum_sign_changes_{2U};
   double output_spacing_{0.05};
-  unsigned char max_footprint_cost_{200};
+  unsigned char max_footprint_cost_{252};
   bool line_of_sight_pruning_{false};
   std::vector<geometry_msgs::msg::Point> fallback_footprint_;
 };
