@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
-"""Generate the beginner-oriented, end-to-end Adaptive Hybrid Pivot-G2 report.
+"""Generate the legacy compact HTML used to rebuild tutorial figures and data.
 
-This is deliberately a single self-contained teaching report, not a conference
-paper or a supplement.  It reads the current source configuration and measured
-Gazebo datasets, regenerates every diagram, and writes one HTML source that can
-be converted to DOCX/PDF with ``html_report_to_docx.py``.
+The authoritative detailed report is rebuilt from Linh's 53-page DOCX master
+with ``rebuild_detailed_algorithm_report.py``.  This older renderer is retained
+because it regenerates the project diagrams and provides a compact HTML view,
+but it must not overwrite the detailed report linked from the README.
 """
 
 from __future__ import annotations
@@ -14,6 +14,7 @@ import argparse
 import collections
 import csv
 import gzip
+import hashlib
 import html
 import json
 import math
@@ -43,7 +44,7 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 DOCS = ROOT / "docs"
 ASSETS = DOCS / "bao_cao_toan_dien_assets"
-OUTPUT = DOCS / "BAO_CAO_TOAN_DIEN_ADAPTIVE_HYBRID_PIVOT_G2.html"
+OUTPUT = DOCS / "BAO_CAO_TOAN_DIEN_ADAPTIVE_HYBRID_PIVOT_G2_LEGACY_COMPACT.html"
 MAP_DIR = ROOT / "src" / "vacuum_robot_gazebo" / "maps"
 WORLD_DIR = ROOT / "src" / "vacuum_robot_gazebo" / "worlds"
 SCENARIO_DIR = ROOT / "src" / "adaptive_pivot_g2_benchmark" / "config"
@@ -884,9 +885,6 @@ def copy_evidence_assets():
         "figure_09_rviz_methods.png": (
             DOCS / "rev_ecit_2026_assets" / "figure_10_rviz_all_methods.png"
         ),
-        "figure_10_speed_trace.png": (
-            DOCS / "rev_ecit_2026_assets" / "figure_05_trace_speed.png"
-        ),
         "figure_11_geometry_comparison.png": (
             DOCS / "rev_ecit_2026_assets" / "figure_02_geometry_overview.png"
         ),
@@ -896,14 +894,272 @@ def copy_evidence_assets():
         "figure_13_speed_comparison.png": (
             DOCS / "rev_ecit_2026_assets" / "figure_04_speed_tracking.png"
         ),
-        "figure_14_all_map_error.png": (
-            DOCS / "rev_ecit_2026_assets" / "figure_06_all_map_closed_loop.png"
-        ),
     }
     for target, source in sources.items():
         if not source.exists():
             raise FileNotFoundError(source)
         shutil.copy2(source, ASSETS / target)
+
+
+def save_current_speed_trace(validation):
+    """Plot the current 2026-07-26 trace, not the older conference trace."""
+    row = validation["research_warehouse"]
+    selected = np.asarray(row["selected_path_xy"], dtype=float)
+    ground_truth = np.asarray(row["ground_truth_state_trace"], dtype=object)
+    trace = np.asarray(row["adaptive_speed_trace"], dtype=object)
+    fields = {
+        name: index for index, name in enumerate(row["adaptive_speed_trace_fields"])
+    }
+
+    # Giữ ba panel trên một hàng nhưng tăng chiều cao để nhãn trục, legend và
+    # dao động nhỏ vẫn đọc được khi hình được đặt vừa chiều rộng trang A4.
+    figure, axes = plt.subplots(1, 3, figsize=(14.8, 6.4))
+    axes[0].plot(
+        selected[:, 0], selected[:, 1], color="#1d4ed8", lw=2.4,
+        label="selected path",
+    )
+    axes[0].plot(
+        ground_truth[:, 1].astype(float),
+        ground_truth[:, 2].astype(float),
+        color="#f97316", lw=1.5, label="ground truth Gazebo",
+    )
+    axes[0].scatter(
+        selected[[0, -1], 0], selected[[0, -1], 1],
+        c=["#16a34a", "#dc2626"], s=42, zorder=5,
+    )
+    axes[0].set_aspect("equal")
+    axes[0].set_xlabel("x (m)")
+    axes[0].set_ylabel("y (m)")
+    axes[0].set_title("Quỹ đạo vật lý và đường tham chiếu")
+    axes[0].legend(fontsize=8)
+    axes[0].grid(True)
+
+    time = trace[:, fields["time_s"]].astype(float)
+    for field, label, color, width in (
+        ("measured_speed_mps", "v đo", "#0f766e", 1.5),
+        ("command_speed_mps", "v lệnh", "#2563eb", 1.8),
+        ("profile_cap_mps", "trần profile", "#dc2626", 1.4),
+    ):
+        axes[1].plot(
+            time, trace[:, fields[field]].astype(float),
+            label=label, color=color, lw=width,
+        )
+    axes[1].set_xlabel("thời gian (s)")
+    axes[1].set_ylabel("vận tốc (m/s)")
+    axes[1].set_title("Profile vận tốc thực hiện")
+    axes[1].legend(fontsize=8)
+    axes[1].grid(True)
+
+    cross_track_cm = 100.0 * np.abs(
+        trace[:, fields["cross_track_error_m"]].astype(float)
+    )
+    heading_deg = np.degrees(
+        np.abs(trace[:, fields["path_heading_error_rad"]].astype(float))
+    )
+    axes[2].plot(
+        time, cross_track_cm, color="#7c3aed", lw=1.5,
+        label="sai số ngang (cm)",
+    )
+    heading_axis = axes[2].twinx()
+    heading_axis.plot(
+        time, heading_deg, color="#ea580c", lw=1.2, alpha=0.8,
+        label="sai số hướng (độ)",
+    )
+    axes[2].set_xlabel("thời gian (s)")
+    axes[2].set_ylabel("sai số ngang (cm)", color="#7c3aed")
+    heading_axis.set_ylabel("sai số hướng (độ)", color="#ea580c")
+    axes[2].set_title("Sai số mà controller quan sát")
+    axes[2].grid(True)
+    lines = axes[2].lines + heading_axis.lines
+    axes[2].legend(lines, [line.get_label() for line in lines], fontsize=8)
+
+    figure.suptitle(
+        "Trace cuối 26/07/2026 — research_warehouse/lower_left_diagonal\n"
+        f"t = {row['execution_time_s']:.3f} s; "
+        f"GT RMSE = {100.0 * row['tracking_rmse_m']:.3f} cm; "
+        f"GT max = {100.0 * row['tracking_max_error_m']:.3f} cm",
+        fontsize=13, weight="bold",
+    )
+    figure.tight_layout(rect=(0, 0, 1, 0.90))
+    figure.savefig(ASSETS / "figure_10_speed_trace.png", bbox_inches="tight")
+    plt.close(figure)
+
+
+def save_current_all_map_error(validation):
+    labels = [ENV_LABEL[name] for name in ENVIRONMENTS]
+    metrics = (
+        (
+            "RMSE bám theo ground truth",
+            [100.0 * validation[name]["tracking_rmse_m"] for name in ENVIRONMENTS],
+            "#2563eb",
+        ),
+        (
+            "RMSE bám trong hệ điều khiển",
+            [
+                100.0 * validation[name]["estimated_tracking_rmse_m"]
+                for name in ENVIRONMENTS
+            ],
+            "#0f766e",
+        ),
+        (
+            "Sai số định vị P95",
+            [
+                100.0 * validation[name]["localization_position_error_p95_m"]
+                for name in ENVIRONMENTS
+            ],
+            "#d97706",
+        ),
+    )
+    figure, axes = plt.subplots(1, 3, figsize=(14.8, 4.8))
+    x = np.arange(len(labels))
+    for axis, (title, values, color) in zip(axes, metrics):
+        bars = axis.bar(x, values, color=color)
+        axis.set_xticks(x, labels, rotation=43, ha="right")
+        axis.set_ylabel("cm")
+        axis.set_title(title)
+        axis.grid(True, axis="y", alpha=0.35)
+        for bar, value in zip(bars, values):
+            axis.text(
+                bar.get_x() + bar.get_width() / 2,
+                bar.get_height(),
+                f"{value:.2f}",
+                ha="center", va="bottom", fontsize=7,
+            )
+    figure.suptitle(
+        "Kiểm chứng chạy kín Pivot–G2 thích nghi trên 7 môi trường — "
+        "trace cuối 26/07/2026",
+        fontsize=14, weight="bold",
+    )
+    figure.tight_layout(rect=(0, 0, 1, 0.93))
+    figure.savefig(ASSETS / "figure_14_all_map_error.png", bbox_inches="tight")
+    plt.close(figure)
+
+
+def save_current_audit_comparison(current_audit):
+    """Show improvements and regressions honestly on a common 100% baseline."""
+    lower_before = current_audit["lower_before"]
+    lower_after = current_audit["lower_after"]
+    rack_before = current_audit["rack_before"]
+    rack_after = current_audit["rack_after"]
+    narrow_before = current_audit["narrow_before_angular_braking"]
+    narrow_after = current_audit["narrow_after"]
+    groups = (
+        (
+            "lower_left_diagonal",
+            (
+                ("GT RMSE", "tracking_rmse_m"),
+                ("Odom vị trí P95", "odometry_position_error_p95_m"),
+                ("Odom yaw P95", "odometry_yaw_error_p95_rad"),
+                ("RMSE controller", "estimated_tracking_rmse_m"),
+            ),
+            lower_before,
+            lower_after,
+        ),
+        (
+            "right_rack_detour",
+            (
+                ("Thời gian", "execution_time_s"),
+                ("GT RMSE", "tracking_rmse_m"),
+                ("Exit max", "curve_exit_tracking_max_error_m"),
+                ("Odom yaw P95", "odometry_yaw_error_p95_rad"),
+            ),
+            rack_before,
+            rack_after,
+        ),
+        (
+            "narrow_aisles",
+            (
+                ("Thời gian", "execution_time_s"),
+                ("Initial alignment", "adaptive_speed_mode_sample_counts.initial_alignment"),
+                ("GT RMSE", "tracking_rmse_m"),
+                ("Exit max", "curve_exit_tracking_max_error_m"),
+            ),
+            narrow_before,
+            narrow_after,
+        ),
+    )
+
+    def get(row, key):
+        if "." not in key:
+            return float(row[key])
+        first, second = key.split(".", 1)
+        return float(row[first][second])
+
+    figure, axes = plt.subplots(1, 3, figsize=(14.8, 4.6))
+    for axis, (title, metrics, before, after) in zip(axes, groups):
+        labels = [label for label, _ in metrics]
+        ratios = [100.0 * get(after, key) / get(before, key) for _, key in metrics]
+        y = np.arange(len(labels))
+        axis.axvline(100.0, color="#475569", lw=1.2, ls="--")
+        colors = ["#16a34a" if ratio < 100.0 else "#dc2626" for ratio in ratios]
+        bars = axis.barh(y, ratios, color=colors, alpha=0.88)
+        axis.set_yticks(y, labels)
+        axis.invert_yaxis()
+        axis.set_xlabel("sau / trước (%)")
+        axis.set_title(title)
+        axis.grid(True, axis="x", alpha=0.3)
+        axis.set_xlim(0.0, max(115.0, max(ratios) + 10.0))
+        for bar, ratio in zip(bars, ratios):
+            axis.text(
+                ratio + 1.0, bar.get_y() + bar.get_height() / 2,
+                f"{ratio:.1f}%", va="center", fontsize=8,
+            )
+    figure.suptitle(
+        "Rà soát 26/07/2026: 100% là giá trị trước; xanh là giảm, đỏ là tăng",
+        fontsize=14, weight="bold",
+    )
+    figure.tight_layout(rect=(0, 0, 1, 0.92))
+    figure.savefig(
+        ASSETS / "figure_15_current_audit_comparison.png", bbox_inches="tight"
+    )
+    plt.close(figure)
+
+
+def save_current_figure_manifest(validation, current_audit):
+    def digest(path):
+        return hashlib.sha256(path.read_bytes()).hexdigest()
+
+    generated_figures = (
+        "figure_10_speed_trace.png",
+        "figure_14_all_map_error.png",
+        "figure_15_current_audit_comparison.png",
+        *(f"map_{name}.png" for name in ENVIRONMENTS),
+    )
+    manifest = {
+        "version": "current_full_audit_20260726",
+        "validation_sources": {
+            name: {
+                "path": str(path.relative_to(ROOT)),
+                "sha256": digest(path),
+                "execution_time_s": validation[name]["execution_time_s"],
+                "tracking_rmse_m": validation[name]["tracking_rmse_m"],
+                "tracking_max_error_m": validation[name]["tracking_max_error_m"],
+                "estimated_tracking_rmse_m": validation[name][
+                    "estimated_tracking_rmse_m"
+                ],
+                "localization_position_error_p95_m": validation[name][
+                    "localization_position_error_p95_m"
+                ],
+            }
+            for name, path in VALIDATION_PATHS.items()
+        },
+        "before_after_sources": {
+            name: {
+                "path": str(path.relative_to(ROOT)),
+                "sha256": digest(path),
+            }
+            for name, path in CURRENT_AUDIT_PATHS.items()
+        },
+        "generated_figures": generated_figures,
+        "figure_sha256": {
+            filename: digest(ASSETS / filename)
+            for filename in generated_figures
+        },
+    }
+    (ASSETS / "current_figure_manifest.json").write_text(
+        json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
 
 
 def table(headers, rows, class_name=""):
@@ -2191,6 +2447,11 @@ def main():
         action="store_true",
         help="Validate all source datasets without writing report artifacts.",
     )
+    parser.add_argument(
+        "--write-legacy-html",
+        action="store_true",
+        help="Also write the older compact HTML view (disabled by default).",
+    )
     args = parser.parse_args()
     summary = load_geometry_summary()
     execution = load_execution_rows()
@@ -2213,14 +2474,19 @@ def main():
     copy_evidence_assets()
     for environment in ENVIRONMENTS:
         save_map_detail(environment, validation[environment])
-    OUTPUT.write_text(
-        tutorial_html(summary, execution, validation, current_audit, hardware),
-        encoding="utf-8",
-    )
+    save_current_speed_trace(validation)
+    save_current_all_map_error(validation)
+    save_current_audit_comparison(current_audit)
+    save_current_figure_manifest(validation, current_audit)
+    if args.write_legacy_html:
+        OUTPUT.write_text(
+            tutorial_html(summary, execution, validation, current_audit, hardware),
+            encoding="utf-8",
+        )
     print(
         json.dumps(
             {
-                "html": str(OUTPUT),
+                "html": str(OUTPUT) if args.write_legacy_html else None,
                 "assets": str(ASSETS),
                 "asset_count": len(list(ASSETS.glob("*.png"))),
                 "geometry_rows": summary["geometry_row_count"],

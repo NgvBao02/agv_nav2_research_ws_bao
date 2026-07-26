@@ -176,6 +176,9 @@ colcon test-result --verbose
 
 ## Tài liệu
 
-- [Báo cáo toàn diện cho người mới: từ ROS 2, robot vi sai đến Adaptive Hybrid Pivot–G2](docs/BAO_CAO_TOAN_DIEN_ADAPTIVE_HYBRID_PIVOT_G2.html)
+- Báo cáo toàn diện 66 trang cho người mới, dựng trực tiếp từ bản gốc của
+  Phạm Hải Linh: [HTML](docs/BAO_CAO_TOAN_DIEN_ADAPTIVE_HYBRID_PIVOT_G2.html),
+  [DOCX](docs/BAO_CAO_TOAN_DIEN_ADAPTIVE_HYBRID_PIVOT_G2.docx),
+  [PDF](docs/BAO_CAO_TOAN_DIEN_ADAPTIVE_HYBRID_PIVOT_G2.pdf)
 - [Bài báo REV-ECIT 2026](docs/REV_ECIT_2026_ADAPTIVE_HYBRID_PIVOT_G2_PAPER.html)
 - [Phụ lục kết quả đầy đủ](docs/REV_ECIT_2026_ADAPTIVE_HYBRID_PIVOT_G2_SUPPLEMENT.html)
