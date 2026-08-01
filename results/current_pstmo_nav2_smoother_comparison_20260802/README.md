@@ -34,7 +34,7 @@ smoother nhận cùng một đường Raw đã canonicalize trong từng nhóm.
 
 ## So sánh công bằng trên 34 nhóm cùng thành công
 
-| Phương pháp | Năng lượng độ cong tịnh tiến (1/m) | So với Raw | Chiều dài (m) | So với Raw | Khoảng hở footprint nhỏ nhất (m) | So với Raw |
+| Phương pháp | Tích phân bình phương độ cong trên đoạn tịnh tiến (1/m) | So với Raw | Chiều dài (m) | So với Raw | Khoảng hở footprint nhỏ nhất (m) | So với Raw |
 |---|---:|---:|---:|---:|---:|---:|
 | Raw | 50,207 | — | 10,314 | — | 0,161 | — |
 | Simple | 9,418 | −81,24% | 10,240 | −0,72% | 0,191 | +18,29% |
@@ -42,9 +42,9 @@ smoother nhận cùng một đường Raw đã canonicalize trong từng nhóm.
 | Constrained | 28,065 | −44,10% | 10,332 | +0,17% | **0,213** | **+32,12%** |
 | **PSTMO** | **4,511** | **−91,01%** | **10,195** | **−1,16%** | 0,176 | +9,42% |
 
-PSTMO có năng lượng độ cong thấp nhất và đường ngắn nhất. So với smoother
-Nav2 stock tốt nhất về độ cong là Simple, PSTMO giảm thêm 52,10% năng lượng độ
-cong và rút ngắn thêm 0,45% chiều dài. Đổi lại, Constrained đạt khoảng hở lớn
+PSTMO có tích phân bình phương độ cong thấp nhất và đường ngắn nhất. So với
+smoother Nav2 stock tốt nhất theo chỉ số này là Simple, PSTMO giảm thêm 52,10%
+giá trị tích phân và rút ngắn thêm 0,45% chiều dài. Đổi lại, Constrained đạt khoảng hở lớn
 nhất; khoảng hở trung bình của PSTMO thấp hơn Constrained 17,18%.
 
 ## Mức độ đồng đều
