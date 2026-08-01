@@ -10,7 +10,10 @@ from types import SimpleNamespace
 import unittest
 
 from action_msgs.msg import GoalStatus
-from adaptive_pivot_g2_benchmark.batch_benchmark import calculate_path_deviation
+from adaptive_pivot_g2_benchmark.batch_benchmark import (
+    _parse_selection,
+    calculate_path_deviation,
+)
 from adaptive_pivot_g2_benchmark.clearance_metrics import (
     calculate_footprint_clearance,
 )
@@ -57,6 +60,12 @@ from std_msgs.msg import Bool, String
 
 
 class TestPathMetrics(unittest.TestCase):
+
+    def test_parse_selection_trims_and_removes_duplicates(self):
+        self.assertEqual(
+            _parse_selection(' pivot_g2, simple,pivot_g2, '),
+            ['pivot_g2', 'simple'],
+        )
 
     @staticmethod
     def _pose(x, y, yaw):

@@ -323,12 +323,12 @@ def test_motion_limits_are_consistent_across_nav2_and_gazebo():
     goal_checker = parameters['controller_server']['ros__parameters'][
         'general_goal_checker'
     ]
-    assert goal_checker['plugin'] == 'nav2_controller::StoppedGoalChecker'
+    assert goal_checker['plugin'] == 'nav2_controller::SimpleGoalChecker'
     assert 0.0 < goal_checker['xy_goal_tolerance'] <= 0.10
     assert 0.0 < goal_checker['yaw_goal_tolerance'] <= 0.10
-    assert goal_checker['trans_stopped_velocity'] == 0.01
-    assert goal_checker['rot_stopped_velocity'] == 0.02
-    assert goal_checker['stateful'] is False
+    assert 'trans_stopped_velocity' not in goal_checker
+    assert 'rot_stopped_velocity' not in goal_checker
+    assert goal_checker['stateful'] is True
 
     route_operations = parameters['route_server']['ros__parameters'][
         'operations'

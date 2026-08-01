@@ -74,6 +74,8 @@ def _launch_setup(context):
             'repetitions': ParameterValue(
                 LaunchConfiguration('repetitions'), value_type=int
             ),
+            'smoothers': LaunchConfiguration('smoothers'),
+            'scenario_names': LaunchConfiguration('scenario_names'),
             'resample_spacing': ParameterValue(
                 LaunchConfiguration('resample_spacing'), value_type=float
             ),
@@ -111,6 +113,14 @@ def generate_launch_description():
             default_value='/tmp/planner_benchmark_summary.json',
         ),
         DeclareLaunchArgument('repetitions', default_value='1'),
+        DeclareLaunchArgument(
+            'smoothers',
+            default_value=(
+                'simple,savitzky_golay,constrained,pivot_g2,'
+                'adaptive_hybrid'
+            ),
+        ),
+        DeclareLaunchArgument('scenario_names', default_value=''),
         DeclareLaunchArgument('resample_spacing', default_value='0.05'),
         DeclareLaunchArgument('gui', default_value='false'),
         OpaqueFunction(function=_launch_setup),

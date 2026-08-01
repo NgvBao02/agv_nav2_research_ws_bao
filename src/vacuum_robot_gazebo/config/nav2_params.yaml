@@ -99,17 +99,17 @@ controller_server:
       required_movement_radius: 0.05
       required_movement_angle: 0.02
       movement_time_allowance: 30.0
-    # One standard physical-stop goal definition is shared by all methods.
-    # Do not latch XY: the action only succeeds while the stopped robot is
-    # inside the benchmark's 0.10 m ground-truth acceptance radius even with
-    # the measured map-localization offset of roughly 0.04 m.
+    # Terminate FollowPath on pose and latch XY once reached.  Pairing RPP's
+    # bang-bang final-heading command with StoppedGoalChecker made completion
+    # depend on angular velocity crossing zero inside the yaw tolerance; AMCL
+    # drift could also reopen XY and produce a long terminal limit cycle.  The
+    # benchmark runner independently waits for a physical stop and validates
+    # the final pose from Gazebo ground truth after this action completes.
     general_goal_checker:
-      plugin: "nav2_controller::StoppedGoalChecker"
+      plugin: "nav2_controller::SimpleGoalChecker"
       xy_goal_tolerance: 0.06
       yaw_goal_tolerance: 0.10
-      trans_stopped_velocity: 0.01
-      rot_stopped_velocity: 0.02
-      stateful: false
+      stateful: true
     # A stock Regulated Pure Pursuit controller is shared by every method.
     # Keep the experimental motion law deterministic: one fixed cruise speed
     # and one fixed lookahead are used for every path.  Only the short terminal

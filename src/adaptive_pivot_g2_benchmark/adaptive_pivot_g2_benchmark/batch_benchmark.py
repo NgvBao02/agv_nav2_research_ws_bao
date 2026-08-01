@@ -56,6 +56,16 @@ SMOOTHERS = {
 }
 
 
+def _parse_selection(value: str) -> List[str]:
+    """Parse a comma-separated ROS parameter without retaining duplicates."""
+    selected = []
+    for item in value.split(','):
+        normalized = item.strip()
+        if normalized and normalized not in selected:
+            selected.append(normalized)
+    return selected
+
+
 def _path_points(path: NavPath) -> List[Point]:
     return [(pose.pose.position.x, pose.pose.position.y) for pose in path.poses]
 
@@ -131,6 +141,8 @@ class BatchBenchmark(Node):
             ],
         )
         self.declare_parameter('repetitions', 1)
+        self.declare_parameter('smoothers', ','.join(SMOOTHERS))
+        self.declare_parameter('scenario_names', '')
         self.declare_parameter('resample_spacing', 0.05)
         self.declare_parameter('max_smoothing_duration', 3.0)
         self.declare_parameter('check_for_collisions', True)
@@ -141,6 +153,12 @@ class BatchBenchmark(Node):
         self.output_json = Path(str(self.get_parameter('output_json').value))
         self.planners = list(self.get_parameter('planners').value)
         self.repetitions = int(self.get_parameter('repetitions').value)
+        self.smoothers = _parse_selection(
+            str(self.get_parameter('smoothers').value)
+        )
+        self.scenario_names = _parse_selection(
+            str(self.get_parameter('scenario_names').value)
+        )
         self.resample_spacing = float(self.get_parameter('resample_spacing').value)
         self.max_smoothing_duration = float(
             self.get_parameter('max_smoothing_duration').value
@@ -156,6 +174,9 @@ class BatchBenchmark(Node):
             raise ValueError('resample_spacing must be positive')
         if not self.planners:
             raise ValueError('at least one planner ID is required')
+        unknown_smoothers = sorted(set(self.smoothers) - set(SMOOTHERS))
+        if unknown_smoothers:
+            raise ValueError(f'unknown smoothers: {unknown_smoothers}')
 
         self.planner_client = ActionClient(
             self, ComputePathToPose, 'compute_path_to_pose'
@@ -277,6 +298,19 @@ class BatchBenchmark(Node):
                 raise ValueError(f'scenario is missing one of {sorted(required)}: {scenario}')
             if len(scenario['start']) < 2 or len(scenario['goal']) < 2:
                 raise ValueError(f'scenario start/goal must contain x and y: {scenario}')
+        if self.scenario_names:
+            available = {str(scenario['name']) for scenario in scenarios}
+            missing = sorted(set(self.scenario_names) - available)
+            if missing:
+                raise ValueError(
+                    f'unknown scenarios in {self.scenario_file}: {missing}'
+                )
+            requested = set(self.scenario_names)
+            scenarios = [
+                scenario
+                for scenario in scenarios
+                if str(scenario['name']) in requested
+            ]
         return scenarios
 
     def _spin_future(self, future):
@@ -434,7 +468,7 @@ class BatchBenchmark(Node):
                         planner_id, scenario
                     )
                     if plan_result is None:
-                        for method in ('raw', *SMOOTHERS):
+                        for method in ('raw', *self.smoothers):
                             rows.append(
                                 {
                                     'scenario': scenario['name'],
@@ -491,7 +525,7 @@ class BatchBenchmark(Node):
                             removed_duplicates,
                         )
                     )
-                    for method in SMOOTHERS:
+                    for method in self.smoothers:
                         result, error, wall_time = self._smooth(raw_path, method)
                         if result is None:
                             rows.append(
@@ -547,7 +581,7 @@ class BatchBenchmark(Node):
 
         aggregate = {}
         for planner in self.planners:
-            for method in ('raw', *SMOOTHERS):
+            for method in ('raw', *self.smoothers):
                 selected = [
                     row
                     for row in rows
@@ -593,6 +627,8 @@ class BatchBenchmark(Node):
             'environment': self.environment,
             'scenario_file': str(self.scenario_file),
             'planners': self.planners,
+            'methods': ['raw', *self.smoothers],
+            'scenario_names': self.scenario_names,
             'repetitions': self.repetitions,
             'resample_spacing_m': self.resample_spacing,
             'row_count': len(rows),

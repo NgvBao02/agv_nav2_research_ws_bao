@@ -1,5 +1,27 @@
 # Phân loại kết quả nghiên cứu
 
+## So sánh PSTMO với smoother chuẩn Nav2 ngày 02/08/2026
+
+- `current_pstmo_nav2_smoother_comparison_20260802/` là benchmark hình học
+  hiện tại dùng Raw, Simple, Savitzky–Golay, Constrained và PSTMO trên 35 nhóm
+  ghép cặp/175 bản ghi; không chạy Adaptive Hybrid.
+- Dùng dataset này cho phần so sánh smoother trong Abstract và báo cáo. Phần
+  vòng kín Raw–PSTMO sau sửa goal termination vẫn lấy từ
+  `current_pstmo_reduced_20260802_fixed/`.
+
+## Benchmark PSTMO hiện tại, rút gọn ngày 02/08/2026
+
+- `current_pstmo_reduced_20260802/` là dataset mới dùng phiên bản code hiện
+  tại và chỉ so sánh Raw với `pivot_g2`; Adaptive Hybrid không được chạy. Phần
+  vòng kín ban đầu trong thư mục này có lỗi goal termination và chỉ được giữ để
+  chẩn đoán, không dùng số liệu thời gian.
+- `current_pstmo_reduced_20260802_fixed/` chứa 6 lượt vòng kín đã chạy lại sau
+  khi sửa goal termination; đây là nguồn hợp lệ cho số liệu vòng kín hiện tại.
+- Phần hình học gồm 7 tình huống trên 7 map, 5 planner, 1 lần đánh giá và 2
+  phương pháp: 35 cặp/70 dòng. Phần vòng kín gồm 3 cặp Raw–PSTMO, tổng 6 lượt.
+- Dùng phần hình học của dataset gốc và phần vòng kín của dataset `_fixed` thay
+  cho ma trận 7.200 dòng cùng các lượt chạy kín cũ khi mô tả Abstract hiện tại.
+
 ## Audit selector Hybrid trung lập ngày 27/07/2026
 
 - `neutral_hybrid_20260727/` chứa ma trận trước–sau 320 + 320 hàng trên

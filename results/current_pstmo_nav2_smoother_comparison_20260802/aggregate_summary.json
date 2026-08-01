@@ -1,0 +1,104 @@
+{
+  "design": {
+    "environment_count": 7,
+    "scenario_count": 7,
+    "planner_count": 5,
+    "methods": [
+      "raw",
+      "simple",
+      "savitzky_golay",
+      "constrained",
+      "pivot_g2"
+    ],
+    "repetitions": 1,
+    "paired_group_count": 35,
+    "record_count": 175,
+    "common_success_group_count": 34
+  },
+  "validation": {
+    "raw_path_hash_consistent_group_count": 35,
+    "raw_path_hash_matches_previous_reduced_dataset_count": 35,
+    "successful_record_count": 174,
+    "failed_record_count": 1,
+    "footprint_collision_record_count": 0,
+    "footprint_collision_sample_count": 0,
+    "adaptive_hybrid_record_count": 0
+  },
+  "success": {
+    "raw": "35/35",
+    "simple": "34/35",
+    "savitzky_golay": "35/35",
+    "constrained": "35/35",
+    "pivot_g2": "35/35"
+  },
+  "failure": {
+    "method": "simple",
+    "environment": "warehouse_dispatch",
+    "scenario": "full_replenishment",
+    "planner": "SmacHybrid",
+    "error_code": 503,
+    "error": "FAILED_TO_SMOOTH_PATH"
+  },
+  "common_success_means": {
+    "raw": {
+      "translation_curvature_energy_1pm": 50.2067009331,
+      "translation_path_length_m": 10.3144116147,
+      "minimum_footprint_clearance_m": 0.161283683852,
+      "wall_time_ms": 9.2037614706
+    },
+    "simple": {
+      "translation_curvature_energy_1pm": 9.41781282904,
+      "translation_path_length_m": 10.2403044207,
+      "minimum_footprint_clearance_m": 0.19077539571,
+      "wall_time_ms": 9.03307217657
+    },
+    "savitzky_golay": {
+      "translation_curvature_energy_1pm": 22.6991485113,
+      "translation_path_length_m": 10.2957737871,
+      "minimum_footprint_clearance_m": 0.19124870422,
+      "wall_time_ms": 7.44814679413
+    },
+    "constrained": {
+      "translation_curvature_energy_1pm": 28.0653189558,
+      "translation_path_length_m": 10.33245951,
+      "minimum_footprint_clearance_m": 0.213088305982,
+      "wall_time_ms": 29.5044162352
+    },
+    "pivot_g2": {
+      "translation_curvature_energy_1pm": 4.51115560915,
+      "translation_path_length_m": 10.1946564263,
+      "minimum_footprint_clearance_m": 0.176478656745,
+      "action_smoothing_duration_ms": 33.7058823529,
+      "internal_runtime_ms": 33.5107058824,
+      "wall_time_ms": 46.2135035589
+    }
+  },
+  "common_success_change_from_raw_pct": {
+    "simple": {
+      "translation_curvature_energy": -81.2419205923,
+      "translation_path_length": -0.71848203122,
+      "minimum_footprint_clearance": 18.2856139902
+    },
+    "savitzky_golay": {
+      "translation_curvature_energy": -54.788608,
+      "translation_path_length": -0.180697,
+      "minimum_footprint_clearance": 18.579077
+    },
+    "constrained": {
+      "translation_curvature_energy": -44.100452,
+      "translation_path_length": 0.174977,
+      "minimum_footprint_clearance": 32.120188
+    },
+    "pivot_g2": {
+      "translation_curvature_energy": -91.014834,
+      "translation_path_length": -1.161047,
+      "minimum_footprint_clearance": 9.421271
+    }
+  },
+  "minimum_clearance_change_counts": {
+    "simple": {"higher": 20, "equal": 4, "lower": 10},
+    "savitzky_golay": {"higher": 18, "equal": 12, "lower": 4},
+    "constrained": {"higher": 28, "equal": 6, "lower": 0},
+    "pivot_g2": {"higher": 19, "equal": 3, "lower": 12}
+  }
+}

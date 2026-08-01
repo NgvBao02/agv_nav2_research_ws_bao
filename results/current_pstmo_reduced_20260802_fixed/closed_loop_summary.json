@@ -1,0 +1,77 @@
+{
+  "design": {
+    "environment_count": 3,
+    "scenario_count": 3,
+    "planner": "ThetaStar",
+    "methods": [
+      "raw",
+      "pivot_g2"
+    ],
+    "repetitions": 1,
+    "paired_group_count": 3,
+    "trial_count": 6
+  },
+  "generated_at_utc": "2026-08-01T17:57:39.361492+00:00",
+  "goal_termination_fix": {
+    "goal_checker_plugin": "nav2_controller::SimpleGoalChecker",
+    "stateful": true,
+    "xy_goal_tolerance_m": 0.06,
+    "yaw_goal_tolerance_rad": 0.1,
+    "physical_stop_and_final_pose_gate": "Gazebo ground truth in execution_trial"
+  },
+  "paired_changes": {
+    "mean_execution_time_change_pct": -3.9870514363796072,
+    "mean_ground_truth_tracking_rmse_change_pct": -1.3369322369640169
+  },
+  "pairs": [
+    {
+      "environment": "research_warehouse",
+      "scenario": "lower_left_diagonal",
+      "planner": "ThetaStar",
+      "same_raw_path": true,
+      "raw_execution_time_s": 34.230000000000004,
+      "pstmo_execution_time_s": 33.45
+    },
+    {
+      "environment": "narrow_aisles",
+      "scenario": "southwest_northeast_weave",
+      "planner": "ThetaStar",
+      "same_raw_path": true,
+      "raw_execution_time_s": 68.61,
+      "pstmo_execution_time_s": 66.705
+    },
+    {
+      "environment": "warehouse_dispatch",
+      "scenario": "full_replenishment",
+      "planner": "ThetaStar",
+      "same_raw_path": true,
+      "raw_execution_time_s": 81.58200000000001,
+      "pstmo_execution_time_s": 76.914
+    }
+  ],
+  "raw": {
+    "trial_count": 3,
+    "success_count": 3,
+    "mean_execution_time_s": 61.474000000000004,
+    "mean_ground_truth_tracking_rmse_m": 0.028481135343838407,
+    "mean_controller_estimated_tracking_rmse_m": 0.014587355059266584,
+    "mean_final_position_error_m": 0.04178533412802469
+  },
+  "pstmo": {
+    "trial_count": 3,
+    "success_count": 3,
+    "mean_execution_time_s": 59.023,
+    "mean_ground_truth_tracking_rmse_m": 0.02810036186397328,
+    "mean_controller_estimated_tracking_rmse_m": 0.016480301415202667,
+    "mean_final_position_error_m": 0.03917116334192919
+  },
+  "validation": {
+    "success_count": 6,
+    "physically_settled_count": 6,
+    "ground_truth_goal_reached_count": 6,
+    "same_raw_path_pair_count": 3,
+    "adaptive_hybrid_trial_count": 0,
+    "collision_monitor_interventions": 0,
+    "planned_footprint_collision_sample_count": 0
+  }
+}
