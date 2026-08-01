@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>ICEEIS 2026 — PSTMO Abstract</title>
+  <style>
+    @page { size: A4; margin: 22mm 20mm; }
+    body {
+      margin: 0;
+      color: #111;
+      font-family: "Times New Roman", Times, serif;
+      font-size: 11pt;
+      line-height: 1.28;
+      text-align: justify;
+    }
+    h1 {
+      margin: 0 0 10pt;
+      font-size: 16pt;
+      line-height: 1.15;
+      text-align: center;
+    }
+    .conference {
+      margin: 0 0 4pt;
+      font-size: 10pt;
+      font-weight: bold;
+      text-align: center;
+    }
+    .track {
+      margin: 0 0 18pt;
+      font-size: 9.5pt;
+      font-style: italic;
+      text-align: center;
+    }
+    p { margin: 0 0 9pt; }
+    .label { font-weight: bold; }
+    .keywords { font-size: 10.5pt; }
+  </style>
+</head>
+<body>
+  <p class="conference">The 1st International Conference on Electrical, Electronics and Intelligent Systems — ICEEIS 2026</p>
+  <h1>A Safety-Aware Path Smoothing and Turning-Maneuver Optimization Method for a Two-Wheeled Differential-Drive Mobile Robot</h1>
+  <p class="track">Intelligent Control, Robotics, and Automation — Autonomous Systems (AMR, AGV, UAV)</p>
+
+  <p><span class="label">Abstract—</span>Global planners in ROS 2/Nav2 return collision-free polylines with abrupt heading changes. For a two-wheeled differential-drive mobile robot, preserving these vertices can induce frequent in-place rotations and high curvature variation, whereas unconstrained smoothing may cut corners and reduce obstacle clearance. This study addresses footprint-safe path post-processing in narrow warehouse passages. We propose a path smoothing and turning-maneuver optimization method (PSTMO) that conditions the planner path and represents each retained corner either as an explicit in-place pivot or as a quintic Bézier transition that is geometrically G<sup>2</sup>-continuous with adjacent line segments. An adaptive trim/radius search generates local candidates; curvature, wheel-motion, and swept-footprint checks reject infeasible candidates; and dynamic programming selects a globally compatible sequence without overlap between adjacent transitions. Evaluation used a paired benchmark of 7,200 path records comprising 60 scenarios distributed across seven maps, five global planners, eight post-processing methods, and three repetitions, with identical raw-path hashes within every comparison group. PSTMO succeeded in 882/900 cases (98.0%). On the 882 jointly successful pairs, it reduced mean translational curvature energy by 92.1%, shortened path length by 0.8%, and increased minimum footprint clearance by 7.3% relative to the raw paths, with a mean processing time of 6.09 ms and zero footprint-collision samples. Eight representative closed-loop Gazebo runs across the seven environments all completed without collision-monitor intervention; the mean ground-truth and controller-estimated tracking RMSEs were 2.42 cm and 0.69 cm, respectively. The results indicate that PSTMO provides real-time, footprint-aware path smoothing while retaining in-place rotations where continuous cornering is infeasible. Hardware trials and repeated statistical testing remain future work.</p>
+
+  <p class="keywords"><span class="label">Keywords—</span>Two-wheeled mobile robot; differential drive; path smoothing; maneuver optimization; swept-footprint safety; ROS 2/Nav2.</p>
+</body>
+</html>
