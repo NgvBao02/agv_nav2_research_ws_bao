@@ -22,7 +22,6 @@
 #include <string>
 #include <vector>
 
-#include "diagnostic_msgs/msg/diagnostic_array.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "rviz_common/panel.hpp"
 #include "std_msgs/msg/string.hpp"
@@ -60,8 +59,6 @@ private:
   void updateSmootherVisibility(
     const std_msgs::msg::String::SharedPtr message);
   void updateMetrics(const std_msgs::msg::String::SharedPtr message);
-  void updateAdaptiveSpeed(
-    const diagnostic_msgs::msg::DiagnosticArray::SharedPtr message);
   void setComboPlanner(const QString & planner_id);
   void setComboEnvironment(const QString & environment_id);
   void setSmootherVisibility(
@@ -81,8 +78,6 @@ private:
   QPushButton * show_raw_only_button_{nullptr};
   QLabel * smoother_status_label_{nullptr};
   QTableWidget * metrics_table_{nullptr};
-  QLabel * adaptive_speed_status_label_{nullptr};
-  QLabel * adaptive_speed_values_label_{nullptr};
   bool updating_smoother_buttons_{false};
   std::atomic_bool shutting_down_{false};
   int metrics_generation_{-1};
@@ -96,8 +91,6 @@ private:
     smoother_visibility_subscription_;
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr
     metrics_subscription_;
-  rclcpp::Subscription<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr
-    adaptive_speed_subscription_;
   rclcpp::Publisher<std_msgs::msg::String>::SharedPtr environment_publisher_;
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr
     environment_active_subscription_;

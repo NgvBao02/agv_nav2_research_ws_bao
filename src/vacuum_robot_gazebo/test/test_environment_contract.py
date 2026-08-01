@@ -215,9 +215,7 @@ def test_research_rviz_has_one_display_for_every_comparison_path():
         '/research/path/simple',
         '/research/path/savitzky_golay',
         '/research/path/constrained',
-        '/research/path/pivot_g2_fixed',
         '/research/path/pivot_g2',
-        '/research/path/adaptive_hybrid_fixed',
         '/research/path/adaptive_hybrid',
         '/research/path/executed',
     }
@@ -252,121 +250,86 @@ def test_motion_limits_are_consistent_across_nav2_and_gazebo():
     controller = parameters['controller_server']['ros__parameters'][
         'FollowPath'
     ]
+    assert controller['plugin'] == (
+        'nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController'
+    )
     assert controller['desired_linear_vel'] == expected['max_linear_speed']
-    assert (
-        controller['adaptive_wheel_separation']
-        == expected['wheel_separation']
+    assert controller['rotate_to_heading_angular_vel'] <= expected[
+        'max_angular_speed'
+    ]
+    assert controller['max_angular_accel'] == expected[
+        'max_angular_acceleration'
+    ]
+    assert not any(key.startswith('adaptive_') for key in controller)
+    assert not any(key.startswith('pivot_') for key in controller)
+    assert not any(key.startswith('terminal_') for key in controller)
+
+    progress_checker = parameters['controller_server']['ros__parameters'][
+        'progress_checker'
+    ]
+    assert progress_checker['plugin'] == (
+        'nav2_controller::PoseProgressChecker'
     )
-    assert (
-        controller['adaptive_max_linear_speed']
-        == expected['max_linear_speed']
-    )
-    assert (
-        controller['adaptive_max_angular_speed']
-        == expected['max_angular_speed']
-    )
-    assert (
-        controller['adaptive_max_wheel_linear_speed']
-        == expected['max_wheel_speed']
-    )
-    assert (
-        controller['adaptive_max_lateral_acceleration']
-        == expected['max_lateral_acceleration']
-    )
-    assert (
-        controller['adaptive_max_linear_acceleration']
-        == expected['max_linear_acceleration']
-    )
-    assert (
-        controller['adaptive_max_linear_deceleration']
-        == expected['max_linear_deceleration']
-    )
-    assert (
-        controller['adaptive_max_angular_acceleration']
-        == expected['max_angular_acceleration']
-    )
-    assert controller['pivot_control_period'] == 1.0 / (
-        parameters['controller_server']['ros__parameters'][
-            'controller_frequency'
-        ]
-    )
-    assert (
-        0.0
-        < controller['pivot_effective_angular_deceleration']
-        <= controller['pivot_max_angular_acceleration']
-    )
-    assert (
-        0.0
-        < controller['initial_alignment_exit_angle']
-        < controller['initial_alignment_enter_angle']
-        < controller['rotate_to_heading_min_angle']
-    )
-    assert controller['initial_alignment_preview_distance'] > 0.0
+    assert progress_checker['required_movement_radius'] > 0.0
+    assert progress_checker['required_movement_angle'] > 0.0
+
+    velocity_smoother = parameters['velocity_smoother']['ros__parameters']
+    assert velocity_smoother['max_velocity'] == [
+        expected['max_linear_speed'], 0.0, expected['max_angular_speed']
+    ]
+    assert velocity_smoother['min_velocity'] == [
+        -expected['max_linear_speed'], 0.0, -expected['max_angular_speed']
+    ]
+    assert velocity_smoother['max_accel'] == [
+        expected['max_linear_acceleration'],
+        0.0,
+        expected['max_angular_acceleration'],
+    ]
+    assert velocity_smoother['max_decel'] == [
+        -expected['max_linear_deceleration'],
+        0.0,
+        -expected['max_angular_acceleration'],
+    ]
 
     smoother = parameters['smoother_server']['ros__parameters']
+    assert smoother['smoother_plugins'] == [
+        'simple_smoother',
+        'savitzky_golay',
+        'constrained',
+        'pivot_g2',
+        'adaptive_hybrid',
+    ]
     pivot_profiles = [
-        smoother['pivot_g2_fixed'],
         smoother['pivot_g2'],
-        smoother['adaptive_hybrid_fixed']['pivot'],
         smoother['adaptive_hybrid']['pivot'],
     ]
     for profile in pivot_profiles:
         for key, value in expected.items():
             assert profile[key] == value
-        assert (
-            profile['corner_angle_threshold']
-            == controller['minimum_pivot_angle']
-        )
-
-    hybrid_profiles = [
-        smoother['adaptive_hybrid_fixed'],
-        smoother['adaptive_hybrid'],
+        assert 'radius_search_mode' not in profile
+        assert 'radius_candidates' not in profile
+    hybrid = smoother['adaptive_hybrid']
+    assert hybrid['minimum_pivot_angle'] == hybrid['pivot'][
+        'corner_angle_threshold'
     ]
-    for profile in hybrid_profiles:
-        assert (
-            profile['pivot_duplicate_position_tolerance']
-            == controller['pivot_duplicate_position_tolerance']
-        )
-        assert (
-            profile['minimum_pivot_angle']
-            == controller['minimum_pivot_angle']
-        )
-        assert (
-            profile['minimum_pivot_angle']
-            == profile['pivot']['corner_angle_threshold']
-        )
 
     goal_checker = parameters['controller_server']['ros__parameters'][
         'general_goal_checker'
     ]
-    assert (
-        controller['terminal_hold_position_tolerance']
-        < goal_checker['xy_goal_tolerance']
-        <= controller['terminal_release_position_tolerance']
-        < controller['terminal_staging_position_tolerance']
-    )
-    assert (
-        controller['pivot_yaw_tolerance']
-        < goal_checker['yaw_goal_tolerance']
-        <= 0.05
-    )
-    assert (
-        controller['pivot_stopped_linear_velocity']
-        == goal_checker['trans_stopped_velocity']
-    )
-    assert (
-        controller['pivot_stopped_angular_velocity']
-        == goal_checker['rot_stopped_velocity']
-    )
-    assert (
-        controller['terminal_precision_max_linear_speed']
-        <= controller['terminal_max_linear_speed']
-        <= controller['adaptive_max_linear_speed']
-    )
-    assert (
-        controller['pivot_position_tolerance']
-        <= controller['terminal_staging_position_tolerance']
-    )
+    assert goal_checker['plugin'] == 'nav2_controller::StoppedGoalChecker'
+    assert 0.0 < goal_checker['xy_goal_tolerance'] <= 0.10
+    assert 0.0 < goal_checker['yaw_goal_tolerance'] <= 0.10
+    assert goal_checker['trans_stopped_velocity'] == 0.01
+    assert goal_checker['rot_stopped_velocity'] == 0.02
+    assert goal_checker['stateful'] is False
+
+    route_operations = parameters['route_server']['ros__parameters'][
+        'operations'
+    ]
+    assert route_operations == ['ReroutingService', 'CollisionMonitor']
+    assert 'AdjustSpeedLimit' not in parameters['route_server'][
+        'ros__parameters'
+    ]
 
     assert float(drive.findtext('max_linear_velocity')) == expected[
         'max_linear_speed'
@@ -408,13 +371,12 @@ def test_motion_limits_are_consistent_across_nav2_and_gazebo():
     # while URDF/SDF retain no-load speed and stall torque as hard absolutes.
     motor = real_profile['drive']
     assert (
-        controller['adaptive_max_wheel_linear_speed']
+        expected['max_wheel_speed']
         <= motor['theoretical_rated_load_linear_speed_mps']
         < motor['theoretical_no_load_linear_speed_mps']
     )
     assert (
-        controller['adaptive_max_linear_speed']
-        <= controller['adaptive_max_wheel_linear_speed']
+        expected['max_linear_speed'] <= expected['max_wheel_speed']
     )
     for joint_name in ('left_wheel_joint', 'right_wheel_joint'):
         joint = model.find(f".//joint[@name='{joint_name}']")

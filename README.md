@@ -17,29 +17,57 @@ luồng nghiên cứu chính chạy hoàn toàn trong ROS 2.
 - `adaptive_pivot_g2_benchmark`: lập kế hoạch một lần, tuần tự đưa đúng cùng
   `nav_msgs/Path` vào Nav2 Simple, Savitzky–Golay, Constrained, Pivot–G2 và
   adaptive hybrid; xuất CSV/JSON, metric full-footprint, và chạy ma trận vòng
-  kín bằng cùng một controller.
+  kín bằng cùng controller Nav2 chuẩn.
 - `adaptive_pivot_g2_rviz`: panel RViz2 để đổi trực tiếp bảy môi trường, chọn
   một trong năm global planner, bật/tắt riêng từng baseline/Pivot/Hybrid và
-  theo dõi metric cùng trạng thái profile vận tốc.
+  theo dõi metric hình học.
 - `vacuum_robot_gazebo`: robot vi sai hai bánh dùng mesh CAD 440 × 340 mm,
   bảy cặp world/map Gazebo–Nav2 đồng nhất, trong đó có ba layout chuyên cho nhà
   kho, bridge Gazebo–ROS, Nav2 và RViz2. Cấu hình cảm biến mô phỏng đã bám theo
   RPLIDAR A1M8 và BNO055 của xe dự kiến.
 - `matlab/pivot_g2`: bản lưu source thử ý tưởng cũ, không nằm trong đường chạy.
 
-Raw và bảy biến thể smoother đã qua ma trận hình học dùng raw-path hash cố
-định. Ma trận vòng kín yêu cầu đồng thời Nav2 action và ground truth Gazebo đạt
-đích, lưu riêng ground truth, odom, pose ước lượng, command và telemetry profile
-vận tốc, rồi dừng server cô lập sau mỗi trial. Báo cáo REV-ECIT hiện hành tách
-rõ ma trận hình học toàn phần khỏi ma trận vòng kín phân tầng; không suy diễn
-“tối ưu toàn cục” từ số liệu mô phỏng.
+Pipeline hiện tại cố ý chỉ giữ RAW và năm smoother: Simple, Savitzky–Golay,
+Constrained, Pivot–G2 adaptive và Adaptive Hybrid. Hai ablation fixed cùng
+controller/tốc độ thích nghi đã được bỏ khỏi đường chạy. Mọi phương pháp dùng
+chung `RegulatedPurePursuitController`, `PoseProgressChecker`,
+`StoppedGoalChecker` chuẩn và `nav2_velocity_smoother`. Các giới hạn cố định của xe
+(0,30 m/s, 0,80 rad/s, gia tốc/phanh và kích thước xe) vẫn được giữ nguyên.
+Việc tham số hóa thời gian nội bộ của smoother vẫn dùng các giới hạn
+vật lý này để loại quỹ đạo bất khả thi; nó không publish `SpeedLimit` và
+không thay đổi tốc độ controller khi xe chạy.
+
+## Chuẩn bị lần đầu sau khi clone
+
+Repo hỗ trợ **Ubuntu 24.04, ROS 2 Jazzy và Gazebo Harmonic**. Nếu máy chưa có
+stack cần thiết, cài các gói nền trước:
+
+```bash
+sudo apt update
+sudo apt install ros-jazzy-desktop ros-jazzy-navigation2 \
+  ros-jazzy-nav2-bringup ros-jazzy-ros-gz ros-dev-tools
+```
+
+Nếu `rosdep` chưa từng được khởi tạo trên máy, chạy một lần:
+
+```bash
+sudo rosdep init
+rosdep update
+```
+
+Sau đó mở terminal tại thư mục gốc của repo vừa clone rồi chạy bootstrap.
+Script tự tìm workspace theo vị trí của chính nó, nên không phụ thuộc tên repo
+hoặc đường dẫn home của người đã fork:
+
+```bash
+./tools/bootstrap_workspace.bash
+source install/setup.bash
+```
 
 ## Chạy nhanh
 
 ```bash
-cd /home/linh-pham/agv_nav2_research_ws
 source /opt/ros/jazzy/setup.bash
-colcon build --symlink-install
 source install/setup.bash
 ros2 launch vacuum_robot_gazebo switchable_simulation.launch.py gui:=true
 ```
@@ -88,9 +116,7 @@ publish cùng input và các màu:
 - vàng: Nav2 Simple;
 - cyan: Nav2 Savitzky–Golay;
 - xanh lá: Nav2 Constrained;
-- hồng nhạt: Pivot–G2 fixed;
 - magenta: Pivot–G2 adaptive;
-- xanh lam nhạt: Hybrid fixed;
 - xanh lam đậm: Adaptive Hybrid;
 - trắng: quỹ đạo xe thực thi.
 
@@ -101,11 +127,11 @@ publish cùng input và các màu:
 2. chọn `NavFn A*`, `NavFn Dijkstra`, `Theta*`, `Smac 2D` hoặc `Smac Hybrid`;
 3. nhấn **Áp dụng và lập lại đường**.
 
-Đường đỏ `RAW planner` được tạo lại bằng đúng planner đã chọn. Bảy nút riêng
-cho Simple, Savitzky–Golay, Constrained, Pivot–G2 fixed/adaptive và Hybrid
-fixed/adaptive cho phép ẩn/hiện từng đường; **Hiện tất cả** và **Chỉ RAW** là
-hai thao tác nhanh. Tất cả phương pháp của một generation nhận đúng cùng raw
-path, và bảng metric hiển thị kết quả riêng từng phương pháp.
+Đường đỏ `RAW planner` được tạo lại bằng đúng planner đã chọn. Năm nút riêng
+cho Simple, Savitzky–Golay, Constrained, Pivot–G2 adaptive và Adaptive Hybrid
+cho phép ẩn/hiện từng đường; **Hiện tất cả** và **Chỉ RAW** là hai thao tác
+nhanh. Tất cả phương pháp của một generation nhận đúng cùng raw path, và bảng
+metric hiển thị kết quả riêng từng phương pháp.
 
 Để xe bám đường đề xuất ngay từ lúc launch:
 
@@ -150,32 +176,34 @@ ros2 run adaptive_pivot_g2_benchmark execution_matrix -- \
   --scenario-file "$PWD/src/adaptive_pivot_g2_benchmark/config/open_arena_scenarios.yaml" \
   --scenario short_open_diagonal \
   --planners NavFnAStar NavFnDijkstra ThetaStar Smac2D SmacHybrid \
-  --methods raw simple savitzky_golay constrained pivot_g2_fixed pivot_g2 \
-    adaptive_hybrid_fixed adaptive_hybrid \
-  --speed-limits 0.15 0.22 0 \
+  --methods raw simple savitzky_golay constrained pivot_g2 adaptive_hybrid \
   --repetitions 3 --output-dir "$PWD/results/execution_matrix"
 ```
 
-`--speed-limits 0` dùng trần tốc độ thích nghi; các giá trị dương tạo nhánh
-đối chứng có trần cố định. `--resume` chỉ dùng lại JSON thành công có đúng
-planner, smoother, tốc độ và repetition; lỗi khởi tạo Gazebo/Nav2 được retry
-riêng, còn timeout/va chạm của thuật toán không bị che bằng retry.
+`--resume` chỉ dùng lại JSON thành công có đúng planner, smoother, repetition
+và fingerprint cấu hình; lỗi khởi tạo Gazebo/Nav2 được retry riêng, còn
+timeout/va chạm của thuật toán không bị che bằng retry.
 
 ## Build và test có chọn lọc
 
 ```bash
 source /opt/ros/jazzy/setup.bash
 colcon build --symlink-install --packages-select \
-  adaptive_pivot_g2 adaptive_pivot_g2_nav2 adaptive_pivot_g2_controller \
+  adaptive_pivot_g2 adaptive_pivot_g2_nav2 \
   adaptive_pivot_g2_benchmark adaptive_pivot_g2_rviz vacuum_robot_gazebo
 colcon test --packages-select \
-  adaptive_pivot_g2 adaptive_pivot_g2_nav2 adaptive_pivot_g2_controller \
+  adaptive_pivot_g2 adaptive_pivot_g2_nav2 \
   adaptive_pivot_g2_benchmark adaptive_pivot_g2_rviz vacuum_robot_gazebo \
   --event-handlers console_direct+
 colcon test-result --verbose
 ```
 
 ## Tài liệu
+
+Các báo cáo dựng trước đợt đơn giản hóa này được giữ làm snapshot lịch sử và
+có thể còn mô tả hai ablation fixed hoặc controller tốc độ thích nghi. Không
+dùng các số liệu cũ đó như kết quả của pipeline hiện tại; hãy tạo ma trận mới
+với lệnh ở trên.
 
 - Báo cáo toàn diện 66 trang cho người mới, dựng trực tiếp từ bản gốc của
   Phạm Hải Linh: [HTML](docs/BAO_CAO_TOAN_DIEN_ADAPTIVE_HYBRID_PIVOT_G2.html),

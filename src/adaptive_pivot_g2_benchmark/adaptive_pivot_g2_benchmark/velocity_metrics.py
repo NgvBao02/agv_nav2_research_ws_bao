@@ -9,7 +9,6 @@ from typing import Dict, List, Tuple
 
 
 CommandSample = Tuple[float, float, float]
-ShaperSample = Tuple[float, bool]
 
 
 def _percentile(values: List[float], fraction: float) -> float:
@@ -134,38 +133,4 @@ def calculate_velocity_metrics(
         'cruise_command_fraction': sum(
             value >= 0.90 * cruise_speed_mps for value in absolute_linear
         ) / len(absolute_linear),
-    }
-
-
-def calculate_shaper_metrics(
-    samples: List[ShaperSample],
-) -> Dict[str, float]:
-    """Separate nominal jerk shaping from immediate safety overrides."""
-    valid = [
-        (abs(float(jerk)), bool(safety_override))
-        for jerk, safety_override in samples
-        if math.isfinite(float(jerk))
-    ]
-    nominal_jerk = [
-        jerk for jerk, safety_override in valid if not safety_override
-    ]
-    override_jerk = [
-        jerk for jerk, safety_override in valid if safety_override
-    ]
-    sample_count = len(valid)
-    return {
-        'adaptive_speed_telemetry_sample_count': sample_count,
-        'adaptive_speed_nominal_jerk_sample_count': len(nominal_jerk),
-        'adaptive_speed_nominal_p95_abs_jerk_mps3': _percentile(
-            nominal_jerk, 0.95
-        ),
-        'adaptive_speed_nominal_max_abs_jerk_mps3': max(
-            nominal_jerk, default=0.0
-        ),
-        'adaptive_speed_safety_override_fraction': (
-            len(override_jerk) / sample_count if sample_count else 0.0
-        ),
-        'adaptive_speed_override_p95_abs_jerk_mps3': _percentile(
-            override_jerk, 0.95
-        ),
     }

@@ -204,17 +204,21 @@ class TestPathMetrics(unittest.TestCase):
     def test_smoother_visibility_accepts_only_exact_ordered_ids(self):
         payload = (
             '{"methods":["adaptive_hybrid","simple","simple",'
-            '"pivot_g2_fixed"]}'
+            '"pivot_g2"]}'
         )
         self.assertEqual(
             normalize_smoother_visibility(payload),
-            ('simple', 'pivot_g2_fixed', 'adaptive_hybrid'),
+            ('simple', 'pivot_g2', 'adaptive_hybrid'),
         )
         self.assertEqual(
             normalize_smoother_visibility('{"methods":[]}'), ()
         )
         with self.assertRaises(ValueError):
             normalize_smoother_visibility('{"methods":["pivot-g2"]}')
+        with self.assertRaises(ValueError):
+            normalize_smoother_visibility(
+                '{"methods":["pivot_g2_fixed"]}'
+            )
         with self.assertRaises(ValueError):
             normalize_smoother_visibility('["simple"]')
         with self.assertRaises(ValueError):
@@ -486,7 +490,6 @@ class TestPathMetrics(unittest.TestCase):
                 'scenario': 'west_east_center',
                 'planner': 'ThetaStar',
                 'method': 'pivot_g2',
-                'fixed_speed_limit_mps': 0.22,
                 'success': True,
                 'repetition': 2,
                 'configuration_sha256': 'config-a',
@@ -497,7 +500,6 @@ class TestPathMetrics(unittest.TestCase):
                 'west_east_center',
                 'ThetaStar',
                 'pivot_g2',
-                0.22,
                 2,
                 'config-a',
             )
@@ -508,7 +510,6 @@ class TestPathMetrics(unittest.TestCase):
                 'west_east_center',
                 'ThetaStar',
                 'raw',
-                0.22,
                 2,
                 'config-a',
             ))
@@ -517,7 +518,6 @@ class TestPathMetrics(unittest.TestCase):
                 'west_east_center',
                 'ThetaStar',
                 'pivot_g2',
-                0.22,
                 2,
                 'config-b',
             ))
@@ -525,7 +525,6 @@ class TestPathMetrics(unittest.TestCase):
                 'scenario': 'west_east_center',
                 'planner': 'ThetaStar',
                 'method': 'pivot_g2',
-                'fixed_speed_limit_mps': 0.22,
                 'success': True,
             }), encoding='utf-8')
             self.assertIsNone(_matching_successful_record(
@@ -533,7 +532,6 @@ class TestPathMetrics(unittest.TestCase):
                 'west_east_center',
                 'ThetaStar',
                 'pivot_g2',
-                0.22,
                 2,
             ))
 
@@ -559,15 +557,13 @@ class TestPathMetrics(unittest.TestCase):
             'success': True,
             'tracking_rmse_m': 0.01,
             'ground_truth_state_trace': [[0.0, 1.0, 2.0]],
-            'adaptive_speed_trace': [[0.0, 'tracking']],
         })
 
         self.assertEqual(compact['tracking_rmse_m'], 0.01)
         self.assertNotIn('ground_truth_state_trace', compact)
-        self.assertNotIn('adaptive_speed_trace', compact)
         self.assertEqual(
             compact['omitted_trace_fields'],
-            ['adaptive_speed_trace', 'ground_truth_state_trace'],
+            ['ground_truth_state_trace'],
         )
 
     def test_execution_matrix_retains_trial_console_log(self):

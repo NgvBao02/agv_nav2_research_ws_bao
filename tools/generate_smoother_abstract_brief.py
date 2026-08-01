@@ -578,7 +578,7 @@ def create():
             ("Môi trường Gazebo/Nav2", "7", "Kho nghiên cứu, lối hẹp, văn phòng, không gian mở và ba bố trí kho"),
             ("Cặp điểm đầu–đích", "60", "Đường thẳng, rẽ gấp, chữ S, hành lang hẹp và đường vòng vật cản"),
             ("Global planner", "5", "NavFn A*, NavFn Dijkstra, Theta*, Smac 2D, Smac Hybrid"),
-            ("Đường/phương pháp", "8", "Raw, Simple, SG, Constrained, Pivot fixed/adaptive, Hybrid fixed/adaptive"),
+            ("Đường/phương pháp", "6", "Raw, Simple, SG, Constrained, Pivot–G2 adaptive, Adaptive Hybrid"),
             ("Lần lặp", "3", "Mọi smoother trong một nhóm nhận cùng Raw"),
             ("Nhóm đầu vào", "900", "60 tình huống × 5 planner × 3 lần lặp"),
             ("Bản ghi hình học", "7.200", "900 nhóm × 8 phương pháp"),

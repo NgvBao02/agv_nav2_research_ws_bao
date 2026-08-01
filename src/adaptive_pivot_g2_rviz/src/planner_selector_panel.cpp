@@ -37,7 +37,6 @@
 
 #include <algorithm>
 #include <array>
-#include <map>
 #include <string>
 #include <utility>
 
@@ -91,13 +90,11 @@ struct SmootherDisplay
   const char * color;
 };
 
-constexpr std::array<SmootherDisplay, 7> kSmootherDisplays = {{
+constexpr std::array<SmootherDisplay, 5> kSmootherDisplays = {{
   {"simple", "Nav2 Simple", "255, 190, 0"},
   {"savitzky_golay", "Nav2 Savitzky–Golay", "0, 220, 255"},
   {"constrained", "Nav2 Constrained", "50, 220, 90"},
-  {"pivot_g2_fixed", "Pivot‑G2 fixed", "255, 120, 220"},
   {"pivot_g2", "Pivot‑G2 adaptive", "220, 40, 255"},
-  {"adaptive_hybrid_fixed", "Hybrid fixed", "140, 160, 255"},
   {"adaptive_hybrid", "Adaptive Hybrid", "80, 100, 255"},
 }};
 
@@ -225,7 +222,7 @@ PlannerSelectorPanel::PlannerSelectorPanel(QWidget * parent)
   metrics_table_->setEditTriggers(QAbstractItemView::NoEditTriggers);
   metrics_table_->setSelectionMode(QAbstractItemView::NoSelection);
   metrics_table_->setAlternatingRowColors(true);
-  metrics_table_->setMinimumHeight(230);
+  metrics_table_->setMinimumHeight(190);
   metrics_table_->setItem(0, 0, new QTableWidgetItem("RAW"));
   for (std::size_t index = 0; index < kSmootherDisplays.size(); ++index) {
     metrics_table_->setItem(
@@ -233,22 +230,6 @@ PlannerSelectorPanel::PlannerSelectorPanel(QWidget * parent)
       new QTableWidgetItem(kSmootherDisplays[index].label));
   }
   clearMetricsTable();
-
-  auto * adaptive_speed_title = new QLabel("TỐC ĐỘ THÍCH NGHI", this);
-  adaptive_speed_title->setFont(title_font);
-  adaptive_speed_status_label_ = new QLabel(
-    "Đang chờ controller phát chẩn đoán tốc độ...", this);
-  adaptive_speed_status_label_->setWordWrap(true);
-  adaptive_speed_values_label_ = new QLabel(
-    "Thực tế / lệnh: — / — m/s<br>"
-    "RPP / bao đường: — / — m/s<br>"
-    "Gia tốc / jerk: — / —<br>"
-    "Quãng đường còn lại: — m",
-    this);
-  adaptive_speed_values_label_->setTextFormat(Qt::RichText);
-  adaptive_speed_values_label_->setStyleSheet(
-    "QLabel { background-color: #263238; color: #eceff1; "
-    "border: 1px solid #607d8b; padding: 6px; }");
 
   auto * content_layout = new QVBoxLayout;
   content_layout->addWidget(environment_title);
@@ -269,10 +250,6 @@ PlannerSelectorPanel::PlannerSelectorPanel(QWidget * parent)
   content_layout->addLayout(smoother_actions);
   content_layout->addWidget(smoother_status_label_);
   content_layout->addWidget(metrics_table_);
-  content_layout->addSpacing(12);
-  content_layout->addWidget(adaptive_speed_title);
-  content_layout->addWidget(adaptive_speed_status_label_);
-  content_layout->addWidget(adaptive_speed_values_label_);
   content_layout->addStretch();
 
   auto * content = new QWidget(this);
@@ -319,7 +296,6 @@ PlannerSelectorPanel::~PlannerSelectorPanel()
   shutting_down_.store(true, std::memory_order_release);
   environment_status_subscription_.reset();
   environment_active_subscription_.reset();
-  adaptive_speed_subscription_.reset();
   metrics_subscription_.reset();
   smoother_visibility_subscription_.reset();
   status_subscription_.reset();
@@ -375,13 +351,6 @@ void PlannerSelectorPanel::onInitialize()
     metrics_qos,
     [this](std_msgs::msg::String::SharedPtr message) {
       updateMetrics(std::move(message));
-    });
-  adaptive_speed_subscription_ =
-    node_->create_subscription<diagnostic_msgs::msg::DiagnosticArray>(
-    "/research/adaptive_speed",
-    rclcpp::QoS(10),
-    [this](diagnostic_msgs::msg::DiagnosticArray::SharedPtr message) {
-      updateAdaptiveSpeed(std::move(message));
     });
   environment_publisher_ =
     node_->create_publisher<std_msgs::msg::String>(
@@ -670,64 +639,6 @@ void PlannerSelectorPanel::updateMetrics(
           object.value("path_length_m").toDouble(), 'f', 3));
       metrics_table_->item(row, 4)->setText(
         QString::number(1000.0 * elapsed_seconds, 'f', 1));
-    },
-    Qt::QueuedConnection);
-}
-
-void PlannerSelectorPanel::updateAdaptiveSpeed(
-  const diagnostic_msgs::msg::DiagnosticArray::SharedPtr message)
-{
-  if (shutting_down_.load(std::memory_order_acquire)) {
-    return;
-  }
-  if (message->status.empty()) {
-    return;
-  }
-  std::map<std::string, std::string> values;
-  for (const auto & item : message->status.front().values) {
-    values[item.key] = item.value;
-  }
-  const QString mode = QString::fromStdString(values["mode"]);
-  const QString constraint =
-    QString::fromStdString(values["limiting_constraint"]);
-  const auto number = [&values](const std::string & key) {
-      try {
-        return std::stod(values.at(key));
-      } catch (const std::exception &) {
-        return 0.0;
-      }
-    };
-  const double measured = number("measured_speed_mps");
-  const double command = number("command_speed_mps");
-  const double rpp = number("rpp_speed_mps");
-  const double profile = number("profile_cap_mps");
-  const double acceleration = number("command_acceleration_mps2");
-  const double jerk = number("command_jerk_mps3");
-  const double remaining = number("remaining_distance_m");
-  const double curvature = number("command_curvature_1pm");
-
-  QMetaObject::invokeMethod(
-    this,
-    [this, mode, constraint, measured, command, rpp, profile,
-    acceleration, jerk, remaining, curvature]()
-    {
-      adaptive_speed_status_label_->setText(
-        QString("Chế độ: %1 · Giới hạn đang chi phối: %2")
-        .arg(mode, constraint));
-      adaptive_speed_values_label_->setText(
-        QString(
-          "Thực tế / lệnh: <b>%1 / %2 m/s</b><br>"
-          "RPP / bao đường: %3 / %4 m/s<br>"
-          "Gia tốc / jerk: %5 m/s² / %6 m/s³<br>"
-          "Độ cong lệnh: %7 m⁻¹ · Còn lại: %8 m")
-        .arg(measured, 0, 'f', 3)
-        .arg(command, 0, 'f', 3)
-        .arg(rpp, 0, 'f', 3)
-        .arg(profile, 0, 'f', 3)
-        .arg(acceleration, 0, 'f', 3)
-        .arg(jerk, 0, 'f', 3)
-        .arg(curvature, 0, 'f', 3)
-        .arg(remaining, 0, 'f', 2));
     },
     Qt::QueuedConnection);
 }

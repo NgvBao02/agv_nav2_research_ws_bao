@@ -22,13 +22,11 @@
 namespace adaptive_pivot_g2_rviz
 {
 
-inline constexpr std::array<std::string_view, 7> kSmootherIds = {
+inline constexpr std::array<std::string_view, 5> kSmootherIds = {
   "simple",
   "savitzky_golay",
   "constrained",
-  "pivot_g2_fixed",
   "pivot_g2",
-  "adaptive_hybrid_fixed",
   "adaptive_hybrid",
 };
 

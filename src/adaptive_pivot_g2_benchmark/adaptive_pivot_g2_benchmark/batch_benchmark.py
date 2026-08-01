@@ -51,9 +51,7 @@ SMOOTHERS = {
     'simple': 'simple_smoother',
     'savitzky_golay': 'savitzky_golay',
     'constrained': 'constrained',
-    'pivot_g2_fixed': 'pivot_g2_fixed',
     'pivot_g2': 'pivot_g2',
-    'adaptive_hybrid_fixed': 'adaptive_hybrid_fixed',
     'adaptive_hybrid': 'adaptive_hybrid',
 }
 
@@ -351,11 +349,8 @@ class BatchBenchmark(Node):
         # DDS delivery can arrive one executor cycle later for very short
         # straight paths. Give the selected research plugin a bounded wall-time
         # window so its decision is attached to the correct CSV row.
-        pivot_method = method in {'pivot_g2_fixed', 'pivot_g2'}
-        hybrid_method = method in {
-            'adaptive_hybrid_fixed',
-            'adaptive_hybrid',
-        }
+        pivot_method = method == 'pivot_g2'
+        hybrid_method = method == 'adaptive_hybrid'
         research_method = pivot_method or hybrid_method
         deadline = time.monotonic() + 0.20
         while research_method and time.monotonic() < deadline:
@@ -406,13 +401,13 @@ class BatchBenchmark(Node):
             **calculate_footprint_clearance(output_path, self.occupancy_grid),
             **calculate_path_deviation(common_points, raw_points),
         }
-        if method in {'pivot_g2_fixed', 'pivot_g2'} and (
+        if method == 'pivot_g2' and (
             self.latest_pivot_diagnostics
         ):
             for key, value in self.latest_pivot_diagnostics.items():
                 if key not in {'method'}:
                     row[f'pivot_{key}'] = value
-        if method in {'adaptive_hybrid_fixed', 'adaptive_hybrid'} and (
+        if method == 'adaptive_hybrid' and (
             self.latest_hybrid_diagnostics
         ):
             for key, value in self.latest_hybrid_diagnostics.items():

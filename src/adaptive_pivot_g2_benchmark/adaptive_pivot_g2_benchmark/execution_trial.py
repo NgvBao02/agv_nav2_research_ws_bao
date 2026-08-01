@@ -44,14 +44,12 @@ from adaptive_pivot_g2_benchmark.initial_heading import (
     resolve_scenario_start_heading,
 )
 from adaptive_pivot_g2_benchmark.velocity_metrics import (
-    calculate_shaper_metrics,
     calculate_velocity_metrics,
 )
 from ament_index_python.packages import get_package_share_directory
-from diagnostic_msgs.msg import DiagnosticArray
 from geometry_msgs.msg import PoseWithCovarianceStamped, Twist
 from nav2_msgs.action import ComputePathToPose, FollowPath, SmoothPath
-from nav2_msgs.msg import CollisionMonitorState, SpeedLimit
+from nav2_msgs.msg import CollisionMonitorState
 from nav2_msgs.srv import ClearEntireCostmap
 from nav_msgs.msg import OccupancyGrid, Odometry
 import rclpy
@@ -114,7 +112,6 @@ class ExecutionTrial(Node):
         self.declare_parameter('check_for_collisions', True)
         self.declare_parameter('ground_truth_position_tolerance_m', 0.10)
         self.declare_parameter('ground_truth_yaw_tolerance_rad', 0.15)
-        self.declare_parameter('fixed_speed_limit_mps', 0.0)
 
         self.scenario_file = Path(str(self.get_parameter('scenario_file').value))
         self.scenario_name = str(self.get_parameter('scenario').value)
@@ -148,20 +145,14 @@ class ExecutionTrial(Node):
         self.ground_truth_yaw_tolerance = float(
             self.get_parameter('ground_truth_yaw_tolerance_rad').value
         )
-        self.fixed_speed_limit = float(
-            self.get_parameter('fixed_speed_limit_mps').value
-        )
         if (
             self.ground_truth_position_tolerance <= 0.0
             or self.ground_truth_yaw_tolerance <= 0.0
             or self.initial_localization_tolerance <= 0.0
             or self.initial_localization_yaw_tolerance <= 0.0
             or self.post_action_settle_timeout <= 0.0
-            or self.fixed_speed_limit < 0.0
         ):
-            raise ValueError(
-                'goal tolerances must be positive and speed limit non-negative'
-            )
+            raise ValueError('goal and localization tolerances must be positive')
         if self.method not in {'raw', *SMOOTHERS}:
             raise ValueError(f'unknown execution method: {self.method!r}')
 
@@ -187,9 +178,6 @@ class ExecutionTrial(Node):
         ]
         self.initial_pose_publisher = self.create_publisher(
             PoseWithCovarianceStamped, '/initialpose', 10
-        )
-        self.speed_limit_publisher = self.create_publisher(
-            SpeedLimit, '/speed_limit', 10
         )
         self.create_subscription(
             Odometry,
@@ -231,12 +219,6 @@ class ExecutionTrial(Node):
             self._collision_callback,
             10,
         )
-        self.create_subscription(
-            DiagnosticArray,
-            '/research/adaptive_speed',
-            self._adaptive_speed_callback,
-            50,
-        )
         self.latest_ground_truth: Optional[Odometry] = None
         self.latest_odometry: Optional[Odometry] = None
         self.latest_amcl_pose: Optional[PoseWithCovarianceStamped] = None
@@ -262,7 +244,6 @@ class ExecutionTrial(Node):
         self.localization_samples: List[
             Tuple[float, float, float, float, float, float]
         ] = []
-        self.adaptive_speed_samples: List[Tuple] = []
         self.action_completion_stamp: Optional[float] = None
         self.action_completion_ground_truth = None
         self.action_completion_command: Optional[Tuple[float, float, float]] = (
@@ -409,55 +390,6 @@ class ExecutionTrial(Node):
             self.collision_interventions += 1
         self.last_collision_action = message.action_type
 
-    def _adaptive_speed_callback(self, message: DiagnosticArray) -> None:
-        if not self.executing:
-            return
-        stamp = (
-            float(message.header.stamp.sec)
-            + float(message.header.stamp.nanosec) * 1.0e-9
-        )
-        for status in message.status:
-            if (
-                status.name
-                != 'adaptive_pivot_g2_controller/speed_envelope'
-            ):
-                continue
-            values = {item.key: item.value for item in status.values}
-
-            def number(key: str) -> float:
-                try:
-                    return float(values.get(key, 'nan'))
-                except ValueError:
-                    return math.nan
-
-            self.adaptive_speed_samples.append((
-                stamp,
-                values.get('mode', 'unknown'),
-                values.get('controller_phase', 'unknown'),
-                values.get('limiting_constraint', 'unknown'),
-                number('measured_speed_mps'),
-                number('rpp_speed_mps'),
-                number('command_speed_mps'),
-                number('profile_cap_mps'),
-                number('local_path_cap_mps'),
-                number('instantaneous_cap_mps'),
-                number('lateral_acceleration_cap_mps'),
-                number('angular_speed_cap_mps'),
-                number('angular_acceleration_cap_mps'),
-                number('wheel_speed_cap_mps'),
-                number('tracking_error_cap_mps'),
-                number('heading_error_cap_mps'),
-                number('angular_tracking_cap_mps'),
-                number('remaining_distance_m'),
-                number('cross_track_error_m'),
-                number('path_heading_error_rad'),
-                number('path_curvature_1pm'),
-                number('command_curvature_1pm'),
-                number('command_acceleration_mps2'),
-                number('command_jerk_mps3'),
-                values.get('safety_override', 'false').lower() == 'true',
-            ))
-
     def _load_scenario(self) -> Dict:
         with self.scenario_file.open(encoding='utf-8') as stream:
             document = yaml.safe_load(stream)
@@ -579,15 +511,6 @@ class ExecutionTrial(Node):
         while time.monotonic() < deadline:
             rclpy.spin_once(self, timeout_sec=0.1)
 
-    def _publish_speed_limit(self) -> None:
-        message = SpeedLimit()
-        message.header.stamp = self.get_clock().now().to_msg()
-        message.percentage = False
-        message.speed_limit = self.fixed_speed_limit
-        for _ in range(3):
-            self.speed_limit_publisher.publish(message)
-            rclpy.spin_once(self, timeout_sec=0.1)
-
     def _wait_result(self, future, timeout: Optional[float] = None):
         rclpy.spin_until_future_complete(self, future, timeout_sec=timeout)
         if not future.done():
@@ -665,7 +588,6 @@ class ExecutionTrial(Node):
         self.odometry_state_samples.clear()
         self.estimated_map_state_samples.clear()
         self.localization_samples.clear()
-        self.adaptive_speed_samples.clear()
         self.action_completion_stamp = None
         self.action_completion_ground_truth = None
         self.action_completion_command = None
@@ -785,7 +707,6 @@ class ExecutionTrial(Node):
         selected_path, selected_goal_adjustment = anchor_path_goal(
             selected_path, requested_goal
         )
-        self._publish_speed_limit()
         (
             response,
             controller_success,
@@ -962,27 +883,11 @@ class ExecutionTrial(Node):
                     self.odometry_state_samples,
                     self.estimated_map_state_samples,
                     self.localization_samples,
-                    self.adaptive_speed_samples,
                 )
                 if samples
             ),
             default=0.0,
         )
-        adaptive_speed_mode_counts = {}
-        adaptive_speed_constraint_counts = {}
-        for sample in self.adaptive_speed_samples:
-            mode = sample[1]
-            constraint = sample[3]
-            adaptive_speed_mode_counts[mode] = (
-                adaptive_speed_mode_counts.get(mode, 0) + 1
-            )
-            adaptive_speed_constraint_counts[constraint] = (
-                adaptive_speed_constraint_counts.get(constraint, 0) + 1
-            )
-        adaptive_speed_shaper_metrics = calculate_shaper_metrics([
-            (sample[23], sample[24])
-            for sample in self.adaptive_speed_samples
-        ])
         final_estimated_position_error = None
         final_estimated_yaw_error = None
         try:
@@ -1005,7 +910,6 @@ class ExecutionTrial(Node):
             'scenario': self.scenario_name,
             'planner': self.planner_id,
             'method': self.method,
-            'fixed_speed_limit_mps': self.fixed_speed_limit,
             'success': success,
             'controller_succeeded': controller_success,
             'controller_action_succeeded': (
@@ -1103,7 +1007,6 @@ class ExecutionTrial(Node):
             **velocity_metrics,
             **actual_velocity_metrics,
             **controller_velocity_metrics,
-            **adaptive_speed_shaper_metrics,
             **localization_metrics,
             **odometry_metrics,
             **estimated_pose_metrics,
@@ -1225,53 +1128,6 @@ class ExecutionTrial(Node):
                 'x_m',
                 'y_m',
                 'yaw_rad',
-            ],
-            'adaptive_speed_mode_sample_counts': (
-                adaptive_speed_mode_counts
-            ),
-            'adaptive_speed_constraint_sample_counts': (
-                adaptive_speed_constraint_counts
-            ),
-            'adaptive_speed_safety_override_count': sum(
-                bool(sample[-1]) for sample in self.adaptive_speed_samples
-            ),
-            'adaptive_speed_trace': [
-                [
-                    float(sample[0] - trace_start_stamp),
-                    sample[1],
-                    sample[2],
-                    sample[3],
-                    *[float(value) for value in sample[4:-1]],
-                    bool(sample[-1]),
-                ]
-                for sample in self.adaptive_speed_samples
-            ],
-            'adaptive_speed_trace_fields': [
-                'time_s',
-                'mode',
-                'controller_phase',
-                'limiting_constraint',
-                'measured_speed_mps',
-                'rpp_speed_mps',
-                'command_speed_mps',
-                'profile_cap_mps',
-                'local_path_cap_mps',
-                'instantaneous_cap_mps',
-                'lateral_acceleration_cap_mps',
-                'angular_speed_cap_mps',
-                'angular_acceleration_cap_mps',
-                'wheel_speed_cap_mps',
-                'tracking_error_cap_mps',
-                'heading_error_cap_mps',
-                'angular_tracking_cap_mps',
-                'remaining_distance_m',
-                'cross_track_error_m',
-                'path_heading_error_rad',
-                'path_curvature_1pm',
-                'command_curvature_1pm',
-                'command_acceleration_mps2',
-                'command_jerk_mps3',
-                'safety_override',
             ],
         }
         self.output_json.parent.mkdir(parents=True, exist_ok=True)
