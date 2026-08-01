@@ -92,3 +92,18 @@ TEST(SmootherCatalog, AcceptsOnlyExactConfiguredIds)
   EXPECT_FALSE(is_supported_smoother("pivot-g2"));
   EXPECT_FALSE(is_supported_smoother("../simple"));
 }
+
+TEST(SmootherCatalog, ExecutionMethodsIncludeRawAndConfiguredSmoothers)
+{
+  using adaptive_pivot_g2_rviz::is_supported_execution_method;
+  EXPECT_EQ(adaptive_pivot_g2_rviz::kExecutionMethodIds.size(), 6u);
+  EXPECT_TRUE(is_supported_execution_method("raw"));
+  EXPECT_TRUE(is_supported_execution_method("simple"));
+  EXPECT_TRUE(is_supported_execution_method("savitzky_golay"));
+  EXPECT_TRUE(is_supported_execution_method("constrained"));
+  EXPECT_TRUE(is_supported_execution_method("pivot_g2"));
+  EXPECT_TRUE(is_supported_execution_method("adaptive_hybrid"));
+  EXPECT_FALSE(is_supported_execution_method("none"));
+  EXPECT_FALSE(is_supported_execution_method("pivot_g2_fixed"));
+  EXPECT_FALSE(is_supported_execution_method(""));
+}

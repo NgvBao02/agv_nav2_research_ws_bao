@@ -31,7 +31,9 @@ Pipeline hiện tại cố ý chỉ giữ RAW và năm smoother: Simple, Savitzk
 Constrained, Pivot–G2 adaptive và Adaptive Hybrid. Hai ablation fixed cùng
 controller/tốc độ thích nghi đã được bỏ khỏi đường chạy. Mọi phương pháp dùng
 chung `RegulatedPurePursuitController`, `PoseProgressChecker`,
-`StoppedGoalChecker` chuẩn và `nav2_velocity_smoother`. Các giới hạn cố định của xe
+`StoppedGoalChecker` chuẩn và `nav2_velocity_smoother`. Controller dùng vận tốc
+hành trình cố định 0,30 m/s, lookahead cố định 0,50 m và không scale vận tốc theo
+độ cong/cost; chỉ ramp dừng ngắn sát đích được giữ lại. Các giới hạn cố định của xe
 (0,30 m/s, 0,80 rad/s, gia tốc/phanh và kích thước xe) vẫn được giữ nguyên.
 Việc tham số hóa thời gian nội bộ của smoother vẫn dùng các giới hạn
 vật lý này để loại quỹ đạo bất khả thi; nó không publish `SpeedLimit` và
@@ -75,6 +77,11 @@ ros2 launch vacuum_robot_gazebo switchable_simulation.launch.py gui:=true
 Sau khi RViz2 mở, đổi map bằng ô **MÔI TRƯỜNG GAZEBO / NAV2** ở panel bên
 phải. Environment manager sẽ tắt stack cũ, khởi động đúng cặp world/map rồi
 chỉ báo hoàn tất khi Nav2 mới đã active.
+
+Trong cùng panel, ô **CHỌN SMOOTHER ĐỂ XE ĐI THEO** quyết định đường mà xe
+thực sự thực thi (`RAW`, Simple, Savitzky–Golay, Constrained, Pivot–G2 hoặc
+Adaptive Hybrid). Nhấn **Áp dụng smoother và chạy lại đường** để áp dụng cho
+goal hiện tại; các nút ở phần so sánh phía dưới chỉ điều khiển đường hiển thị.
 
 Để chạy trực tiếp một map cố định, ba map sát bài toán kho nhất là
 `warehouse_long_aisles`, `warehouse_cross_aisles` và `warehouse_dispatch`:

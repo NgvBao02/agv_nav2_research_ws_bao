@@ -111,21 +111,24 @@ controller_server:
       rot_stopped_velocity: 0.02
       stateful: false
     # A stock Regulated Pure Pursuit controller is shared by every method.
-    # There is no experiment-specific speed profile, terminal servo or pivot
-    # state machine here; fixed hardware limits are enforced downstream by the
-    # standard velocity smoother.
+    # Keep the experimental motion law deterministic: one fixed cruise speed
+    # and one fixed lookahead are used for every path.  Only the short terminal
+    # stopping ramp remains so the physical chassis can settle at the goal.
     FollowPath:
       plugin: "nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController"
       desired_linear_vel: 0.30
-      lookahead_dist: 0.35
-      min_lookahead_dist: 0.25
-      max_lookahead_dist: 0.60
+      # 0.50 m is longer than the 0.44 m chassis and avoids the low-speed
+      # 0.25 m carrot that previously amplified a residual heading error into
+      # alternating high-curvature commands.
+      lookahead_dist: 0.50
+      min_lookahead_dist: 0.50
+      max_lookahead_dist: 0.50
       lookahead_time: 1.5
       # A conservative fixed alignment speed avoids overshoot on the physical
       # four-contact chassis. This is common to every smoother, not adaptive.
       rotate_to_heading_angular_vel: 0.25
       transform_tolerance: 0.20
-      use_velocity_scaled_lookahead_dist: true
+      use_velocity_scaled_lookahead_dist: false
       # The four-contact chassis decelerates more slowly than an ideal
       # two-wheel model. Start Nav2's stock linear approach ramp one metre
       # before the goal so it can stop inside 0.10 m without a custom servo.
@@ -133,15 +136,20 @@ controller_server:
       approach_velocity_scaling_dist: 1.00
       use_collision_detection: true
       max_allowed_time_to_collision_up_to_carrot: 1.5
-      use_regulated_linear_velocity_scaling: true
-      use_cost_regulated_linear_velocity_scaling: true
+      # Disable RPP's curvature/cost speed adaptation. Collision checking and
+      # the downstream physical velocity/acceleration limits remain active.
+      use_regulated_linear_velocity_scaling: false
+      use_cost_regulated_linear_velocity_scaling: false
       regulated_linear_scaling_min_radius: 0.35
       regulated_linear_scaling_min_speed: 0.05
       cost_scaling_dist: 0.30
       cost_scaling_gain: 1.0
       inflation_cost_scaling_factor: 5.0
       use_rotate_to_heading: true
-      rotate_to_heading_min_angle: 0.35
+      # Finish initial alignment within about 5.7 degrees before translating.
+      # The previous 0.35 rad threshold released the robot with nearly 20
+      # degrees of error and produced a left-right Pure Pursuit limit cycle.
+      rotate_to_heading_min_angle: 0.10
       max_angular_accel: 1.20
       allow_reversing: false
 

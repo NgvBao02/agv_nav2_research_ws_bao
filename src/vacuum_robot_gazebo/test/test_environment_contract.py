@@ -260,6 +260,13 @@ def test_motion_limits_are_consistent_across_nav2_and_gazebo():
     assert controller['max_angular_accel'] == expected[
         'max_angular_acceleration'
     ]
+    assert controller['lookahead_dist'] == 0.50
+    assert controller['min_lookahead_dist'] == 0.50
+    assert controller['max_lookahead_dist'] == 0.50
+    assert controller['use_velocity_scaled_lookahead_dist'] is False
+    assert controller['use_regulated_linear_velocity_scaling'] is False
+    assert controller['use_cost_regulated_linear_velocity_scaling'] is False
+    assert 0.0 < controller['rotate_to_heading_min_angle'] <= 0.10
     assert not any(key.startswith('adaptive_') for key in controller)
     assert not any(key.startswith('pivot_') for key in controller)
     assert not any(key.startswith('terminal_') for key in controller)

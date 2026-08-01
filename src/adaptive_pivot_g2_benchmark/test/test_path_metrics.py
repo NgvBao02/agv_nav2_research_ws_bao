@@ -6,8 +6,10 @@ import subprocess
 import sys
 import tempfile
 import time
+from types import SimpleNamespace
 import unittest
 
+from action_msgs.msg import GoalStatus
 from adaptive_pivot_g2_benchmark.batch_benchmark import calculate_path_deviation
 from adaptive_pivot_g2_benchmark.clearance_metrics import (
     calculate_footprint_clearance,
@@ -17,6 +19,8 @@ from adaptive_pivot_g2_benchmark.compare_paths import (
     calculate_path_metrics,
     calculate_tracking_metrics,
     condition_trajectory_for_metrics,
+    EXECUTION_METHOD_IDS,
+    normalize_execute_method,
     normalize_planner_id,
     normalize_smoother_visibility,
     PathComparisonNode,
@@ -201,6 +205,22 @@ class TestPathMetrics(unittest.TestCase):
             normalize_planner_id('thetastar')
         self.assertEqual(normalize_planner_id('  Smac2D  '), 'Smac2D')
 
+    def test_execution_method_selector_accepts_raw_and_all_smoothers(self):
+        self.assertEqual(
+            EXECUTION_METHOD_IDS,
+            ('none', 'raw', *SMOOTHER_IDS),
+        )
+        for method_id in EXECUTION_METHOD_IDS:
+            self.assertEqual(normalize_execute_method(method_id), method_id)
+        self.assertEqual(
+            normalize_execute_method('  adaptive_hybrid  '),
+            'adaptive_hybrid',
+        )
+        with self.assertRaises(ValueError):
+            normalize_execute_method('pivot_g2_fixed')
+        with self.assertRaises(ValueError):
+            normalize_execute_method('Simple')
+
     def test_smoother_visibility_accepts_only_exact_ordered_ids(self):
         payload = (
             '{"methods":["adaptive_hybrid","simple","simple",'
@@ -223,6 +243,118 @@ class TestPathMetrics(unittest.TestCase):
             normalize_smoother_visibility('["simple"]')
         with self.assertRaises(ValueError):
             normalize_smoother_visibility('not-json')
+
+    def test_execution_method_topic_confirms_selection_and_replans_goal(self):
+        previous_domain = os.environ.get('ROS_DOMAIN_ID')
+        os.environ['ROS_DOMAIN_ID'] = str(140 + os.getpid() % 80)
+        rclpy.init()
+        comparison = PathComparisonNode()
+        probe = rclpy.create_node('execution_method_selector_contract_test')
+        executor = SingleThreadedExecutor()
+        executor.add_node(comparison)
+        executor.add_node(probe)
+        latched_qos = QoSProfile(
+            history=HistoryPolicy.KEEP_LAST,
+            depth=1,
+            reliability=ReliabilityPolicy.RELIABLE,
+            durability=DurabilityPolicy.TRANSIENT_LOCAL,
+        )
+        active_methods = []
+        probe.create_subscription(
+            String,
+            '/research/execute_method_active',
+            lambda message: active_methods.append(message.data),
+            latched_qos,
+        )
+        selector = probe.create_publisher(
+            String, '/research/execute_method', latched_qos
+        )
+        replans = []
+        comparison._last_goal_pose = self._pose(1.0, 2.0, 0.3)
+        comparison._start_planning = (
+            lambda goal_pose, source: replans.append((goal_pose, source))
+        )
+
+        def spin_until(predicate, timeout=3.0):
+            deadline = time.monotonic() + timeout
+            while time.monotonic() < deadline:
+                executor.spin_once(timeout_sec=0.05)
+                if predicate():
+                    return True
+            return False
+
+        try:
+            self.assertTrue(
+                spin_until(
+                    lambda: active_methods
+                    and active_methods[-1] == 'simple'
+                )
+            )
+            selection = String()
+            selection.data = 'adaptive_hybrid'
+            selector.publish(selection)
+            self.assertTrue(
+                spin_until(
+                    lambda: active_methods[-1] == 'adaptive_hybrid'
+                    and len(replans) == 1
+                )
+            )
+            self.assertEqual(comparison._execute_method, 'adaptive_hybrid')
+            self.assertEqual(replans[0][1], 'execute_method_selector')
+            self.assertIsNot(replans[0][0], comparison._last_goal_pose)
+
+            selection.data = 'pivot_g2_fixed'
+            selector.publish(selection)
+            for _ in range(5):
+                executor.spin_once(timeout_sec=0.05)
+            self.assertEqual(comparison._execute_method, 'adaptive_hybrid')
+            self.assertEqual(len(replans), 1)
+        finally:
+            executor.remove_node(probe)
+            executor.remove_node(comparison)
+            probe.destroy_node()
+            comparison.destroy_node()
+            executor.shutdown()
+            rclpy.shutdown()
+            if previous_domain is None:
+                os.environ.pop('ROS_DOMAIN_ID', None)
+            else:
+                os.environ['ROS_DOMAIN_ID'] = previous_domain
+
+    def test_controller_result_can_change_log_severity_without_crashing(self):
+        previous_domain = os.environ.get('ROS_DOMAIN_ID')
+        os.environ['ROS_DOMAIN_ID'] = str(160 + os.getpid() % 60)
+        rclpy.init()
+        comparison = PathComparisonNode()
+
+        def completed(status, error_code, error_msg):
+            response = SimpleNamespace(
+                status=status,
+                result=SimpleNamespace(
+                    error_code=error_code,
+                    error_msg=error_msg,
+                ),
+            )
+            return SimpleNamespace(result=lambda: response)
+
+        try:
+            comparison._controller_result(
+                completed(GoalStatus.STATUS_SUCCEEDED, 0, ''),
+                'simple',
+                comparison._generation,
+            )
+            comparison._controller_result(
+                completed(GoalStatus.STATUS_ABORTED, 100, 'aborted'),
+                'simple',
+                comparison._generation,
+            )
+        finally:
+            comparison.destroy_node()
+            rclpy.shutdown()
+            if previous_domain is None:
+                os.environ.pop('ROS_DOMAIN_ID', None)
+            else:
+                os.environ['ROS_DOMAIN_ID'] = previous_domain
 
     def test_smoother_visibility_filters_and_restores_cached_paths(self):
         previous_domain = os.environ.get('ROS_DOMAIN_ID')

@@ -98,6 +98,21 @@ constexpr std::array<SmootherDisplay, 5> kSmootherDisplays = {{
   {"adaptive_hybrid", "Adaptive Hybrid", "80, 100, 255"},
 }};
 
+struct ExecutionMethodDisplay
+{
+  const char * id;
+  const char * label;
+};
+
+constexpr std::array<ExecutionMethodDisplay, 6> kExecutionMethodDisplays = {{
+  {"raw", "RAW — không smoothing"},
+  {"simple", "Nav2 Simple"},
+  {"savitzky_golay", "Nav2 Savitzky–Golay"},
+  {"constrained", "Nav2 Constrained"},
+  {"pivot_g2", "Pivot‑G2 adaptive"},
+  {"adaptive_hybrid", "Adaptive Hybrid"},
+}};
+
 int metricsRow(const QString & method)
 {
   if (method == "raw") {
@@ -160,6 +175,28 @@ PlannerSelectorPanel::PlannerSelectorPanel(QWidget * parent)
   apply_button_ = new QPushButton("Áp dụng và lập lại đường", this);
   status_label_ = new QLabel("Đang chờ node so sánh đường...", this);
   status_label_->setWordWrap(true);
+
+  auto * execution_method_title = new QLabel(
+    "CHỌN SMOOTHER ĐỂ XE ĐI THEO", this);
+  execution_method_title->setFont(title_font);
+
+  auto * execution_method_help = new QLabel(
+    "Chọn RAW hoặc một smoother rồi nhấn áp dụng. Nếu đã có 2D Goal Pose, "
+    "hệ thống sẽ lập lại đường và xe sẽ đi theo đúng phương pháp này.",
+    this);
+  execution_method_help->setWordWrap(true);
+
+  execution_method_combo_ = new QComboBox(this);
+  for (const auto & method : kExecutionMethodDisplays) {
+    execution_method_combo_->addItem(method.label, method.id);
+  }
+  setComboExecutionMethod("simple");
+
+  execution_method_apply_button_ = new QPushButton(
+    "Áp dụng smoother và chạy lại đường", this);
+  execution_method_status_label_ = new QLabel(
+    "Đang chờ phương pháp thực thi...", this);
+  execution_method_status_label_->setWordWrap(true);
 
   auto * smoother_title = new QLabel("SO SÁNH TRƯỚC / SAU SMOOTH", this);
   smoother_title->setFont(title_font);
@@ -244,6 +281,12 @@ PlannerSelectorPanel::PlannerSelectorPanel(QWidget * parent)
   content_layout->addWidget(apply_button_);
   content_layout->addWidget(status_label_);
   content_layout->addSpacing(12);
+  content_layout->addWidget(execution_method_title);
+  content_layout->addWidget(execution_method_help);
+  content_layout->addWidget(execution_method_combo_);
+  content_layout->addWidget(execution_method_apply_button_);
+  content_layout->addWidget(execution_method_status_label_);
+  content_layout->addSpacing(12);
   content_layout->addWidget(smoother_title);
   content_layout->addWidget(smoother_help);
   content_layout->addLayout(smoother_grid);
@@ -282,6 +325,14 @@ PlannerSelectorPanel::PlannerSelectorPanel(QWidget * parent)
     this,
     [this](int) {Q_EMIT configChanged();});
   connect(
+    execution_method_apply_button_, &QPushButton::clicked,
+    this, &PlannerSelectorPanel::applyExecutionMethod);
+  connect(
+    execution_method_combo_,
+    QOverload<int>::of(&QComboBox::currentIndexChanged),
+    this,
+    [this](int) {Q_EMIT configChanged();});
+  connect(
     show_all_smoothers_button_, &QPushButton::clicked,
     this, &PlannerSelectorPanel::showAllSmoothers);
   connect(
@@ -297,10 +348,12 @@ PlannerSelectorPanel::~PlannerSelectorPanel()
   environment_status_subscription_.reset();
   environment_active_subscription_.reset();
   metrics_subscription_.reset();
+  execution_method_status_subscription_.reset();
   smoother_visibility_subscription_.reset();
   status_subscription_.reset();
   environment_publisher_.reset();
   smoother_visibility_publisher_.reset();
+  execution_method_publisher_.reset();
   selection_publisher_.reset();
   node_.reset();
 }
@@ -313,8 +366,12 @@ void PlannerSelectorPanel::onInitialize()
     status_label_->setText("Lỗi: RViz không cung cấp ROS node.");
     environment_status_label_->setText(
       "Lỗi: RViz không cung cấp ROS node.");
+    execution_method_status_label_->setText(
+      "Lỗi: RViz không cung cấp ROS node.");
     environment_apply_button_->setEnabled(false);
     apply_button_->setEnabled(false);
+    execution_method_apply_button_->setEnabled(false);
+    execution_method_combo_->setEnabled(false);
     for (auto * button : smoother_buttons_) {
       button->setEnabled(false);
     }
@@ -333,6 +390,16 @@ void PlannerSelectorPanel::onInitialize()
     status_qos,
     [this](std_msgs::msg::String::SharedPtr message) {
       updateActivePlanner(std::move(message));
+    });
+  execution_method_publisher_ =
+    node_->create_publisher<std_msgs::msg::String>(
+    "/research/execute_method", selection_qos);
+  execution_method_status_subscription_ =
+    node_->create_subscription<std_msgs::msg::String>(
+    "/research/execute_method_active",
+    status_qos,
+    [this](std_msgs::msg::String::SharedPtr message) {
+      updateActiveExecutionMethod(std::move(message));
     });
   smoother_visibility_publisher_ =
     node_->create_publisher<std_msgs::msg::String>(
@@ -422,6 +489,29 @@ void PlannerSelectorPanel::applySelection()
   status_label_->setText(
     QString("Đã gửi yêu cầu: %1. Đang chờ xác nhận...")
     .arg(planner_id));
+}
+
+void PlannerSelectorPanel::applyExecutionMethod()
+{
+  if (!execution_method_publisher_) {
+    execution_method_status_label_->setText(
+      "Bộ chọn smoother thực thi chưa kết nối ROS.");
+    return;
+  }
+  const QString method_id =
+    execution_method_combo_->currentData().toString();
+  if (!is_supported_execution_method(method_id.toStdString())) {
+    execution_method_status_label_->setText(
+      "Lỗi: smoother thực thi trong panel không hợp lệ.");
+    return;
+  }
+
+  std_msgs::msg::String message;
+  message.data = method_id.toStdString();
+  execution_method_publisher_->publish(message);
+  execution_method_status_label_->setText(
+    QString("Đã yêu cầu xe đi theo: %1. Đang chờ xác nhận...")
+    .arg(method_id));
 }
 
 std::vector<std::string> PlannerSelectorPanel::selectedSmoothers() const
@@ -552,6 +642,26 @@ void PlannerSelectorPanel::updateActivePlanner(
     Qt::QueuedConnection);
 }
 
+void PlannerSelectorPanel::updateActiveExecutionMethod(
+  const std_msgs::msg::String::SharedPtr message)
+{
+  if (shutting_down_.load(std::memory_order_acquire)) {
+    return;
+  }
+  const QString method_id = QString::fromStdString(message->data);
+  if (!is_supported_execution_method(method_id.toStdString())) {
+    return;
+  }
+  QMetaObject::invokeMethod(
+    this,
+    [this, method_id]() {
+      setComboExecutionMethod(method_id);
+      execution_method_status_label_->setText(
+        QString("Xe sẽ đi theo: %1").arg(method_id));
+    },
+    Qt::QueuedConnection);
+}
+
 void PlannerSelectorPanel::updateSmootherVisibility(
   const std_msgs::msg::String::SharedPtr message)
 {
@@ -664,6 +774,19 @@ void PlannerSelectorPanel::setComboPlanner(const QString & planner_id)
   }
 }
 
+void PlannerSelectorPanel::setComboExecutionMethod(
+  const QString & method_id)
+{
+  for (int index = 0; index < execution_method_combo_->count(); ++index) {
+    if (
+      execution_method_combo_->itemData(index).toString() == method_id)
+    {
+      execution_method_combo_->setCurrentIndex(index);
+      return;
+    }
+  }
+}
+
 void PlannerSelectorPanel::setSmootherVisibility(
   const std::vector<std::string> & visible_methods)
 {
@@ -702,6 +825,10 @@ void PlannerSelectorPanel::load(const rviz_common::Config & config)
   if (config.mapGetString("Selected Planner", &planner_id)) {
     setComboPlanner(planner_id);
   }
+  QString execution_method;
+  if (config.mapGetString("Selected Execution Method", &execution_method)) {
+    setComboExecutionMethod(execution_method);
+  }
   QString environment_id;
   if (config.mapGetString("Selected Environment", &environment_id)) {
     setComboEnvironment(environment_id);
@@ -733,6 +860,9 @@ void PlannerSelectorPanel::save(rviz_common::Config config) const
   rviz_common::Panel::save(config);
   config.mapSetValue(
     "Selected Planner", planner_combo_->currentData().toString());
+  config.mapSetValue(
+    "Selected Execution Method",
+    execution_method_combo_->currentData().toString());
   config.mapSetValue(
     "Selected Environment",
     environment_combo_->currentData().toString());

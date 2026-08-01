@@ -30,11 +30,29 @@ inline constexpr std::array<std::string_view, 5> kSmootherIds = {
   "adaptive_hybrid",
 };
 
+// RAW is a useful no-smoothing execution baseline, but it is not a Nav2
+// smoother plugin and therefore intentionally stays outside kSmootherIds.
+inline constexpr std::array<std::string_view, 6> kExecutionMethodIds = {
+  "raw",
+  "simple",
+  "savitzky_golay",
+  "constrained",
+  "pivot_g2",
+  "adaptive_hybrid",
+};
+
 inline bool is_supported_smoother(std::string_view smoother_id)
 {
   return std::find(
     kSmootherIds.begin(), kSmootherIds.end(), smoother_id) !=
          kSmootherIds.end();
+}
+
+inline bool is_supported_execution_method(std::string_view method_id)
+{
+  return std::find(
+    kExecutionMethodIds.begin(), kExecutionMethodIds.end(), method_id) !=
+         kExecutionMethodIds.end();
 }
 
 }  // namespace adaptive_pivot_g2_rviz
