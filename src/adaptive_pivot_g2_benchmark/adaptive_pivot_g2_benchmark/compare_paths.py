@@ -40,12 +40,11 @@ SMOOTHER_PLUGINS = {
     'simple': 'simple_smoother',
     'savitzky_golay': 'savitzky_golay',
     'constrained': 'constrained',
-    'pivot_g2_fixed': 'pivot_g2_fixed',
     'pivot_g2': 'pivot_g2',
-    'adaptive_hybrid_fixed': 'adaptive_hybrid_fixed',
     'adaptive_hybrid': 'adaptive_hybrid',
 }
 SMOOTHER_IDS = tuple(SMOOTHER_PLUGINS)
+EXECUTION_METHOD_IDS = ('none', 'raw', *SMOOTHER_IDS)
 
 
 def normalize_planner_id(planner_id: str) -> str:
@@ -54,6 +53,17 @@ def normalize_planner_id(planner_id: str) -> str:
     if selected not in PLANNER_IDS:
         raise ValueError(
             f'planner_id={selected!r} must be one of {PLANNER_IDS}'
+        )
+    return selected
+
+
+def normalize_execute_method(method_id: str) -> str:
+    """Return one exact execution method or raise a clear error."""
+    selected = method_id.strip()
+    if selected not in EXECUTION_METHOD_IDS:
+        raise ValueError(
+            f'execute_method={selected!r} must be one of '
+            f'{EXECUTION_METHOD_IDS}'
         )
     return selected
 
@@ -363,6 +373,7 @@ class PathComparisonNode(Node):
         self.declare_parameter('replan_on_planner_change', True)
         self.declare_parameter('smoothers_enabled', True)
         self.declare_parameter('execute_method', 'simple')
+        self.declare_parameter('replan_on_execute_method_change', True)
         self.declare_parameter('execute', True)
         self.declare_parameter('check_for_collisions', True)
         self.declare_parameter('max_smoothing_duration', 3.0)
@@ -377,18 +388,17 @@ class PathComparisonNode(Node):
             self.get_parameter('smoothers_enabled').value
         )
         self._visible_smoothers = set(self.SMOOTHERS)
-        self._execute_method = str(self.get_parameter('execute_method').value)
+        self._execute_method = normalize_execute_method(
+            str(self.get_parameter('execute_method').value)
+        )
+        self._replan_on_execute_method_change = bool(
+            self.get_parameter('replan_on_execute_method_change').value
+        )
         self._execute = bool(self.get_parameter('execute').value)
         self._check_collisions = bool(self.get_parameter('check_for_collisions').value)
         self._max_smoothing_duration = float(
             self.get_parameter('max_smoothing_duration').value
         )
-        valid_methods = {'none', 'raw', *self.SMOOTHERS.keys()}
-        if self._execute_method not in valid_methods:
-            raise ValueError(
-                f'execute_method={self._execute_method!r} must be one of {valid_methods}'
-            )
-
         latched_qos = QoSProfile(
             history=HistoryPolicy.KEEP_LAST,
             depth=1,
@@ -413,6 +423,9 @@ class PathComparisonNode(Node):
         )
         self._planner_status_publisher = self.create_publisher(
             String, '/research/planner_active', latched_qos
+        )
+        self._execution_method_status_publisher = self.create_publisher(
+            String, '/research/execute_method_active', latched_qos
         )
         self._smoother_status_publisher = self.create_publisher(
             Bool, '/research/smoothers_active', latched_qos
@@ -477,6 +490,7 @@ class PathComparisonNode(Node):
         self._pending_smoothers = []
         self._raw_path: Optional[Path] = None
         self._publish_active_planner()
+        self._publish_active_execution_method()
         self._publish_smoothers_active()
         self._publish_smoother_visibility()
         self.get_logger().info(
@@ -508,17 +522,45 @@ class PathComparisonNode(Node):
         return all(client.server_is_ready() for client in clients)
 
     def _method_callback(self, message: String) -> None:
-        method = message.data.strip()
-        if method not in {'none', 'raw', *self.SMOOTHERS.keys()}:
-            self.get_logger().error(f'Ignoring unknown execution method: {method!r}')
+        try:
+            method = normalize_execute_method(message.data)
+        except ValueError as error:
+            self.get_logger().error(f'Ignoring execution method selection: {error}')
+            self._publish_active_execution_method()
             return
+        changed = method != self._execute_method
         self._execute_method = method
-        self.get_logger().info(f'Next goal will execute method: {method}')
+        self._publish_active_execution_method()
+        event = String()
+        event.data = json.dumps(
+            {
+                'event': 'execution_method_selected',
+                'method': method,
+                'changed': changed,
+                'has_last_goal': self._last_goal_pose is not None,
+            },
+            sort_keys=True,
+        )
+        self._metrics_publisher.publish(event)
+        self.get_logger().info(event.data)
+        if (
+            self._replan_on_execute_method_change
+            and self._last_goal_pose is not None
+        ):
+            self._start_planning(
+                deepcopy(self._last_goal_pose),
+                source='execute_method_selector',
+            )
 
     def _publish_active_planner(self) -> None:
         message = String()
         message.data = self._planner_id
         self._planner_status_publisher.publish(message)
+
+    def _publish_active_execution_method(self) -> None:
+        message = String()
+        message.data = self._execute_method
+        self._execution_method_status_publisher.publish(message)
 
     def _publish_smoothers_active(self) -> None:
         message = Bool()
@@ -1039,8 +1081,14 @@ class PathComparisonNode(Node):
         message = String()
         message.data = json.dumps(payload, sort_keys=True)
         self._metrics_publisher.publish(message)
-        log = self.get_logger().info if succeeded else self.get_logger().error
-        log(message.data)
+        # rcutils keys throttling/severity metadata by Python call-site. Calling
+        # a severity-selected bound method from one shared source line makes a
+        # later success/failure transition raise on ROS 2 Jazzy. Keep each
+        # severity on its own stable call-site.
+        if succeeded:
+            self.get_logger().info(message.data)
+        else:
+            self.get_logger().error(message.data)
         self._active_controller_goal = None
         self._execution_started_at = None
 

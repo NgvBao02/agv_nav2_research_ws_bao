@@ -136,8 +136,6 @@ private:
 
   adaptive_pivot_g2::RobotLimits limits_;
   adaptive_pivot_g2::TransitionOptions transition_options_;
-  std::vector<double> radius_candidates_;
-  std::string radius_search_mode_{"fixed"};
   adaptive_pivot_g2::AdaptiveSearchOptions adaptive_search_options_;
   std::size_t retained_candidates_per_corner_{5};
   double curvature_energy_scale_{1.0};

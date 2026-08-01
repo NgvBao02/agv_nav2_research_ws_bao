@@ -22,7 +22,6 @@
 #include <string>
 #include <vector>
 
-#include "diagnostic_msgs/msg/diagnostic_array.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "rviz_common/panel.hpp"
 #include "std_msgs/msg/string.hpp"
@@ -49,20 +48,22 @@ public:
 
 private Q_SLOTS:
   void applySelection();
+  void applyExecutionMethod();
   void applyEnvironment();
   void showAllSmoothers();
   void showRawOnly();
 
 private:
   void updateActivePlanner(const std_msgs::msg::String::SharedPtr message);
+  void updateActiveExecutionMethod(
+    const std_msgs::msg::String::SharedPtr message);
   void updateActiveEnvironment(const std_msgs::msg::String::SharedPtr message);
   void updateEnvironmentStatus(const std_msgs::msg::String::SharedPtr message);
   void updateSmootherVisibility(
     const std_msgs::msg::String::SharedPtr message);
   void updateMetrics(const std_msgs::msg::String::SharedPtr message);
-  void updateAdaptiveSpeed(
-    const diagnostic_msgs::msg::DiagnosticArray::SharedPtr message);
   void setComboPlanner(const QString & planner_id);
+  void setComboExecutionMethod(const QString & method_id);
   void setComboEnvironment(const QString & environment_id);
   void setSmootherVisibility(
     const std::vector<std::string> & visible_methods);
@@ -76,13 +77,14 @@ private:
   QComboBox * planner_combo_{nullptr};
   QPushButton * apply_button_{nullptr};
   QLabel * status_label_{nullptr};
+  QComboBox * execution_method_combo_{nullptr};
+  QPushButton * execution_method_apply_button_{nullptr};
+  QLabel * execution_method_status_label_{nullptr};
   std::vector<QPushButton *> smoother_buttons_;
   QPushButton * show_all_smoothers_button_{nullptr};
   QPushButton * show_raw_only_button_{nullptr};
   QLabel * smoother_status_label_{nullptr};
   QTableWidget * metrics_table_{nullptr};
-  QLabel * adaptive_speed_status_label_{nullptr};
-  QLabel * adaptive_speed_values_label_{nullptr};
   bool updating_smoother_buttons_{false};
   std::atomic_bool shutting_down_{false};
   int metrics_generation_{-1};
@@ -91,13 +93,15 @@ private:
   rclcpp::Publisher<std_msgs::msg::String>::SharedPtr selection_publisher_;
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr status_subscription_;
   rclcpp::Publisher<std_msgs::msg::String>::SharedPtr
+    execution_method_publisher_;
+  rclcpp::Subscription<std_msgs::msg::String>::SharedPtr
+    execution_method_status_subscription_;
+  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr
     smoother_visibility_publisher_;
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr
     smoother_visibility_subscription_;
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr
     metrics_subscription_;
-  rclcpp::Subscription<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr
-    adaptive_speed_subscription_;
   rclcpp::Publisher<std_msgs::msg::String>::SharedPtr environment_publisher_;
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr
     environment_active_subscription_;

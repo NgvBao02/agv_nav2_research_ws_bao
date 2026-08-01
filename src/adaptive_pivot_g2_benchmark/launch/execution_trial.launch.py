@@ -31,9 +31,6 @@ def _launch_setup(context):
     planner = LaunchConfiguration('planner').perform(context)
     output_json = LaunchConfiguration('output_json').perform(context)
     gui = LaunchConfiguration('gui').perform(context)
-    fixed_speed_limit = LaunchConfiguration(
-        'fixed_speed_limit_mps'
-    ).perform(context)
     with Path(scenario_file).open(encoding='utf-8') as stream:
         document = yaml.safe_load(stream)
     environment = str(document.get('environment', 'research_warehouse'))
@@ -80,7 +77,6 @@ def _launch_setup(context):
             'method': method,
             'planner': planner,
             'output_json': output_json,
-            'fixed_speed_limit_mps': float(fixed_speed_limit),
         }],
     )
     stop_when_finished = RegisterEventHandler(
@@ -106,6 +102,5 @@ def generate_launch_description():
             'output_json', default_value='/tmp/pivot_g2_execution_trial.json'
         ),
         DeclareLaunchArgument('gui', default_value='false'),
-        DeclareLaunchArgument('fixed_speed_limit_mps', default_value='0.0'),
         OpaqueFunction(function=_launch_setup),
     ])

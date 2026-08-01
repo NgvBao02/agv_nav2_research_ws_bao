@@ -5,7 +5,6 @@ import math
 import unittest
 
 from adaptive_pivot_g2_benchmark.velocity_metrics import (
-    calculate_shaper_metrics,
     calculate_velocity_metrics,
 )
 
@@ -58,26 +57,6 @@ class TestVelocityMetrics(unittest.TestCase):
         ])
         self.assertGreater(metrics['max_abs_command_jerk_mps3'], 0.0)
         self.assertTrue(math.isfinite(metrics['p95_abs_command_jerk_mps3']))
-
-    def test_nominal_shaper_jerk_is_separated_from_safety_override(self):
-        metrics = calculate_shaper_metrics([
-            (0.2, False),
-            (-0.9, False),
-            (12.0, True),
-            (math.nan, False),
-        ])
-
-        self.assertEqual(metrics['adaptive_speed_telemetry_sample_count'], 3)
-        self.assertEqual(metrics['adaptive_speed_nominal_jerk_sample_count'], 2)
-        self.assertAlmostEqual(
-            metrics['adaptive_speed_nominal_max_abs_jerk_mps3'], 0.9
-        )
-        self.assertAlmostEqual(
-            metrics['adaptive_speed_safety_override_fraction'], 1.0 / 3.0
-        )
-        self.assertAlmostEqual(
-            metrics['adaptive_speed_override_p95_abs_jerk_mps3'], 12.0
-        )
 
     def test_empty_and_non_finite_samples_are_safe(self):
         empty = calculate_velocity_metrics([])

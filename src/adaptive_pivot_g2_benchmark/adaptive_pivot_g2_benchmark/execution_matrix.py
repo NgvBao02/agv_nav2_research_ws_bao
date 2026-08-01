@@ -24,9 +24,7 @@ DEFAULT_METHODS = [
     'simple',
     'savitzky_golay',
     'constrained',
-    'pivot_g2_fixed',
     'pivot_g2',
-    'adaptive_hybrid_fixed',
     'adaptive_hybrid',
 ]
 
@@ -37,7 +35,6 @@ INFRASTRUCTURE_ERROR_FRAGMENTS = (
 )
 
 SUMMARY_OMITTED_FIELDS = {
-    'adaptive_speed_trace',
     'aligned_odometry_state_trace',
     'command_velocity_trace',
     'controller_command_velocity_trace',
@@ -117,11 +114,6 @@ AGGREGATE_METRICS = [
     'controller_p95_abs_angular_acceleration_radps2',
     'controller_p95_abs_lateral_acceleration_mps2',
     'controller_p95_abs_jerk_mps3',
-    'adaptive_speed_nominal_p95_abs_jerk_mps3',
-    'adaptive_speed_nominal_max_abs_jerk_mps3',
-    'adaptive_speed_safety_override_fraction',
-    'adaptive_speed_override_p95_abs_jerk_mps3',
-    'adaptive_speed_safety_override_count',
     'collision_monitor_interventions',
     'planner_start_anchor_adjustment_m',
     'planner_goal_anchor_adjustment_m',
@@ -251,16 +243,6 @@ def _arguments(args: Optional[List[str]] = None):
     parser.add_argument('--trial-timeout-s', type=float, default=240.0)
     parser.add_argument('--repetitions', type=int, default=1)
     parser.add_argument(
-        '--speed-limits',
-        nargs='+',
-        type=float,
-        default=[0.0],
-        help=(
-            'Absolute speed limits in m/s. Use 0 for the fully adaptive '
-            'controller ceiling; multiple values add a speed dimension.'
-        ),
-    )
-    parser.add_argument(
         '--resume',
         action='store_true',
         help=(
@@ -310,7 +292,6 @@ def _matching_successful_record(
     scenario,
     planner,
     method,
-    speed_limit,
     repetition,
     configuration_sha256=None,
 ):
@@ -322,7 +303,6 @@ def _matching_successful_record(
     except (OSError, ValueError, TypeError):
         return None
     try:
-        recorded_speed = float(record.get('fixed_speed_limit_mps', math.nan))
         recorded_repetition = int(record.get('repetition', -1))
     except (TypeError, ValueError):
         return None
@@ -331,7 +311,6 @@ def _matching_successful_record(
         and record.get('scenario') == scenario
         and record.get('planner') == planner
         and record.get('method') == method
-        and math.isclose(recorded_speed, speed_limit, abs_tol=1.0e-12)
         and recorded_repetition == repetition
         and (
             configuration_sha256 is None or
@@ -423,17 +402,8 @@ def main(args: Optional[List[str]] = None) -> None:
         raise ValueError('repetitions must be at least one')
     if options.infrastructure_retries < 0:
         raise ValueError('infrastructure retries must be non-negative')
-    if (
-        len(set(options.speed_limits)) != len(options.speed_limits)
-        or any(
-            not math.isfinite(speed_limit) or speed_limit < 0.0
-            for speed_limit in options.speed_limits
-        )
-    ):
-        raise ValueError('speed limits must be unique, finite and non-negative')
     trial_count = (
-        len(planners) * len(options.speed_limits) *
-        len(options.methods) * options.repetitions
+        len(planners) * len(options.methods) * options.repetitions
     )
     if options.base_domain_id < 0 or options.base_domain_id + trial_count - 1 > 232:
         raise ValueError('execution-matrix ROS domain IDs must be within 0..232')
@@ -447,155 +417,141 @@ def main(args: Optional[List[str]] = None) -> None:
             character.lower() if character.isalnum() else '_'
             for character in planner
         ).strip('_')
-        for speed_limit in options.speed_limits:
-            speed_slug = (
-                'adaptive' if speed_limit == 0.0 else
-                f'{speed_limit:.3f}'.replace('.', 'p')
-            )
-            for method in options.methods:
-                for repetition in range(1, options.repetitions + 1):
-                    suffix = (
-                        f'_r{repetition:02d}'
-                        if options.repetitions > 1 else ''
+        for method in options.methods:
+            for repetition in range(1, options.repetitions + 1):
+                suffix = (
+                    f'_r{repetition:02d}'
+                    if options.repetitions > 1 else ''
+                )
+                planner_prefix = (
+                    f'{planner_slug}_' if len(planners) > 1 else ''
+                )
+                result_path = output_dir / (
+                    f'{options.scenario}_{planner_prefix}'
+                    f'{method}{suffix}.json'
+                )
+                resumed_record = (
+                    _matching_successful_record(
+                        result_path,
+                        options.scenario,
+                        planner,
+                        method,
+                        repetition,
+                        configuration_sha256,
                     )
-                    planner_prefix = (
-                        f'{planner_slug}_' if len(planners) > 1 else ''
-                    )
-                    speed_prefix = (
-                        f'v{speed_slug}_'
-                        if len(options.speed_limits) > 1 else ''
-                    )
-                    result_path = output_dir / (
-                        f'{options.scenario}_{planner_prefix}{speed_prefix}'
-                        f'{method}{suffix}.json'
-                    )
-                    resumed_record = (
-                        _matching_successful_record(
-                            result_path,
-                            options.scenario,
-                            planner,
-                            method,
-                            speed_limit,
-                            repetition,
-                            configuration_sha256,
-                        )
-                        if options.resume else None
-                    )
-                    if resumed_record is not None:
-                        records.append(resumed_record)
-                        trial_index += 1
-                        print(
-                            f'[{trial_index}/{trial_count}] resumed '
-                            f'{planner} / {method} / v={speed_slug} '
-                            f'(repetition {repetition}/'
-                            f'{options.repetitions})',
-                            flush=True,
-                        )
-                        continue
-                    environment = os.environ.copy()
-                    domain_id = options.base_domain_id + trial_index
-                    environment['ROS_DOMAIN_ID'] = str(domain_id)
-                    environment['GZ_PARTITION'] = (
-                        f'pivot_matrix_{os.getpid()}_{domain_id}'
-                    )
-                    command = [
-                        'ros2', 'launch', 'adaptive_pivot_g2_benchmark',
-                        'execution_trial.launch.py',
-                        f'scenario:={options.scenario}',
-                        f'method:={method}',
-                        f'planner:={planner}',
-                        f'fixed_speed_limit_mps:={speed_limit}',
-                        f'output_json:={result_path}',
-                        'gui:=false',
-                    ]
-                    if options.scenario_file:
-                        command.append(
-                            'scenario_file:='
-                            f'{Path(options.scenario_file).resolve()}'
-                        )
+                    if options.resume else None
+                )
+                if resumed_record is not None:
+                    records.append(resumed_record)
+                    trial_index += 1
                     print(
-                        f'[{trial_index + 1}/{trial_count}] running '
-                        f'{planner} / {method} / v={speed_slug} '
+                        f'[{trial_index}/{trial_count}] resumed '
+                        f'{planner} / {method} '
                         f'(repetition {repetition}/'
                         f'{options.repetitions})',
                         flush=True,
                     )
-                    trial_started = time.monotonic()
-                    attempt_wall_time = 0.0
-                    record = {}
-                    return_code = 1
-                    infrastructure_attempt = 0
-                    for infrastructure_attempt in range(
-                        1, options.infrastructure_retries + 2
-                    ):
-                        result_path.unlink(missing_ok=True)
-                        log_path = result_path.with_suffix('.log')
-                        if infrastructure_attempt == 1:
-                            log_path.unlink(missing_ok=True)
-                        with log_path.open('a', encoding='utf-8') as log_stream:
-                            log_stream.write(
-                                f'=== infrastructure attempt '
-                                f'{infrastructure_attempt} ===\n'
-                            )
-                        attempt_started = time.monotonic()
-                        process, return_code = _run_launch(
-                            command, environment, options.trial_timeout_s,
-                            log_path,
+                    continue
+                environment = os.environ.copy()
+                domain_id = options.base_domain_id + trial_index
+                environment['ROS_DOMAIN_ID'] = str(domain_id)
+                environment['GZ_PARTITION'] = (
+                    f'pivot_matrix_{os.getpid()}_{domain_id}'
+                )
+                command = [
+                    'ros2', 'launch', 'adaptive_pivot_g2_benchmark',
+                    'execution_trial.launch.py',
+                    f'scenario:={options.scenario}',
+                    f'method:={method}',
+                    f'planner:={planner}',
+                    f'output_json:={result_path}',
+                    'gui:=false',
+                ]
+                if options.scenario_file:
+                    command.append(
+                        'scenario_file:='
+                        f'{Path(options.scenario_file).resolve()}'
+                    )
+                print(
+                    f'[{trial_index + 1}/{trial_count}] running '
+                    f'{planner} / {method} '
+                    f'(repetition {repetition}/'
+                    f'{options.repetitions})',
+                    flush=True,
+                )
+                trial_started = time.monotonic()
+                attempt_wall_time = 0.0
+                record = {}
+                return_code = 1
+                infrastructure_attempt = 0
+                for infrastructure_attempt in range(
+                    1, options.infrastructure_retries + 2
+                ):
+                    result_path.unlink(missing_ok=True)
+                    log_path = result_path.with_suffix('.log')
+                    if infrastructure_attempt == 1:
+                        log_path.unlink(missing_ok=True)
+                    with log_path.open('a', encoding='utf-8') as log_stream:
+                        log_stream.write(
+                            f'=== infrastructure attempt '
+                            f'{infrastructure_attempt} ===\n'
                         )
-                        _stop_gazebo_server(environment)
-                        _terminate_trial_process_group(process)
-                        attempt_wall_time = time.monotonic() - attempt_started
-                        if result_path.exists():
-                            with result_path.open(encoding='utf-8') as stream:
-                                record = json.load(stream)
-                        else:
-                            record = {
-                                'scenario': options.scenario,
-                                'planner': planner,
-                                'method': method,
-                                'fixed_speed_limit_mps': speed_limit,
-                                'success': False,
-                                'error': 'trial did not produce a result file',
-                            }
-                        if (
-                            _is_infrastructure_failure(record) and
-                            infrastructure_attempt <=
-                            options.infrastructure_retries
-                        ):
-                            print(
-                                '    transient setup failure; retrying '
-                                f'({infrastructure_attempt}/'
-                                f'{options.infrastructure_retries})',
-                                flush=True,
-                            )
-                            continue
-                        break
-                    wall_time = time.monotonic() - trial_started
-                    record['repetition'] = repetition
-                    record['configuration_sha256'] = configuration_sha256
-                    record['launch_return_code'] = return_code
-                    record['trial_wall_time_s'] = wall_time
-                    record['last_attempt_wall_time_s'] = attempt_wall_time
-                    record['infrastructure_attempt_count'] = (
-                        infrastructure_attempt
+                    attempt_started = time.monotonic()
+                    process, return_code = _run_launch(
+                        command, environment, options.trial_timeout_s,
+                        log_path,
                     )
-                    record['trial_log'] = str(log_path)
-                    record['resumed'] = False
-                    _write_json(result_path, record)
-                    records.append(record)
-                    trial_index += 1
-                    print(
-                        f'    success={record.get("success", False)} '
-                        f'execution={record.get("execution_time_s", "n/a")}s '
-                        f'wall={wall_time:.1f}s',
-                        flush=True,
-                    )
+                    _stop_gazebo_server(environment)
+                    _terminate_trial_process_group(process)
+                    attempt_wall_time = time.monotonic() - attempt_started
+                    if result_path.exists():
+                        with result_path.open(encoding='utf-8') as stream:
+                            record = json.load(stream)
+                    else:
+                        record = {
+                            'scenario': options.scenario,
+                            'planner': planner,
+                            'method': method,
+                            'success': False,
+                            'error': 'trial did not produce a result file',
+                        }
+                    if (
+                        _is_infrastructure_failure(record) and
+                        infrastructure_attempt <=
+                        options.infrastructure_retries
+                    ):
+                        print(
+                            '    transient setup failure; retrying '
+                            f'({infrastructure_attempt}/'
+                            f'{options.infrastructure_retries})',
+                            flush=True,
+                        )
+                        continue
+                    break
+                wall_time = time.monotonic() - trial_started
+                record['repetition'] = repetition
+                record['configuration_sha256'] = configuration_sha256
+                record['launch_return_code'] = return_code
+                record['trial_wall_time_s'] = wall_time
+                record['last_attempt_wall_time_s'] = attempt_wall_time
+                record['infrastructure_attempt_count'] = (
+                    infrastructure_attempt
+                )
+                record['trial_log'] = str(log_path)
+                record['resumed'] = False
+                _write_json(result_path, record)
+                records.append(record)
+                trial_index += 1
+                print(
+                    f'    success={record.get("success", False)} '
+                    f'execution={record.get("execution_time_s", "n/a")}s '
+                    f'wall={wall_time:.1f}s',
+                    flush=True,
+                )
 
     raw_hashes_by_planner = {}
     pairing_by_planner = {}
-    pairing_by_planner_speed = {}
     planner_aggregates = {}
-    planner_speed_aggregates = {}
     for planner in planners:
         planner_records = [
             record for record in records
@@ -607,39 +563,12 @@ def main(args: Optional[List[str]] = None) -> None:
             if record.get('raw_path_sha256')
         }
         raw_hashes_by_planner[planner] = sorted(raw_hashes)
-        pairing_by_planner_speed[planner] = {}
-        planner_speed_aggregates[planner] = {}
-        for speed_limit in options.speed_limits:
-            speed_records = [
-                record for record in planner_records
-                if float(record.get('fixed_speed_limit_mps', 0.0))
-                == speed_limit
-            ]
-            speed_key = (
-                'adaptive' if speed_limit == 0.0 else
-                f'{speed_limit:.3f}'
-            )
-            speed_raw_hashes = {
-                record.get('raw_path_sha256')
-                for record in speed_records
-                if record.get('raw_path_sha256')
-            }
-            pairing_by_planner_speed[planner][speed_key] = (
-                len(speed_raw_hashes) == 1
-                and all(
-                    record.get('raw_path_sha256')
-                    for record in speed_records
-                )
-            )
-            planner_speed_aggregates[planner][speed_key] = _aggregate(
-                speed_records, options.methods
-            )
-        pairing_by_planner[planner] = all(
-            pairing_by_planner_speed[planner].values()
+        pairing_by_planner[planner] = (
+            len(raw_hashes) == 1
+            and all(record.get('raw_path_sha256') for record in planner_records)
         )
-        planner_aggregates[planner] = (
-            next(iter(planner_speed_aggregates[planner].values()))
-            if len(options.speed_limits) == 1 else {}
+        planner_aggregates[planner] = _aggregate(
+            planner_records, options.methods
         )
     paired_comparison_valid = all(pairing_by_planner.values())
     summary = {
@@ -653,12 +582,10 @@ def main(args: Optional[List[str]] = None) -> None:
         'planner': planners[0] if len(planners) == 1 else None,
         'planners': planners,
         'methods': options.methods,
-        'speed_limits_mps': options.speed_limits,
         'repetitions': options.repetitions,
         'all_successful': all(record.get('success', False) for record in records),
         'same_raw_path': paired_comparison_valid,
         'same_raw_path_by_planner': pairing_by_planner,
-        'same_raw_path_by_planner_speed': pairing_by_planner_speed,
         'paired_comparison_valid': paired_comparison_valid,
         'comparison_warning': (
             '' if paired_comparison_valid else
@@ -676,7 +603,6 @@ def main(args: Optional[List[str]] = None) -> None:
             if len(planners) == 1 else {}
         ),
         'planner_aggregates': planner_aggregates,
-        'planner_speed_aggregates': planner_speed_aggregates,
         'records': [_compact_summary_record(record) for record in records],
     }
     summary_path = output_dir / f'{options.scenario}_summary.json'

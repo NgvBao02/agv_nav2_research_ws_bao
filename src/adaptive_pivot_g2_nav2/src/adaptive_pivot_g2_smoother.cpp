@@ -517,11 +517,6 @@ void AdaptivePivotG2Smoother::configure(
   footprint_subscriber_ = std::move(footprint_subscriber);
 
   const std::string prefix = plugin_name_ + ".";
-  radius_candidates_ = declare_and_get<std::vector<double>>(
-    node, prefix + "radius_candidates",
-    {0.20, 0.30, 0.40, 0.50, 0.60, 0.75, 1.00, 1.25, 1.50});
-  radius_search_mode_ = declare_and_get<std::string>(
-    node, prefix + "radius_search_mode", "fixed");
   adaptive_search_options_.minimum_radius = declare_and_get<double>(
     node, prefix + "minimum_radius", 0.10);
   adaptive_search_options_.maximum_radius = declare_and_get<double>(
@@ -576,12 +571,7 @@ void AdaptivePivotG2Smoother::configure(
 
   const double selection_weight_sum = selection_weights_.clearance +
     selection_weights_.angular_speed + selection_weights_.curvature_energy;
-  if ((radius_search_mode_ != "fixed" && radius_search_mode_ != "adaptive") ||
-    radius_candidates_.empty() ||
-    std::any_of(
-      radius_candidates_.begin(), radius_candidates_.end(),
-      [](double radius) {return !std::isfinite(radius) || radius <= 0.0;}) ||
-    !std::isfinite(delta_time_selection_) || delta_time_selection_ < 0.0 ||
+  if (!std::isfinite(delta_time_selection_) || delta_time_selection_ < 0.0 ||
     !std::isfinite(time_competitive_slack_) || time_competitive_slack_ < 0.0 ||
     !std::isfinite(selection_weights_.clearance) || selection_weights_.clearance < 0.0 ||
     !std::isfinite(selection_weights_.angular_speed) ||
@@ -698,8 +688,8 @@ void AdaptivePivotG2Smoother::configure(
   diagnostics_publisher_ = node->create_publisher<std_msgs::msg::String>(
     "/research/pivot_g2/diagnostics", rclcpp::QoS(10));
   RCLCPP_INFO(
-    logger_, "Configured Pivot-G2 smoother '%s' in %s radius-search mode",
-    plugin_name_.c_str(), radius_search_mode_.c_str());
+    logger_, "Configured Pivot-G2 smoother '%s' with adaptive radius search",
+    plugin_name_.c_str());
 }
 
 void AdaptivePivotG2Smoother::cleanup()
@@ -754,9 +744,8 @@ void AdaptivePivotG2Smoother::publish_diagnostics(
   const std::size_t pivot_count =
     decisions.size() - transition_count - pass_through_count;
   std::ostringstream diagnostics;
-  diagnostics << "{\"method\":\"pivot_g2\",\"search_mode\":\""
-              << radius_search_mode_
-              << "\",\"corners\":" << decisions.size()
+  diagnostics << "{\"method\":\"pivot_g2\",\"search_mode\":\"adaptive\""
+              << ",\"corners\":" << decisions.size()
               << ",\"g2_transitions\":" << transition_count
               << ",\"pivots\":" << pivot_count
               << ",\"pass_through_corners\":" << pass_through_count
@@ -856,10 +845,10 @@ void AdaptivePivotG2Smoother::publish_diagnostics(
   RCLCPP_DEBUG(logger_, "%s", diagnostics.str().c_str());
   RCLCPP_INFO(
     logger_,
-    "Pivot-G2 %s: %zu corners, %zu G2, %zu pivots, %zu pass-through, "
+    "Pivot-G2 adaptive: %zu corners, %zu G2, %zu pivots, %zu pass-through, "
     "%zu evaluations, %.6f s",
-    radius_search_mode_.c_str(), decisions.size(), transition_count, pivot_count,
-  pass_through_count, evaluation_count, runtime_seconds);
+    decisions.size(), transition_count, pivot_count, pass_through_count,
+    evaluation_count, runtime_seconds);
 }
 
 std::vector<adaptive_pivot_g2::CandidateObjective>
@@ -1151,7 +1140,6 @@ bool AdaptivePivotG2Smoother::smooth(
   std::vector<CornerDecision> decisions;
   decisions.reserve(points.size() > 2 ? points.size() - 2 : 0);
   std::map<std::string, std::size_t> rejection_counts;
-  const bool adaptive_mode = radius_search_mode_ == "adaptive";
   adaptive_pivot_g2::PathOptimizationResult path_optimization;
   const double automatic_segment_margin = std::max({
       output_spacing_, 2.0 * transition_options_.sample_spacing,
@@ -1180,9 +1168,7 @@ bool AdaptivePivotG2Smoother::smooth(
       // cannot silently discard a duplicate-position pair it does not classify
       // as a pivot.
       decision.pivot_safe = true;
-      if (adaptive_mode) {
-        decision.optimization_states.push_back({true, 0.0, 0.0, 0U});
-      }
+      decision.optimization_states.push_back({true, 0.0, 0.0, 0U});
       decisions.push_back(std::move(decision));
       continue;
     }
@@ -1194,127 +1180,84 @@ bool AdaptivePivotG2Smoother::smooth(
     double common_trim = 0.0;
     const CornerInput corner{
       points[index], incoming, outgoing, incoming_length, outgoing_length};
-    if (!adaptive_mode) {
-      for (const double radius : radius_candidates_) {
-        transition_options_.design_radius = radius;
+    const double meaningful_trim_resolution = 0.5 * std::min(
+        transition_options_.sample_spacing, costmap->getResolution());
+    const auto search = adaptive_pivot_g2::search_trim_distance(
+        std::abs(turn_angle), std::min(incoming_length, outgoing_length),
+        meaningful_trim_resolution, adaptive_search_options_,
+      [&](double trim_distance) {
+        if (timed_out()) {
+          return adaptive_pivot_g2::SearchEvaluation{
+          adaptive_pivot_g2::SearchSampleStatus::kInfeasible,
+          std::numeric_limits<double>::infinity(), 0U, "time_budget"};
+        }
         TransitionCandidate candidate =
-          adaptive_pivot_g2::generate_quintic_transition(
-          corner, limits_, transition_options_);
+        adaptive_pivot_g2::generate_quintic_transition_for_trim(
+            corner, limits_, transition_options_, trim_distance);
         if (!candidate.valid) {
-          ++rejection_counts[candidate.rejection_reason];
-          continue;
+          return adaptive_pivot_g2::SearchEvaluation{
+          adaptive_pivot_g2::SearchSampleStatus::kInfeasible,
+          std::numeric_limits<double>::infinity(), 0U,
+          candidate.rejection_reason};
         }
         double peak_cost = 0.0;
         if (!transition_is_safe(
-            candidate, costmap, collision_checker, footprint, max_footprint_cost_,
-            peak_cost))
+              candidate, costmap, collision_checker, footprint,
+              max_footprint_cost_, peak_cost))
         {
-          ++rejection_counts["swept_footprint"];
-          continue;
+          return adaptive_pivot_g2::SearchEvaluation{
+          adaptive_pivot_g2::SearchSampleStatus::kUnsafe,
+          std::numeric_limits<double>::infinity(), 0U,
+          "swept_footprint"};
         }
         const auto profile = adaptive_pivot_g2::parameterize_time(
-          candidate.samples, limits_, maximum_straight_speed(limits_),
-          maximum_straight_speed(limits_));
+            candidate.samples, limits_, maximum_straight_speed(limits_),
+            maximum_straight_speed(limits_));
         if (!profile.valid) {
-          ++rejection_counts[profile.rejection_reason];
-          continue;
+          return adaptive_pivot_g2::SearchEvaluation{
+          adaptive_pivot_g2::SearchSampleStatus::kInfeasible,
+          std::numeric_limits<double>::infinity(), 0U,
+          profile.rejection_reason};
         }
-        common_trim = std::max(common_trim, candidate.trim_distance);
         double max_abs_angular_speed = 0.0;
         for (const double angular_speed : profile.angular_speed) {
           max_abs_angular_speed = std::max(
-            max_abs_angular_speed, std::abs(angular_speed));
-        }
-        evaluations.push_back(
-          {std::move(candidate), profile.total_time,
-            std::numeric_limits<double>::infinity(), peak_cost,
-            max_abs_angular_speed, 0.0});
-        if (timed_out()) {
-          return false;
-        }
-      }
-      decision.evaluation_count = radius_candidates_.size();
-      decision.feasible_count = evaluations.size();
-    } else {
-      const double meaningful_trim_resolution = 0.5 * std::min(
-        transition_options_.sample_spacing, costmap->getResolution());
-      const auto search = adaptive_pivot_g2::search_trim_distance(
-        std::abs(turn_angle), std::min(incoming_length, outgoing_length),
-        meaningful_trim_resolution, adaptive_search_options_,
-        [&](double trim_distance) {
-          if (timed_out()) {
-            return adaptive_pivot_g2::SearchEvaluation{
-            adaptive_pivot_g2::SearchSampleStatus::kInfeasible,
-            std::numeric_limits<double>::infinity(), 0U, "time_budget"};
-          }
-          TransitionCandidate candidate =
-          adaptive_pivot_g2::generate_quintic_transition_for_trim(
-            corner, limits_, transition_options_, trim_distance);
-          if (!candidate.valid) {
-            return adaptive_pivot_g2::SearchEvaluation{
-            adaptive_pivot_g2::SearchSampleStatus::kInfeasible,
-            std::numeric_limits<double>::infinity(), 0U,
-            candidate.rejection_reason};
-          }
-          double peak_cost = 0.0;
-          if (!transition_is_safe(
-              candidate, costmap, collision_checker, footprint,
-              max_footprint_cost_, peak_cost))
-          {
-            return adaptive_pivot_g2::SearchEvaluation{
-            adaptive_pivot_g2::SearchSampleStatus::kUnsafe,
-            std::numeric_limits<double>::infinity(), 0U,
-            "swept_footprint"};
-          }
-          const auto profile = adaptive_pivot_g2::parameterize_time(
-            candidate.samples, limits_, maximum_straight_speed(limits_),
-            maximum_straight_speed(limits_));
-          if (!profile.valid) {
-            return adaptive_pivot_g2::SearchEvaluation{
-            adaptive_pivot_g2::SearchSampleStatus::kInfeasible,
-            std::numeric_limits<double>::infinity(), 0U,
-            profile.rejection_reason};
-          }
-          double max_abs_angular_speed = 0.0;
-          for (const double angular_speed : profile.angular_speed) {
-            max_abs_angular_speed = std::max(
               max_abs_angular_speed, std::abs(angular_speed));
-          }
-          const double objective_cost =
-          adaptive_pivot_g2::stable_candidate_cost(
+        }
+        const double objective_cost =
+        adaptive_pivot_g2::stable_candidate_cost(
             peak_cost, max_abs_angular_speed, candidate.curvature_energy,
             limits_.max_angular_speed, curvature_energy_scale_,
             selection_weights_);
-          const std::size_t payload_index = evaluations.size();
-          evaluations.push_back(
-            {std::move(candidate), profile.total_time,
-              std::numeric_limits<double>::infinity(), peak_cost,
-              max_abs_angular_speed, objective_cost});
-          return adaptive_pivot_g2::SearchEvaluation{
-          adaptive_pivot_g2::SearchSampleStatus::kFeasible,
-          objective_cost, payload_index, ""};
+        const std::size_t payload_index = evaluations.size();
+        evaluations.push_back(
+          {std::move(candidate), profile.total_time,
+            std::numeric_limits<double>::infinity(), peak_cost,
+            max_abs_angular_speed, objective_cost});
+        return adaptive_pivot_g2::SearchEvaluation{
+        adaptive_pivot_g2::SearchSampleStatus::kFeasible,
+        objective_cost, payload_index, ""};
         });
-      decision.evaluation_count = search.samples.size();
-      decision.feasible_count = search.feasible_count;
-      if (search.valid_domain) {
-        const double half_angle_tangent = std::tan(0.5 * std::abs(turn_angle));
-        decision.minimum_search_trim = search.minimum_trim;
-        decision.maximum_search_trim = search.maximum_trim;
-        decision.minimum_search_radius =
-          search.minimum_trim / half_angle_tangent;
-        decision.maximum_search_radius =
-          search.maximum_trim / half_angle_tangent;
+    decision.evaluation_count = search.samples.size();
+    decision.feasible_count = search.feasible_count;
+    if (search.valid_domain) {
+      const double half_angle_tangent = std::tan(0.5 * std::abs(turn_angle));
+      decision.minimum_search_trim = search.minimum_trim;
+      decision.maximum_search_trim = search.maximum_trim;
+      decision.minimum_search_radius =
+        search.minimum_trim / half_angle_tangent;
+      decision.maximum_search_radius =
+        search.maximum_trim / half_angle_tangent;
+    }
+    for (const auto & sample : search.samples) {
+      if (sample.status != adaptive_pivot_g2::SearchSampleStatus::kFeasible) {
+        ++rejection_counts[
+          sample.rejection_reason.empty() ? "unspecified" :
+          sample.rejection_reason];
       }
-      for (const auto & sample : search.samples) {
-        if (sample.status != adaptive_pivot_g2::SearchSampleStatus::kFeasible) {
-          ++rejection_counts[
-            sample.rejection_reason.empty() ? "unspecified" :
-            sample.rejection_reason];
-        }
-      }
-      if (timed_out()) {
-        return false;
-      }
+    }
+    if (timed_out()) {
+      return false;
     }
 
     for (const auto & evaluation : evaluations) {
@@ -1325,7 +1268,7 @@ bool AdaptivePivotG2Smoother::smooth(
     std::size_t window_feasible_count = 0U;
     double common_entry_speed = maximum_straight_speed(limits_);
     double common_exit_speed = maximum_straight_speed(limits_);
-    const auto legacy_objectives = parameterize_common_window(
+    parameterize_common_window(
       evaluations, common_trim, rejection_counts, fastest_time,
       window_feasible_count, common_entry_speed, common_exit_speed);
     decision.pivot_time = common_trim > kEpsilon ?
@@ -1346,128 +1289,105 @@ bool AdaptivePivotG2Smoother::smooth(
           0.0, decision.pivot_time - delta_time_selection_ - fastest_time));
     }
     decision.candidate_count = window_feasible_count;
-    if (!adaptive_mode) {
-      const auto selected = transition_branch_open ?
-        adaptive_pivot_g2::select_competitive_candidate(
-        legacy_objectives, effective_slack, selection_weights_) :
-        adaptive_pivot_g2::CandidateSelection{};
-      decision.competitive_count = selected.competitive_count;
-      decision.transition_time = selected.selected_time;
-      decision.selection_score = selected.valid ? selected.selected_score : 0.0;
-      if (selected.valid) {
-        auto & evaluation = evaluations[selected.candidate_index];
-        decision.use_transition = true;
-        decision.clearance_proxy = 1.0 - std::clamp(
-          evaluation.peak_cost /
-          static_cast<double>(nav2_costmap_2d::INSCRIBED_INFLATED_OBSTACLE),
-          0.0, 1.0);
-        decision.transition = std::move(evaluation.candidate);
-      } else if (!decision.pivot_safe) {
-        throw nav2_core::FailedToSmoothPath(
-                "Pivot-G2 found neither a swept-footprint-safe pivot nor G2 transition");
-      }
-    } else {
-      std::vector<std::size_t> competitive;
-      if (transition_branch_open) {
-        for (std::size_t evaluation_index = 0;
-          evaluation_index < evaluations.size(); ++evaluation_index)
+    std::vector<std::size_t> competitive;
+    if (transition_branch_open) {
+      for (std::size_t evaluation_index = 0;
+        evaluation_index < evaluations.size(); ++evaluation_index)
+      {
+        if (evaluations[evaluation_index].common_window_time <=
+          fastest_time + effective_slack + kEpsilon)
         {
-          if (evaluations[evaluation_index].common_window_time <=
-            fastest_time + effective_slack + kEpsilon)
-          {
-            competitive.push_back(evaluation_index);
-          }
+          competitive.push_back(evaluation_index);
         }
       }
-      decision.competitive_count = competitive.size();
-      std::sort(
+    }
+    decision.competitive_count = competitive.size();
+    std::sort(
         competitive.begin(), competitive.end(),
-        [&evaluations](std::size_t lhs, std::size_t rhs) {
-          if (std::abs(
+      [&evaluations](std::size_t lhs, std::size_t rhs) {
+        if (std::abs(
               evaluations[lhs].objective_cost -
               evaluations[rhs].objective_cost) > kEpsilon)
-          {
-            return evaluations[lhs].objective_cost <
-                   evaluations[rhs].objective_cost;
-          }
-          return evaluations[lhs].candidate.trim_distance <
-                 evaluations[rhs].candidate.trim_distance;
+        {
+          return evaluations[lhs].objective_cost <
+                 evaluations[rhs].objective_cost;
+        }
+        return evaluations[lhs].candidate.trim_distance <
+               evaluations[rhs].candidate.trim_distance;
         });
 
-      std::vector<std::size_t> retained;
-      const auto retain = [&](std::size_t evaluation_index) {
-          if (retained.size() < retained_candidates_per_corner_ &&
-            std::find(retained.begin(), retained.end(), evaluation_index) ==
-            retained.end())
-          {
-            retained.push_back(evaluation_index);
-          }
-        };
-      if (!competitive.empty()) {
-        retain(competitive.front());
-        const auto trim_order = std::minmax_element(
-          competitive.begin(), competitive.end(),
-          [&evaluations](std::size_t lhs, std::size_t rhs) {
-            return evaluations[lhs].candidate.trim_distance <
-                   evaluations[rhs].candidate.trim_distance;
-          });
-        retain(*trim_order.first);
-        retain(*trim_order.second);
-        for (const std::size_t evaluation_index : competitive) {
-          retain(evaluation_index);
+    std::vector<std::size_t> retained;
+    const auto retain = [&](std::size_t evaluation_index) {
+        if (retained.size() < retained_candidates_per_corner_ &&
+          std::find(retained.begin(), retained.end(), evaluation_index) ==
+          retained.end())
+        {
+          retained.push_back(evaluation_index);
         }
+      };
+    if (!competitive.empty()) {
+      retain(competitive.front());
+      const auto trim_order = std::minmax_element(
+          competitive.begin(), competitive.end(),
+        [&evaluations](std::size_t lhs, std::size_t rhs) {
+          return evaluations[lhs].candidate.trim_distance <
+                 evaluations[rhs].candidate.trim_distance;
+          });
+      retain(*trim_order.first);
+      retain(*trim_order.second);
+      for (const std::size_t evaluation_index : competitive) {
+        retain(evaluation_index);
       }
-      for (const std::size_t evaluation_index : retained) {
-        const auto & evaluation = evaluations[evaluation_index];
-        decision.optimization_states.push_back(
-          {false, evaluation.candidate.trim_distance,
-            evaluation.objective_cost, evaluation_index});
-      }
-      if (decision.pivot_safe) {
-        decision.optimization_states.push_back(
-          {true, 0.0, transition_branch_open ? 1.0 : 0.0, 0U});
-      }
-      if (decision.optimization_states.empty()) {
-        RCLCPP_WARN(
+    }
+    for (const std::size_t evaluation_index : retained) {
+      const auto & evaluation = evaluations[evaluation_index];
+      decision.optimization_states.push_back(
+        {false, evaluation.candidate.trim_distance,
+          evaluation.objective_cost, evaluation_index});
+    }
+    if (decision.pivot_safe) {
+      decision.optimization_states.push_back(
+        {true, 0.0, transition_branch_open ? 1.0 : 0.0, 0U});
+    }
+    if (decision.optimization_states.empty()) {
+      RCLCPP_WARN(
           logger_,
           "Adaptive Pivot-G2 corner %zu has no safe state "
           "(pivot_safe=%d, feasible=%zu, competitive=%zu)",
           index, decision.pivot_safe, decision.feasible_count,
           decision.competitive_count);
-        throw nav2_core::FailedToSmoothPath(
+      throw nav2_core::FailedToSmoothPath(
                 "Adaptive Pivot-G2 found no safe pivot or G2 state");
-      }
-      decision.transition_states = std::move(evaluations);
     }
+    decision.transition_states = std::move(evaluations);
     decisions.push_back(std::move(decision));
   }
 
-  if (adaptive_mode) {
-    std::vector<std::vector<adaptive_pivot_g2::CornerState>> corner_states;
-    std::vector<double> shared_segment_lengths;
-    std::vector<double> segment_margins;
-    corner_states.reserve(decisions.size());
-    for (std::size_t index = 0; index < decisions.size(); ++index) {
-      corner_states.push_back(decisions[index].optimization_states);
-      if (index > 0U) {
-        shared_segment_lengths.push_back(adaptive_pivot_g2::distance(
+  std::vector<std::vector<adaptive_pivot_g2::CornerState>> corner_states;
+  std::vector<double> shared_segment_lengths;
+  std::vector<double> segment_margins;
+  corner_states.reserve(decisions.size());
+  for (std::size_t index = 0; index < decisions.size(); ++index) {
+    corner_states.push_back(decisions[index].optimization_states);
+    if (index > 0U) {
+      shared_segment_lengths.push_back(adaptive_pivot_g2::distance(
             decisions[index - 1U].vertex, decisions[index].vertex));
-        segment_margins.push_back(effective_segment_margin);
-      }
+      segment_margins.push_back(effective_segment_margin);
     }
-    path_optimization = adaptive_pivot_g2::optimize_corner_states(
+  }
+  path_optimization = adaptive_pivot_g2::optimize_corner_states(
       corner_states, shared_segment_lengths, segment_margins);
-    if (!path_optimization.valid) {
-      const double minimum_shared_segment = shared_segment_lengths.empty() ?
-        0.0 : *std::min_element(
+  if (!path_optimization.valid) {
+    const double minimum_shared_segment = shared_segment_lengths.empty() ?
+      0.0 : *std::min_element(
         shared_segment_lengths.begin(), shared_segment_lengths.end());
-      const std::size_t segments_below_margin = static_cast<std::size_t>(
-        std::count_if(
+    const std::size_t segments_below_margin = static_cast<std::size_t>(
+      std::count_if(
           shared_segment_lengths.begin(), shared_segment_lengths.end(),
-          [effective_segment_margin](double length) {
-            return length + kEpsilon < effective_segment_margin;
+        [effective_segment_margin](double length) {
+          return length + kEpsilon < effective_segment_margin;
           }));
-      RCLCPP_WARN(
+    RCLCPP_WARN(
         logger_,
         "Adaptive Pivot-G2 DP found no compatible sequence "
         "(corners=%zu, states=%zu, compatible_edges=%zu, "
@@ -1475,24 +1395,23 @@ bool AdaptivePivotG2Smoother::smooth(
         decisions.size(), path_optimization.state_count,
         path_optimization.compatible_edge_count, minimum_shared_segment,
         effective_segment_margin, segments_below_margin);
-      throw nav2_core::FailedToSmoothPath(
+    throw nav2_core::FailedToSmoothPath(
               "Adaptive Pivot-G2 has no globally compatible corner-state sequence");
-    }
-    for (std::size_t index = 0; index < decisions.size(); ++index) {
-      const auto & state = decisions[index].optimization_states[
-        path_optimization.selected_state_indices[index]];
-      if (!state.pivot) {
-        const auto & evaluation =
-          decisions[index].transition_states[state.payload_index];
-        decisions[index].use_transition = true;
-        decisions[index].transition = evaluation.candidate;
-        decisions[index].transition_time = evaluation.common_window_time;
-        decisions[index].selection_score = evaluation.objective_cost;
-        decisions[index].clearance_proxy = 1.0 - std::clamp(
+  }
+  for (std::size_t index = 0; index < decisions.size(); ++index) {
+    const auto & state = decisions[index].optimization_states[
+      path_optimization.selected_state_indices[index]];
+    if (!state.pivot) {
+      const auto & evaluation =
+        decisions[index].transition_states[state.payload_index];
+      decisions[index].use_transition = true;
+      decisions[index].transition = evaluation.candidate;
+      decisions[index].transition_time = evaluation.common_window_time;
+      decisions[index].selection_score = evaluation.objective_cost;
+      decisions[index].clearance_proxy = 1.0 - std::clamp(
           evaluation.peak_cost /
           static_cast<double>(nav2_costmap_2d::INSCRIBED_INFLATED_OBSTACLE),
           0.0, 1.0);
-      }
     }
   }
 
