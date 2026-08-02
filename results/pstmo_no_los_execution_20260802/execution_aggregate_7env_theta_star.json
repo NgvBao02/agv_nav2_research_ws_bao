@@ -1,0 +1,91 @@
+{
+  "collision_monitor_intervention_count": 0,
+  "methods": {
+    "constrained": {
+      "execution_time_s_max": 84.891,
+      "execution_time_s_mean": 60.545142857142864,
+      "execution_time_s_min": 33.975,
+      "execution_time_s_stdev": 20.1610551594617,
+      "sample_count": 7,
+      "success_count": 7
+    },
+    "pstmo": {
+      "execution_time_s_max": 76.071,
+      "execution_time_s_mean": 55.81285714285714,
+      "execution_time_s_min": 33.915,
+      "execution_time_s_stdev": 18.816815010592446,
+      "sample_count": 7,
+      "success_count": 7
+    },
+    "raw": {
+      "execution_time_s_max": 83.991,
+      "execution_time_s_mean": 60.464999999999996,
+      "execution_time_s_min": 34.572,
+      "execution_time_s_stdev": 20.13266301312372,
+      "sample_count": 7,
+      "success_count": 7
+    },
+    "savitzky_golay": {
+      "execution_time_s_max": 81.408,
+      "execution_time_s_mean": 59.00528571428572,
+      "execution_time_s_min": 34.326,
+      "execution_time_s_stdev": 19.214177020404193,
+      "sample_count": 7,
+      "success_count": 7
+    },
+    "simple": {
+      "execution_time_s_max": 78.97500000000001,
+      "execution_time_s_mean": 55.63542857142858,
+      "execution_time_s_min": 32.526,
+      "execution_time_s_stdev": 18.85864017594361,
+      "sample_count": 7,
+      "success_count": 7
+    }
+  },
+  "protocol": {
+    "environment_count": 7,
+    "execution_time_definition": "FollowPath acceptance to physical ground-truth settling",
+    "isolated_fresh_simulation_per_trial": true,
+    "methods": [
+      "raw",
+      "simple",
+      "savitzky_golay",
+      "constrained",
+      "pstmo"
+    ],
+    "planner": "ThetaStar",
+    "repetitions_per_environment_method": 1
+  },
+  "pstmo_comparison": {
+    "constrained": {
+      "environment_count": 7,
+      "mean_difference_s": -4.732285714285723,
+      "mean_relative_change_percent": -7.816127753553448,
+      "paired_difference_s_mean": -4.732285714285716,
+      "pstmo_faster_environment_count": 6
+    },
+    "raw": {
+      "environment_count": 7,
+      "mean_difference_s": -4.652142857142856,
+      "mean_relative_change_percent": -7.69394336747351,
+      "paired_difference_s_mean": -4.652142857142857,
+      "pstmo_faster_environment_count": 7
+    },
+    "savitzky_golay": {
+      "environment_count": 7,
+      "mean_difference_s": -3.1924285714285787,
+      "mean_relative_change_percent": -5.410411173817364,
+      "paired_difference_s_mean": -3.1924285714285725,
+      "pstmo_faster_environment_count": 6
+    },
+    "simple": {
+      "environment_count": 7,
+      "mean_difference_s": 0.17742857142856394,
+      "mean_relative_change_percent": 0.31891292290624484,
+      "paired_difference_s_mean": 0.17742857142857002,
+      "pstmo_faster_environment_count": 3
+    }
+  },
+  "success_count": 35,
+  "trial_count": 35
+}
