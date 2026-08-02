@@ -333,13 +333,14 @@ def add_children(document, container, base_directory, paper):
             add_list(document, element, ordered=True)
 
 
-def convert(source, output, paper):
+def convert(source, output, paper, page_number=True):
     soup = BeautifulSoup(source.read_text(encoding="utf-8"), "html.parser")
     document = Document()
     configure_styles(document, paper)
     first_section = document.sections[0]
     set_section_geometry(first_section)
-    add_page_number(first_section)
+    if page_number:
+        add_page_number(first_section)
     set_columns(first_section, 1)
     body = soup.body
     if body is None:
@@ -390,11 +391,17 @@ def main():
         action="store_true",
         help="Use the REV-ECIT two-column paper layout.",
     )
+    parser.add_argument(
+        "--no-page-number",
+        action="store_true",
+        help="Do not add a footer page number (required by some conference templates).",
+    )
     options = parser.parse_args()
     convert(
         Path(options.source).resolve(),
         Path(options.output).resolve(),
         options.paper,
+        not options.no_page_number,
     )
     print(Path(options.output).resolve())
 

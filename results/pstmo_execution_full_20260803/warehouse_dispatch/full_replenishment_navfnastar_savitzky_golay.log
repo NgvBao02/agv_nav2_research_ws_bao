@@ -1,0 +1,518 @@
+=== infrastructure attempt 1 ===
+[INFO] [launch]: All log files can be found below /home/linh-pham/.ros/log/2026-08-03-02-52-49-953179-linh-pham-LOQ-15IAX9-132720
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [gazebo-1]: process started with pid [132749]
+[INFO] [create-2]: process started with pid [132750]
+[INFO] [parameter_bridge-3]: process started with pid [132752]
+[INFO] [robot_state_publisher-4]: process started with pid [132753]
+[INFO] [execution_trial-5]: process started with pid [132754]
+[robot_state_publisher-4] [INFO] [1785700370.667317258] [robot_state_publisher]: Robot initialized
+[gazebo-1] [1;32m[Msg] [0m[1;32mGazebo Sim Server v[0m[1;32m8.11.0[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mLoading SDF world file[[0m[1;32m/home/linh-pham/agv_nav2_research_ws_bao/install/vacuum_robot_gazebo/share/vacuum_robot_gazebo/worlds/warehouse_dispatch.sdf[0m[1;32m].[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mServing entity system service on [[0m[1;32m/[0m[1;32mentity/system/add[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mCreate[0m[1;32m service on [[0m[1;32m/world/warehouse_dispatch/create_multiple[0m[1;32m] (async)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mCreate[0m[1;32m service on [[0m[1;32m/world/warehouse_dispatch/create_multiple/blocking[0m[1;32m] (blocking)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mRemove[0m[1;32m service on [[0m[1;32m/world/warehouse_dispatch/remove[0m[1;32m] (async)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mRemove[0m[1;32m service on [[0m[1;32m/world/warehouse_dispatch/remove/blocking[0m[1;32m] (blocking)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mPose[0m[1;32m service on [[0m[1;32m/world/warehouse_dispatch/set_pose[0m[1;32m] (async)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mPose[0m[1;32m service on [[0m[1;32m/world/warehouse_dispatch/set_pose/blocking[0m[1;32m] (blocking)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mPose[0m[1;32m service on [[0m[1;32m/world/warehouse_dispatch/set_pose_vector[0m[1;32m] (async)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mPose[0m[1;32m service on [[0m[1;32m/world/warehouse_dispatch/set_pose_vector/blocking[0m[1;32m] (blocking)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mLight configuration[0m[1;32m service on [[0m[1;32m/world/warehouse_dispatch/light_config[0m[1;32m] (async)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mLight configuration[0m[1;32m service on [[0m[1;32m/world/warehouse_dispatch/light_config/blocking[0m[1;32m] (blocking)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mPhysics[0m[1;32m service on [[0m[1;32m/world/warehouse_dispatch/set_physics[0m[1;32m] (async)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mPhysics[0m[1;32m service on [[0m[1;32m/world/warehouse_dispatch/set_physics/blocking[0m[1;32m] (blocking)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mSphericalCoordinates[0m[1;32m service on [[0m[1;32m/world/warehouse_dispatch/set_spherical_coordinates[0m[1;32m] (async)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mSphericalCoordinates[0m[1;32m service on [[0m[1;32m/world/warehouse_dispatch/set_spherical_coordinates/blocking[0m[1;32m] (blocking)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mEnable collision[0m[1;32m service on [[0m[1;32m/world/warehouse_dispatch/enable_collision[0m[1;32m] (async)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mEnable collision[0m[1;32m service on [[0m[1;32m/world/warehouse_dispatch/enable_collision/blocking[0m[1;32m] (blocking)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mDisable collision[0m[1;32m service on [[0m[1;32m/world/warehouse_dispatch/disable_collision[0m[1;32m] (async)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mDisable collision[0m[1;32m service on [[0m[1;32m/world/warehouse_dispatch/disable_collision/blocking[0m[1;32m] (blocking)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mMaterial[0m[1;32m service on [[0m[1;32m/world/warehouse_dispatch/visual_config[0m[1;32m] (async)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mMaterial[0m[1;32m service on [[0m[1;32m/world/warehouse_dispatch/visual_config/blocking[0m[1;32m] (blocking)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mMaterial[0m[1;32m service on [[0m[1;32m/world/warehouse_dispatch/wheel_slip[0m[1;32m] (async)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mMaterial[0m[1;32m service on [[0m[1;32m/world/warehouse_dispatch/wheel_slip/blocking[0m[1;32m] (blocking)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mLoaded level [[0m[1;32mdefault[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mServing world controls on [[0m[1;32m/world/warehouse_dispatch[0m[1;32m/control], [[0m[1;32m/world/warehouse_dispatch[0m[1;32m/control/state] and [[0m[1;32m/world/warehouse_dispatch[0m[1;32m/playback/control][0m[1;32m[0m
+[create-2] [INFO] [1785700371.135328761] [spawn_vacuum_robot]: Entity creation successful.
+[INFO] [create-2]: process has finished cleanly [pid 132750]
+[parameter_bridge-3] [INFO] [1785700371.688584295] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/clock (gz.msgs.Clock) -> /clock (rosgraph_msgs/msg/Clock)] (Lazy 0)
+[parameter_bridge-3] [INFO] [1785700371.689304874] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/joint_states (gz.msgs.Model) -> /joint_states (sensor_msgs/msg/JointState)] (Lazy 0)
+[parameter_bridge-3] [INFO] [1785700371.691119465] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/odom (gz.msgs.Odometry) -> /odom (nav_msgs/msg/Odometry)] (Lazy 0)
+[parameter_bridge-3] [INFO] [1785700371.692358586] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/tf (gz.msgs.Pose_V) -> /tf (tf2_msgs/msg/TFMessage)] (Lazy 0)
+[parameter_bridge-3] [INFO] [1785700371.693415817] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/scan (gz.msgs.LaserScan) -> /scan (sensor_msgs/msg/LaserScan)] (Lazy 0)
+[parameter_bridge-3] [INFO] [1785700371.693807140] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/imu/data (gz.msgs.IMU) -> /imu/data (sensor_msgs/msg/Imu)] (Lazy 0)
+[parameter_bridge-3] [INFO] [1785700371.694176495] [ros_gz_bridge]: Creating ROS->GZ Bridge: [/cmd_vel (geometry_msgs/msg/Twist) -> /cmd_vel (gz.msgs.Twist)] (Lazy 0)
+[parameter_bridge-3] [INFO] [1785700371.694797769] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/ground_truth/odom (gz.msgs.Odometry) -> /ground_truth/odom (nav_msgs/msg/Odometry)] (Lazy 0)
+[gazebo-1] [1;32m[Msg] [0m[1;32mServing GUI information on [[0m[1;32m/world/warehouse_dispatch[0m[1;32m/[0m[1;32mgui/info[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mWorld [[0m[1;32mwarehouse_dispatch[0m[1;32m] initialized with [[0m[1;32mresearch_physics[0m[1;32m] physics profile.[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mServing world SDF generation service on [[0m[1;32m/world/warehouse_dispatch[0m[1;32m/[0m[1;32mgenerate_world_sdf[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mServing world names on [[0m[1;32m/gazebo/worlds[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mResource path add service on [[0m[1;32m/gazebo/resource_paths/add[0m[1;32m].[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mResource path get service on [[0m[1;32m/gazebo/resource_paths/get[0m[1;32m].[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mResource path resolve service on [[0m[1;32m/gazebo/resource_paths/resolve[0m[1;32m].[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mResource paths published on [[0m[1;32m/gazebo/resource_paths[0m[1;32m].[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mServer control service on [[0m[1;32m/server_control[0m[1;32m].[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mFound no publishers on /stats, adding root stats topic[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mFound no publishers on /clock, adding root clock topic[0m[1;32m[0m
+[gazebo-1] [1;33mWarning [Utils.cc:132][0m [/sdf/model[@name="vacuum_robot"]/link[@name="base_link"]/sensor[@name="rplidar_a1m8"]/gz_frame_id:/home/linh-pham/agv_nav2_research_ws_bao/install/vacuum_robot_gazebo/share/vacuum_robot_gazebo/models/vacuum_robot/model.sdf:L107]: XML Element[gz_frame_id], child of element[sensor], not defined in SDF. Copying[gz_frame_id] as children of [sensor].
+[gazebo-1] [1;33mWarning [Utils.cc:132][0m [/sdf/model[@name="vacuum_robot"]/link[@name="base_link"]/sensor[@name="bno055_imu"]/gz_frame_id:/home/linh-pham/agv_nav2_research_ws_bao/install/vacuum_robot_gazebo/share/vacuum_robot_gazebo/models/vacuum_robot/model.sdf:L128]: XML Element[gz_frame_id], child of element[sensor], not defined in SDF. Copying[gz_frame_id] as children of [sensor].
+[gazebo-1] libEGL warning: pci id for fd 55: 10de:25ec, driver (null)
+[gazebo-1] 
+[gazebo-1] pci id for fd 56: 10de:25ec, driver (null)
+[gazebo-1] pci id for fd 57: 10de:25ec, driver (null)
+[gazebo-1] libEGL warning: egl: failed to create dri2 screen
+[gazebo-1] libEGL warning: pci id for fd 55: 10de:25ec, driver (null)
+[gazebo-1] 
+[gazebo-1] pci id for fd 56: 10de:25ec, driver (null)
+[gazebo-1] pci id for fd 57: 10de:25ec, driver (null)
+[gazebo-1] libEGL warning: egl: failed to create dri2 screen
+[gazebo-1] libEGL warning: pci id for fd 55: 10de:25ec, driver (null)
+[gazebo-1] 
+[INFO] [map_server-6]: process started with pid [132955]
+[INFO] [amcl-7]: process started with pid [132956]
+[INFO] [lifecycle_manager-8]: process started with pid [132957]
+[INFO] [controller_server-9]: process started with pid [132958]
+[INFO] [smoother_server-10]: process started with pid [132959]
+[INFO] [planner_server-11]: process started with pid [132960]
+[INFO] [route_server-12]: process started with pid [132961]
+[INFO] [behavior_server-13]: process started with pid [132962]
+[INFO] [bt_navigator-14]: process started with pid [132963]
+[INFO] [waypoint_follower-15]: process started with pid [132964]
+[INFO] [velocity_smoother-16]: process started with pid [132965]
+[INFO] [collision_monitor-17]: process started with pid [132966]
+[INFO] [opennav_docking-18]: process started with pid [132969]
+[INFO] [lifecycle_manager-19]: process started with pid [132972]
+[lifecycle_manager-8] [INFO] [1785700373.586936813] [lifecycle_manager_localization]: Creating
+[lifecycle_manager-8] [INFO] [1785700373.598518439] [lifecycle_manager_localization]: [34m[1mCreating and initializing lifecycle service clients[0m[0m
+[controller_server-9] [INFO] [1785700373.613512174] [controller_server]: 
+[controller_server-9] 	controller_server lifecycle node launched. 
+[controller_server-9] 	Waiting on external lifecycle transitions to activate
+[controller_server-9] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[amcl-7] [INFO] [1785700373.615362407] [amcl]: 
+[amcl-7] 	amcl lifecycle node launched. 
+[amcl-7] 	Waiting on external lifecycle transitions to activate
+[amcl-7] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[amcl-7] [INFO] [1785700373.615774640] [amcl]: Creating
+[controller_server-9] [INFO] [1785700373.620923777] [controller_server]: Creating controller server
+[lifecycle_manager-19] [INFO] [1785700373.622841916] [lifecycle_manager_navigation]: Creating
+[lifecycle_manager-19] [INFO] [1785700373.627475118] [lifecycle_manager_navigation]: [34m[1mCreating and initializing lifecycle service clients[0m[0m
+[waypoint_follower-15] [INFO] [1785700373.628770560] [waypoint_follower]: 
+[waypoint_follower-15] 	waypoint_follower lifecycle node launched. 
+[waypoint_follower-15] 	Waiting on external lifecycle transitions to activate
+[waypoint_follower-15] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[waypoint_follower-15] [INFO] [1785700373.629228550] [waypoint_follower]: Creating
+[collision_monitor-17] [INFO] [1785700373.632364011] [collision_monitor]: 
+[collision_monitor-17] 	collision_monitor lifecycle node launched. 
+[collision_monitor-17] 	Waiting on external lifecycle transitions to activate
+[collision_monitor-17] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[controller_server-9] [INFO] [1785700373.642009648] [local_costmap.local_costmap]: 
+[controller_server-9] 	local_costmap lifecycle node launched. 
+[controller_server-9] 	Waiting on external lifecycle transitions to activate
+[controller_server-9] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[controller_server-9] [INFO] [1785700373.645305986] [local_costmap.local_costmap]: Creating Costmap
+[planner_server-11] [INFO] [1785700373.655081997] [planner_server]: 
+[planner_server-11] 	planner_server lifecycle node launched. 
+[planner_server-11] 	Waiting on external lifecycle transitions to activate
+[planner_server-11] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[map_server-6] [INFO] [1785700373.656322668] [map_server]: 
+[map_server-6] 	map_server lifecycle node launched. 
+[map_server-6] 	Waiting on external lifecycle transitions to activate
+[map_server-6] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[map_server-6] [INFO] [1785700373.656463501] [map_server]: Creating
+[lifecycle_manager-8] [INFO] [1785700373.658785197] [lifecycle_manager_localization]: [34m[1mStarting managed nodes bringup...[0m[0m
+[lifecycle_manager-8] [INFO] [1785700373.658832857] [lifecycle_manager_localization]: [34m[1mConfiguring map_server[0m[0m
+[opennav_docking-18] [INFO] [1785700373.662504973] [docking_server]: 
+[opennav_docking-18] 	docking_server lifecycle node launched. 
+[opennav_docking-18] 	Waiting on external lifecycle transitions to activate
+[opennav_docking-18] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[opennav_docking-18] [INFO] [1785700373.662721794] [docking_server]: Creating docking_server
+[planner_server-11] [INFO] [1785700373.662600374] [planner_server]: Creating
+[smoother_server-10] [INFO] [1785700373.665130993] [smoother_server]: 
+[smoother_server-10] 	smoother_server lifecycle node launched. 
+[smoother_server-10] 	Waiting on external lifecycle transitions to activate
+[smoother_server-10] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[smoother_server-10] [INFO] [1785700373.667044793] [smoother_server]: Creating smoother server
+[route_server-12] [INFO] [1785700373.675313750] [route_server]: 
+[route_server-12] 	route_server lifecycle node launched. 
+[route_server-12] 	Waiting on external lifecycle transitions to activate
+[route_server-12] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[behavior_server-13] [INFO] [1785700374.050420123] [behavior_server]: 
+[behavior_server-13] 	behavior_server lifecycle node launched. 
+[behavior_server-13] 	Waiting on external lifecycle transitions to activate
+[behavior_server-13] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[velocity_smoother-16] [INFO] [1785700374.066161976] [velocity_smoother]: 
+[velocity_smoother-16] 	velocity_smoother lifecycle node launched. 
+[velocity_smoother-16] 	Waiting on external lifecycle transitions to activate
+[velocity_smoother-16] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[bt_navigator-14] [INFO] [1785700374.067725114] [bt_navigator]: 
+[bt_navigator-14] 	bt_navigator lifecycle node launched. 
+[bt_navigator-14] 	Waiting on external lifecycle transitions to activate
+[bt_navigator-14] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[bt_navigator-14] [INFO] [1785700374.069509315] [bt_navigator]: Creating
+[planner_server-11] [INFO] [1785700374.075285589] [global_costmap.global_costmap]: 
+[planner_server-11] 	global_costmap lifecycle node launched. 
+[planner_server-11] 	Waiting on external lifecycle transitions to activate
+[planner_server-11] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[planner_server-11] [INFO] [1785700374.075666108] [global_costmap.global_costmap]: Creating Costmap
+[lifecycle_manager-19] [INFO] [1785700374.408912855] [lifecycle_manager_navigation]: [34m[1mStarting managed nodes bringup...[0m[0m
+[lifecycle_manager-19] [INFO] [1785700374.408982854] [lifecycle_manager_navigation]: [34m[1mConfiguring controller_server[0m[0m
+[controller_server-9] [INFO] [1785700374.409669579] [controller_server]: Configuring controller interface
+[controller_server-9] [INFO] [1785700374.409725327] [controller_server]: getting progress checker plugins..
+[controller_server-9] [INFO] [1785700374.410121794] [controller_server]: getting goal checker plugins..
+[controller_server-9] [INFO] [1785700374.410357288] [controller_server]: Controller frequency set to 20.0000Hz
+[controller_server-9] [INFO] [1785700374.410451032] [local_costmap.local_costmap]: Configuring
+[controller_server-9] [INFO] [1785700374.424698379] [local_costmap.local_costmap]: Using plugin "voxel_layer"
+[controller_server-9] [INFO] [1785700374.428488694] [local_costmap.local_costmap]: Subscribed to Topics: scan
+[controller_server-9] [INFO] [1785700374.443269654] [local_costmap.local_costmap]: Initialized plugin "voxel_layer"
+[controller_server-9] [INFO] [1785700374.443297891] [local_costmap.local_costmap]: Using plugin "inflation_layer"
+[controller_server-9] [INFO] [1785700374.443687740] [local_costmap.local_costmap]: Initialized plugin "inflation_layer"
+[map_server-6] [INFO] [1785700374.461001120] [map_server]: Configuring
+[map_server-6] [INFO] [1785700374.461090955] [map_io]: Loading yaml file: /home/linh-pham/agv_nav2_research_ws_bao/install/vacuum_robot_gazebo/share/vacuum_robot_gazebo/maps/warehouse_dispatch.yaml
+[map_server-6] [INFO] [1785700374.461398401] [map_io]: resolution: 0.05
+[map_server-6] [INFO] [1785700374.461411786] [map_io]: origin[0]: -6
+[map_server-6] [INFO] [1785700374.461416986] [map_io]: origin[1]: -4
+[map_server-6] [INFO] [1785700374.461420979] [map_io]: origin[2]: 0
+[map_server-6] [INFO] [1785700374.461424854] [map_io]: free_thresh: 0.25
+[map_server-6] [INFO] [1785700374.461428528] [map_io]: occupied_thresh: 0.65
+[map_server-6] [INFO] [1785700374.461434809] [map_io]: mode: trinary
+[map_server-6] [INFO] [1785700374.461440247] [map_io]: negate: 0
+[map_server-6] [INFO] [1785700374.461626250] [map_io]: Loading image_file: /home/linh-pham/agv_nav2_research_ws_bao/install/vacuum_robot_gazebo/share/vacuum_robot_gazebo/maps/warehouse_dispatch.pgm
+[map_server-6] [INFO] [1785700374.462403317] [map_io]: Read map /home/linh-pham/agv_nav2_research_ws_bao/install/vacuum_robot_gazebo/share/vacuum_robot_gazebo/maps/warehouse_dispatch.pgm: 240 X 160 map @ 0.05 m/cell
+[controller_server-9] [INFO] [1785700374.466552932] [controller_server]: Created progress_checker : progress_checker of type nav2_controller::PoseProgressChecker
+[controller_server-9] [INFO] [1785700374.466958745] [controller_server]: Controller Server has progress_checker  progress checkers available.
+[controller_server-9] [INFO] [1785700374.467533165] [controller_server]: Created goal checker : general_goal_checker of type nav2_controller::SimpleGoalChecker
+[controller_server-9] [INFO] [1785700374.467883577] [controller_server]: Controller Server has general_goal_checker  goal checkers available.
+[controller_server-9] [INFO] [1785700374.468884945] [controller_server]: Created controller : FollowPath of type nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController
+[lifecycle_manager-8] [INFO] [1785700374.474023511] [lifecycle_manager_localization]: [34m[1mConfiguring amcl[0m[0m
+[amcl-7] [INFO] [1785700374.474479671] [amcl]: Configuring
+[amcl-7] [INFO] [1785700374.474579644] [amcl]: initTransforms
+[controller_server-9] [INFO] [1785700374.475175922] [controller_server]: Controller Server has FollowPath  controllers available.
+[lifecycle_manager-19] [INFO] [1785700374.485548745] [lifecycle_manager_navigation]: [34m[1mConfiguring smoother_server[0m[0m
+[smoother_server-10] [INFO] [1785700374.485925479] [smoother_server]: Configuring smoother server
+[amcl-7] [INFO] [1785700374.489104231] [amcl]: initPubSub
+[smoother_server-10] [INFO] [1785700374.497209287] [smoother_server]: Created smoother : simple_smoother of type nav2_smoother::SimpleSmoother
+[amcl-7] [INFO] [1785700374.497534596] [amcl]: Subscribed to map topic.
+[smoother_server-10] [INFO] [1785700374.499982747] [smoother_server]: Created smoother : savitzky_golay of type nav2_smoother::SavitzkyGolaySmoother
+[lifecycle_manager-8] [INFO] [1785700374.503243829] [lifecycle_manager_localization]: [34m[1mActivating map_server[0m[0m
+[map_server-6] [INFO] [1785700374.503423995] [map_server]: Activating
+[map_server-6] [INFO] [1785700374.503613508] [map_server]: Creating bond (map_server) to lifecycle manager.
+[amcl-7] [INFO] [1785700374.503777352] [amcl]: Received a 240 X 160 map @ 0.050 m/pix
+[smoother_server-10] [INFO] [1785700374.505209354] [smoother_server]: Created smoother : constrained of type nav2_constrained_smoother/ConstrainedSmoother
+[smoother_server-10] [INFO] [1785700374.509237357] [smoother_server]: Created smoother : pstmo of type adaptive_pivot_g2_nav2/AdaptivePivotG2Smoother
+[smoother_server-10] [INFO] [1785700374.511963346] [smoother_server]: Configured PSTMO smoother 'pstmo' with hierarchical_alpha_two_trim search and condition_only preprocessing
+[smoother_server-10] [INFO] [1785700374.512117401] [smoother_server]: Created smoother : adaptive_hybrid of type adaptive_pivot_g2_nav2/SafetyGatedHybridSmoother
+[smoother_server-10] [INFO] [1785700374.516644267] [smoother_server]: Configured PSTMO smoother 'adaptive_hybrid.pivot' with legacy_joint_d_q search and condition_only preprocessing
+[smoother_server-10] [INFO] [1785700374.517448327] [smoother_server]: Configured safety-gated hybrid smoother as 'adaptive_hybrid'
+[smoother_server-10] [INFO] [1785700374.517478134] [smoother_server]: Smoother Server has simple_smoother savitzky_golay constrained pstmo adaptive_hybrid  smoothers available.
+[lifecycle_manager-19] [INFO] [1785700374.524911496] [lifecycle_manager_navigation]: [34m[1mConfiguring planner_server[0m[0m
+[planner_server-11] [INFO] [1785700374.525190260] [planner_server]: Configuring
+[planner_server-11] [INFO] [1785700374.525234003] [global_costmap.global_costmap]: Configuring
+[planner_server-11] [INFO] [1785700374.533948423] [global_costmap.global_costmap]: Using plugin "static_layer"
+[planner_server-11] [INFO] [1785700374.537937592] [global_costmap.global_costmap]: Subscribing to the map topic (/map) with transient local durability
+[planner_server-11] [INFO] [1785700374.539721081] [global_costmap.global_costmap]: Initialized plugin "static_layer"
+[planner_server-11] [INFO] [1785700374.539747309] [global_costmap.global_costmap]: Using plugin "inflation_layer"
+[planner_server-11] [INFO] [1785700374.540145819] [global_costmap.global_costmap]: Initialized plugin "inflation_layer"
+[planner_server-11] [INFO] [1785700374.558602749] [global_costmap.global_costmap]: StaticLayer: Resizing costmap to 240 X 160 at 0.050000 m/pix
+[planner_server-11] [INFO] [1785700374.559521503] [planner_server]: Created global planner plugin NavFnAStar of type nav2_navfn_planner::NavfnPlanner
+[planner_server-11] [INFO] [1785700374.559547971] [planner_server]: Configuring plugin NavFnAStar of type NavfnPlanner
+[planner_server-11] [INFO] [1785700374.560019244] [planner_server]: Created global planner plugin NavFnDijkstra of type nav2_navfn_planner::NavfnPlanner
+[planner_server-11] [INFO] [1785700374.560036474] [planner_server]: Configuring plugin NavFnDijkstra of type NavfnPlanner
+[planner_server-11] [INFO] [1785700374.560855175] [planner_server]: Created global planner plugin ThetaStar of type nav2_theta_star_planner::ThetaStarPlanner
+[planner_server-11] [INFO] [1785700374.565638676] [planner_server]: Created global planner plugin Smac2D of type nav2_smac_planner::SmacPlanner2D
+[planner_server-11] [INFO] [1785700374.565683008] [planner_server]: Configuring Smac2D of type SmacPlanner2D
+[planner_server-11] [ERROR] [1785700374.566569510] [planner_server]: Inflation layer either not found or inflation is not set sufficiently for optimized non-circular collision checking capabilities. It is HIGHLY recommended to set the inflation radius to be at MINIMUM half of the robot's largest cross-section. See github.com/ros-planning/navigation2/tree/main/nav2_smac_planner#potential-fields for full instructions. This will substantially impact run-time performance.
+[planner_server-11] [INFO] [1785700374.567924865] [planner_server]: Configured plugin Smac2D of type SmacPlanner2D with tolerance 0.10, maximum iterations 1000000, max on approach iterations 1000, and not allowing unknown traversal.
+[planner_server-11] [INFO] [1785700374.569297380] [planner_server]: Created global planner plugin SmacHybrid of type nav2_smac_planner::SmacPlannerHybrid
+[planner_server-11] [INFO] [1785700374.569369968] [planner_server]: Configuring SmacHybrid of type SmacPlannerHybrid
+[planner_server-11] [INFO] [1785700374.571037944] [planner_server]: Even sized heuristic lookup table size set 160.000000, increasing size by 1 to make odd
+[lifecycle_manager-8] [INFO] [1785700374.609976060] [lifecycle_manager_localization]: Server map_server connected with bond.
+[lifecycle_manager-8] [INFO] [1785700374.610008247] [lifecycle_manager_localization]: [34m[1mActivating amcl[0m[0m
+[amcl-7] [INFO] [1785700374.610239233] [amcl]: Activating
+[amcl-7] [INFO] [1785700374.610290646] [amcl]: initialPoseReceived
+[amcl-7] [INFO] [1785700374.610394960] [amcl]: Setting pose (1.299000): -5.200 3.200 0.759
+[amcl-7] [INFO] [1785700374.611478723] [amcl]: Creating bond (amcl) to lifecycle manager.
+[lifecycle_manager-8] [INFO] [1785700374.716211394] [lifecycle_manager_localization]: Server amcl connected with bond.
+[lifecycle_manager-8] [INFO] [1785700374.716259856] [lifecycle_manager_localization]: [34m[1mManaged nodes are active[0m[0m
+[lifecycle_manager-8] [INFO] [1785700374.716274724] [lifecycle_manager_localization]: [34m[1mCreating bond timer...[0m[0m
+[planner_server-11] [INFO] [1785700375.055480143] [planner_server]: Configured plugin SmacHybrid of type SmacPlannerHybrid with maximum iterations 1000000, max on approach iterations 1000, and not allowing unknown traversal. Tolerance 0.10.Using motion model: Dubin.
+[planner_server-11] [INFO] [1785700375.055525325] [planner_server]: Planner Server has NavFnAStar NavFnDijkstra ThetaStar Smac2D SmacHybrid  planners available.
+[amcl-7] [INFO] [1785700375.082454690] [amcl]: createLaserObject
+[lifecycle_manager-19] [INFO] [1785700375.089011595] [lifecycle_manager_navigation]: [34m[1mConfiguring route_server[0m[0m
+[route_server-12] [INFO] [1785700375.090680248] [route_server]: Configuring
+[route_server-12] [INFO] [1785700375.146288382] [route_server]: Created GraphFileLoader GeoJsonGraphFileLoader of type nav2_route::GeoJsonGraphFileLoader
+[route_server-12] [INFO] [1785700375.146330127] [route_server]: Configuring geojson graph file loader
+[route_server-12] [INFO] [1785700375.146351539] [route_server]: No graph file provided to load yet.
+[route_server-12] [INFO] [1785700375.150117551] [route_server]: Created edge cost function plugin DistanceScorer of type nav2_route::DistanceScorer
+[route_server-12] [INFO] [1785700375.150163957] [route_server]: Configuring distance scorer.
+[route_server-12] [INFO] [1785700375.150540715] [route_server]: Created edge cost function plugin CostmapScorer of type nav2_route::CostmapScorer
+[route_server-12] [INFO] [1785700375.150561044] [route_server]: Configuring costmap scorer.
+[route_server-12] [INFO] [1785700375.152862477] [route_server]: Created route operation ReroutingService of type nav2_route::ReroutingService
+[route_server-12] [INFO] [1785700375.152897553] [route_server]: Configuring Rerouting service operation.
+[route_server-12] [INFO] [1785700375.154682402] [route_server]: Created route operation CollisionMonitor of type nav2_route::CollisionMonitor
+[route_server-12] [INFO] [1785700375.154881492] [route_server]: Using costmap topic: local_costmap/costmap_raw instead of server costmap topic: global_costmap/costmap_raw for CollisionMonitor.
+[lifecycle_manager-19] [INFO] [1785700375.158973414] [lifecycle_manager_navigation]: [34m[1mConfiguring behavior_server[0m[0m
+[behavior_server-13] [INFO] [1785700375.159203859] [behavior_server]: Configuring
+[behavior_server-13] [INFO] [1785700375.164947213] [behavior_server]: Creating behavior plugin spin of type nav2_behaviors::Spin
+[behavior_server-13] [INFO] [1785700375.165842109] [behavior_server]: Creating behavior plugin backup of type nav2_behaviors::BackUp
+[behavior_server-13] [INFO] [1785700375.166752281] [behavior_server]: Creating behavior plugin drive_on_heading of type nav2_behaviors::DriveOnHeading
+[behavior_server-13] [INFO] [1785700375.168278966] [behavior_server]: Creating behavior plugin assisted_teleop of type nav2_behaviors::AssistedTeleop
+[behavior_server-13] [INFO] [1785700375.170518968] [behavior_server]: Creating behavior plugin wait of type nav2_behaviors::Wait
+[behavior_server-13] [INFO] [1785700375.178220676] [behavior_server]: Configuring spin
+[behavior_server-13] [INFO] [1785700375.185735012] [behavior_server]: Configuring backup
+[behavior_server-13] [INFO] [1785700375.191979518] [behavior_server]: Configuring drive_on_heading
+[behavior_server-13] [INFO] [1785700375.196733129] [behavior_server]: Configuring assisted_teleop
+[behavior_server-13] [INFO] [1785700375.205638376] [behavior_server]: Configuring wait
+[lifecycle_manager-19] [INFO] [1785700375.212466347] [lifecycle_manager_navigation]: [34m[1mConfiguring velocity_smoother[0m[0m
+[velocity_smoother-16] [INFO] [1785700375.212793606] [velocity_smoother]: Configuring velocity smoother
+[lifecycle_manager-19] [INFO] [1785700375.221213857] [lifecycle_manager_navigation]: [34m[1mConfiguring collision_monitor[0m[0m
+[collision_monitor-17] [INFO] [1785700375.221508046] [collision_monitor]: Configuring
+[collision_monitor-17] [INFO] [1785700375.227020993] [collision_monitor]: [scan]: Creating Scan
+[collision_monitor-17] [INFO] [1785700375.229308615] [collision_monitor]: [FootprintApproach]: Creating Polygon
+[collision_monitor-17] [INFO] [1785700375.229452677] [collision_monitor]: [FootprintApproach]: Polygon points are not defined. Using dynamic subscription instead.
+[collision_monitor-17] [INFO] [1785700375.229821149] [collision_monitor]: [FootprintApproach]: Making footprint subscriber on /local_costmap/published_footprint topic
+[lifecycle_manager-19] [INFO] [1785700375.242614871] [lifecycle_manager_navigation]: [34m[1mConfiguring bt_navigator[0m[0m
+[bt_navigator-14] [INFO] [1785700375.242918618] [bt_navigator]: Configuring
+[bt_navigator-14] [INFO] [1785700375.250246406] [bt_navigator]: Creating navigator id navigate_to_pose of type nav2_bt_navigator::NavigateToPoseNavigator
+[bt_navigator-14] [INFO] [1785700375.321295549] [bt_navigator]: Creating navigator id navigate_through_poses of type nav2_bt_navigator::NavigateThroughPosesNavigator
+[lifecycle_manager-19] [INFO] [1785700375.344897811] [lifecycle_manager_navigation]: [34m[1mConfiguring waypoint_follower[0m[0m
+[waypoint_follower-15] [INFO] [1785700375.345244559] [waypoint_follower]: Configuring
+[waypoint_follower-15] [INFO] [1785700375.370955908] [waypoint_follower]: Created waypoint_task_executor : wait_at_waypoint of type nav2_waypoint_follower::WaitAtWaypoint
+[lifecycle_manager-19] [INFO] [1785700375.372143171] [lifecycle_manager_navigation]: [34m[1mConfiguring docking_server[0m[0m
+[opennav_docking-18] [INFO] [1785700375.372474055] [docking_server]: Configuring docking_server
+[opennav_docking-18] [INFO] [1785700375.372509689] [docking_server]: Controller frequency set to 50.0000Hz
+[opennav_docking-18] [INFO] [1785700375.397024121] [docking_server]: Created charging dock plugin simple_charging_dock of type opennav_docking::SimpleChargingDock
+[opennav_docking-18] [WARN] [1785700375.403260919] [docking_server]: Dock database filepath nor dock parameters set. Docking actions can only be executed specifying the dock pose via the action request. Or update the dock database via the reload_database service.
+[opennav_docking-18] [INFO] [1785700375.403301504] [docking_server]: Docking Server has 1 dock types and 0 dock instances available.
+[lifecycle_manager-19] [INFO] [1785700375.405631419] [lifecycle_manager_navigation]: [34m[1mActivating controller_server[0m[0m
+[controller_server-9] [INFO] [1785700375.405871506] [controller_server]: Activating
+[controller_server-9] [INFO] [1785700375.405917331] [local_costmap.local_costmap]: Activating
+[controller_server-9] [INFO] [1785700375.405931535] [local_costmap.local_costmap]: Checking transform
+[controller_server-9] [INFO] [1785700375.406141275] [local_costmap.local_costmap]: start
+[controller_server-9] [INFO] [1785700375.657580377] [controller_server]: Activating controller: FollowPath of type regulated_pure_pursuit_controller::RegulatedPurePursuitController
+[controller_server-9] [INFO] [1785700375.657696155] [controller_server]: Creating bond (controller_server) to lifecycle manager.
+[lifecycle_manager-19] [INFO] [1785700375.766474046] [lifecycle_manager_navigation]: Server controller_server connected with bond.
+[lifecycle_manager-19] [INFO] [1785700375.766577751] [lifecycle_manager_navigation]: [34m[1mActivating smoother_server[0m[0m
+[smoother_server-10] [INFO] [1785700375.767163776] [smoother_server]: Activating
+[smoother_server-10] [INFO] [1785700375.767338786] [smoother_server]: Activating smoother: constrained of type nav2_constrained_smoother::ConstrainedSmoother
+[smoother_server-10] [INFO] [1785700375.767383641] [smoother_server]: Creating bond (smoother_server) to lifecycle manager.
+[lifecycle_manager-19] [INFO] [1785700375.884729963] [lifecycle_manager_navigation]: Server smoother_server connected with bond.
+[lifecycle_manager-19] [INFO] [1785700375.884777863] [lifecycle_manager_navigation]: [34m[1mActivating planner_server[0m[0m
+[planner_server-11] [INFO] [1785700375.885286328] [planner_server]: Activating
+[planner_server-11] [INFO] [1785700375.885376956] [global_costmap.global_costmap]: Activating
+[planner_server-11] [INFO] [1785700375.885394648] [global_costmap.global_costmap]: Checking transform
+[planner_server-11] [INFO] [1785700375.885610754] [global_costmap.global_costmap]: start
+[planner_server-11] [INFO] [1785700375.935845789] [planner_server]: Activating plugin Smac2D of type SmacPlanner2D
+[planner_server-11] [INFO] [1785700375.935942909] [planner_server]: Activating plugin ThetaStar of type nav2_theta_star_planner
+[planner_server-11] [INFO] [1785700375.935979823] [planner_server]: Activating plugin SmacHybrid of type SmacPlannerHybrid
+[planner_server-11] [INFO] [1785700375.938174992] [planner_server]: Activating plugin NavFnDijkstra of type NavfnPlanner
+[planner_server-11] [INFO] [1785700375.938217796] [planner_server]: Activating plugin NavFnAStar of type NavfnPlanner
+[planner_server-11] [INFO] [1785700375.943123118] [planner_server]: Creating bond (planner_server) to lifecycle manager.
+[lifecycle_manager-19] [INFO] [1785700376.057525740] [lifecycle_manager_navigation]: Server planner_server connected with bond.
+[lifecycle_manager-19] [INFO] [1785700376.057583348] [lifecycle_manager_navigation]: [34m[1mActivating route_server[0m[0m
+[route_server-12] [INFO] [1785700376.057952642] [route_server]: Activating
+[route_server-12] [INFO] [1785700376.058100704] [route_server]: Creating bond (route_server) to lifecycle manager.
+[lifecycle_manager-19] [INFO] [1785700376.172510638] [lifecycle_manager_navigation]: Server route_server connected with bond.
+[lifecycle_manager-19] [INFO] [1785700376.172592235] [lifecycle_manager_navigation]: [34m[1mActivating behavior_server[0m[0m
+[behavior_server-13] [INFO] [1785700376.173476380] [behavior_server]: Activating
+[behavior_server-13] [INFO] [1785700376.173545037] [behavior_server]: Activating spin
+[behavior_server-13] [INFO] [1785700376.173588604] [behavior_server]: Activating backup
+[behavior_server-13] [INFO] [1785700376.173621043] [behavior_server]: Activating drive_on_heading
+[behavior_server-13] [INFO] [1785700376.173652533] [behavior_server]: Activating assisted_teleop
+[behavior_server-13] [INFO] [1785700376.173682574] [behavior_server]: Activating wait
+[behavior_server-13] [INFO] [1785700376.173722380] [behavior_server]: Creating bond (behavior_server) to lifecycle manager.
+[lifecycle_manager-19] [INFO] [1785700376.283339845] [lifecycle_manager_navigation]: Server behavior_server connected with bond.
+[lifecycle_manager-19] [INFO] [1785700376.283412734] [lifecycle_manager_navigation]: [34m[1mActivating velocity_smoother[0m[0m
+[velocity_smoother-16] [INFO] [1785700376.283852427] [velocity_smoother]: Activating
+[velocity_smoother-16] [INFO] [1785700376.283981184] [velocity_smoother]: Creating bond (velocity_smoother) to lifecycle manager.
+[lifecycle_manager-19] [INFO] [1785700376.396136905] [lifecycle_manager_navigation]: Server velocity_smoother connected with bond.
+[lifecycle_manager-19] [INFO] [1785700376.396191825] [lifecycle_manager_navigation]: [34m[1mActivating collision_monitor[0m[0m
+[collision_monitor-17] [INFO] [1785700376.396613567] [collision_monitor]: Activating
+[collision_monitor-17] [INFO] [1785700376.396666323] [collision_monitor]: Creating bond (collision_monitor) to lifecycle manager.
+[lifecycle_manager-19] [INFO] [1785700376.517427099] [lifecycle_manager_navigation]: Server collision_monitor connected with bond.
+[lifecycle_manager-19] [INFO] [1785700376.517474373] [lifecycle_manager_navigation]: [34m[1mActivating bt_navigator[0m[0m
+[bt_navigator-14] [INFO] [1785700376.517826277] [bt_navigator]: Activating
+[bt_navigator-14] [INFO] [1785700376.609397690] [bt_navigator]: Creating bond (bt_navigator) to lifecycle manager.
+[lifecycle_manager-19] [INFO] [1785700376.717019462] [lifecycle_manager_navigation]: Server bt_navigator connected with bond.
+[lifecycle_manager-19] [INFO] [1785700376.717140826] [lifecycle_manager_navigation]: [34m[1mActivating waypoint_follower[0m[0m
+[waypoint_follower-15] [INFO] [1785700376.717985691] [waypoint_follower]: Activating
+[waypoint_follower-15] [INFO] [1785700376.718077101] [waypoint_follower]: Creating bond (waypoint_follower) to lifecycle manager.
+[lifecycle_manager-19] [INFO] [1785700376.838365557] [lifecycle_manager_navigation]: Server waypoint_follower connected with bond.
+[lifecycle_manager-19] [INFO] [1785700376.838441346] [lifecycle_manager_navigation]: [34m[1mActivating docking_server[0m[0m
+[opennav_docking-18] [INFO] [1785700376.839402510] [docking_server]: Activating docking_server
+[opennav_docking-18] [INFO] [1785700376.870294226] [docking_server]: Creating bond (docking_server) to lifecycle manager.
+[lifecycle_manager-19] [INFO] [1785700376.983296514] [lifecycle_manager_navigation]: Server docking_server connected with bond.
+[lifecycle_manager-19] [INFO] [1785700376.983420928] [lifecycle_manager_navigation]: [34m[1mManaged nodes are active[0m[0m
+[lifecycle_manager-19] [INFO] [1785700376.983468577] [lifecycle_manager_navigation]: [34m[1mCreating bond timer...[0m[0m
+[amcl-7] [INFO] [1785700376.988268558] [amcl]: initialPoseReceived
+[amcl-7] [WARN] [1785700376.988388562] [amcl]: Failed to transform initial pose in time (Lookup would require extrapolation into the future.  Requested time 3.678000 but the latest data is at time 3.672000, when looking up transform from frame [base_link] to frame [odom])
+[amcl-7] [INFO] [1785700376.988406881] [amcl]: Setting pose (3.678000): -5.200 3.200 0.759
+[amcl-7] [INFO] [1785700376.989758554] [amcl]: initialPoseReceived
+[amcl-7] [WARN] [1785700376.989796576] [amcl]: Failed to transform initial pose in time (Lookup would require extrapolation into the future.  Requested time 3.678000 but the latest data is at time 3.672000, when looking up transform from frame [base_link] to frame [odom])
+[amcl-7] [INFO] [1785700376.989804041] [amcl]: Setting pose (3.678000): -5.200 3.200 0.759
+[planner_server-11] [INFO] [1785700378.993470838] [global_costmap.global_costmap]: Received request to clear entirely the global_costmap
+[controller_server-9] [INFO] [1785700378.994770500] [local_costmap.local_costmap]: Received request to clear entirely the local_costmap
+[planner_server-11] [WARN] [1785700379.898503408] [planner_server]: Planner loop missed its desired rate of 5.0000 Hz. Current loop rate is 2.4876 Hz
+[smoother_server-10] [INFO] [1785700380.056074230] [smoother_server]: Received a path to smooth.
+[controller_server-9] [INFO] [1785700380.118832101] [controller_server]: Received a goal, begin computing control effort.
+[parameter_bridge-3] [INFO] [1785700380.155317887] [ros_gz_bridge]: Passing message from ROS geometry_msgs/msg/Twist to Gazebo gz.msgs.Twist (showing msg only once per type)
+[controller_server-9] [INFO] [1785700467.469329003] [controller_server]: Reached the goal!
+[execution_trial-5] [INFO] [1785700469.948310159] [execution_trial]: Execution trial finished: method=savitzky_golay, success=True, time=88.371s, output=/home/linh-pham/agv_nav2_research_ws_bao/results/pstmo_execution_full_20260803/warehouse_dispatch/full_replenishment_navfnastar_savitzky_golay.json
+[INFO] [execution_trial-5]: process has finished cleanly [pid 132754]
+[INFO] [lifecycle_manager-19]: sending signal 'SIGINT' to process[lifecycle_manager-19]
+[INFO] [opennav_docking-18]: sending signal 'SIGINT' to process[opennav_docking-18]
+[INFO] [collision_monitor-17]: sending signal 'SIGINT' to process[collision_monitor-17]
+[INFO] [velocity_smoother-16]: sending signal 'SIGINT' to process[velocity_smoother-16]
+[INFO] [waypoint_follower-15]: sending signal 'SIGINT' to process[waypoint_follower-15]
+[INFO] [bt_navigator-14]: sending signal 'SIGINT' to process[bt_navigator-14]
+[INFO] [behavior_server-13]: sending signal 'SIGINT' to process[behavior_server-13]
+[INFO] [route_server-12]: sending signal 'SIGINT' to process[route_server-12]
+[INFO] [planner_server-11]: sending signal 'SIGINT' to process[planner_server-11]
+[INFO] [smoother_server-10]: sending signal 'SIGINT' to process[smoother_server-10]
+[INFO] [controller_server-9]: sending signal 'SIGINT' to process[controller_server-9]
+[INFO] [lifecycle_manager-8]: sending signal 'SIGINT' to process[lifecycle_manager-8]
+[INFO] [amcl-7]: sending signal 'SIGINT' to process[amcl-7]
+[INFO] [map_server-6]: sending signal 'SIGINT' to process[map_server-6]
+[INFO] [robot_state_publisher-4]: sending signal 'SIGINT' to process[robot_state_publisher-4]
+[INFO] [parameter_bridge-3]: sending signal 'SIGINT' to process[parameter_bridge-3]
+[INFO] [gazebo-1]: sending signal 'SIGINT' to process[gazebo-1]
+[lifecycle_manager-19] [INFO] [1785700470.235837566] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[lifecycle_manager-19] [INFO] [1785700470.235972007] [lifecycle_manager_navigation]: Running Nav2 LifecycleManager rcl preshutdown (lifecycle_manager_navigation)
+[lifecycle_manager-19] [INFO] [1785700470.236017238] [lifecycle_manager_navigation]: [34m[1mTerminating bond timer...[0m[0m
+[opennav_docking-18] [INFO] [1785700470.238201316] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[opennav_docking-18] [INFO] [1785700470.238397229] [docking_server]: Running Nav2 LifecycleNode rcl preshutdown (docking_server)
+[opennav_docking-18] [INFO] [1785700470.238475140] [docking_server]: Deactivating docking_server
+[collision_monitor-17] [INFO] [1785700470.240603926] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[collision_monitor-17] [INFO] [1785700470.240712400] [collision_monitor]: Running Nav2 LifecycleNode rcl preshutdown (collision_monitor)
+[collision_monitor-17] [INFO] [1785700470.240769437] [collision_monitor]: Deactivating
+[collision_monitor-17] [INFO] [1785700470.240787404] [collision_monitor]: Destroying bond (collision_monitor) to lifecycle manager.
+[velocity_smoother-16] [INFO] [1785700470.243535284] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[velocity_smoother-16] [INFO] [1785700470.243644590] [velocity_smoother]: Running Nav2 LifecycleNode rcl preshutdown (velocity_smoother)
+[velocity_smoother-16] [INFO] [1785700470.243721426] [velocity_smoother]: Deactivating
+[velocity_smoother-16] [INFO] [1785700470.243769715] [velocity_smoother]: Destroying bond (velocity_smoother) to lifecycle manager.
+[waypoint_follower-15] [INFO] [1785700470.246003550] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[waypoint_follower-15] [INFO] [1785700470.246100633] [waypoint_follower]: Running Nav2 LifecycleNode rcl preshutdown (waypoint_follower)
+[waypoint_follower-15] [INFO] [1785700470.246190167] [waypoint_follower]: Deactivating
+[waypoint_follower-15] [INFO] [1785700470.246211699] [waypoint_follower]: Destroying bond (waypoint_follower) to lifecycle manager.
+[opennav_docking-18] [INFO] [1785700470.248244185] [docking_server]: Destroying bond (docking_server) to lifecycle manager.
+[bt_navigator-14] [INFO] [1785700470.249386439] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[bt_navigator-14] [INFO] [1785700470.249483631] [bt_navigator]: Running Nav2 LifecycleNode rcl preshutdown (bt_navigator)
+[bt_navigator-14] [INFO] [1785700470.249551252] [bt_navigator]: Deactivating
+[bt_navigator-14] [INFO] [1785700470.249577620] [bt_navigator]: Destroying bond (bt_navigator) to lifecycle manager.
+[behavior_server-13] [INFO] [1785700470.251033569] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[behavior_server-13] [INFO] [1785700470.251198253] [behavior_server]: Running Nav2 LifecycleNode rcl preshutdown (behavior_server)
+[behavior_server-13] [INFO] [1785700470.251287426] [behavior_server]: Deactivating
+[behavior_server-13] [INFO] [1785700470.251317716] [behavior_server]: Destroying bond (behavior_server) to lifecycle manager.
+[collision_monitor-17] [INFO] [1785700470.251220581] [collision_monitor]: Cleaning up
+[collision_monitor-17] [INFO] [1785700470.251250339] [collision_monitor]: [FootprintApproach]: Destroying Polygon
+[collision_monitor-17] [INFO] [1785700470.251261605] [collision_monitor]: [scan]: Destroying Scan
+[route_server-12] [INFO] [1785700470.253452530] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[route_server-12] [INFO] [1785700470.253559180] [route_server]: Running Nav2 LifecycleNode rcl preshutdown (route_server)
+[route_server-12] [INFO] [1785700470.253619664] [route_server]: Deactivating
+[route_server-12] [INFO] [1785700470.253636179] [route_server]: Destroying bond (route_server) to lifecycle manager.
+[velocity_smoother-16] [INFO] [1785700470.254135098] [velocity_smoother]: Cleaning up
+[velocity_smoother-16] [INFO] [1785700470.254171214] [velocity_smoother]: Destroying bond (velocity_smoother) to lifecycle manager.
+[planner_server-11] [INFO] [1785700470.255522820] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[planner_server-11] [INFO] [1785700470.255581518] [planner_server]: Running Nav2 LifecycleNode rcl preshutdown (planner_server)
+[planner_server-11] [INFO] [1785700470.255630296] [planner_server]: Deactivating
+[planner_server-11] [INFO] [1785700470.255653356] [global_costmap.global_costmap]: Deactivating
+[waypoint_follower-15] [INFO] [1785700470.256575766] [waypoint_follower]: Cleaning up
+[smoother_server-10] [INFO] [1785700470.257810320] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[smoother_server-10] [INFO] [1785700470.257886896] [smoother_server]: Running Nav2 LifecycleNode rcl preshutdown (smoother_server)
+[smoother_server-10] [INFO] [1785700470.257954165] [smoother_server]: Deactivating
+[smoother_server-10] [INFO] [1785700470.257985521] [smoother_server]: Deactivating smoother: constrained of type nav2_constrained_smoother::ConstrainedSmoother
+[smoother_server-10] [INFO] [1785700470.257995097] [smoother_server]: Destroying bond (smoother_server) to lifecycle manager.
+[collision_monitor-17] [INFO] [1785700470.258410266] [collision_monitor]: Destroying bond (collision_monitor) to lifecycle manager.
+[bt_navigator-14] [INFO] [1785700470.259996692] [bt_navigator]: Cleaning up
+[controller_server-9] [INFO] [1785700470.260643476] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[controller_server-9] [INFO] [1785700470.260709025] [controller_server]: Running Nav2 LifecycleNode rcl preshutdown (controller_server)
+[controller_server-9] [INFO] [1785700470.260767717] [controller_server]: Deactivating
+[controller_server-9] [INFO] [1785700470.260787856] [controller_server]: Deactivating controller: FollowPath of type regulated_pure_pursuit_controller::RegulatedPurePursuitController
+[controller_server-9] [INFO] [1785700470.260807995] [local_costmap.local_costmap]: Deactivating
+[velocity_smoother-16] [INFO] [1785700470.260989364] [velocity_smoother]: Destroying
+[opennav_docking-18] [INFO] [1785700470.261149349] [docking_server]: Cleaning up docking_server
+[behavior_server-13] [INFO] [1785700470.261621656] [behavior_server]: Cleaning up
+[route_server-12] [INFO] [1785700470.264216396] [route_server]: Cleaning up
+[lifecycle_manager-8] [INFO] [1785700470.264522078] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[lifecycle_manager-8] [INFO] [1785700470.264664439] [lifecycle_manager_localization]: Running Nav2 LifecycleManager rcl preshutdown (lifecycle_manager_localization)
+[lifecycle_manager-8] [INFO] [1785700470.264710748] [lifecycle_manager_localization]: [34m[1mTerminating bond timer...[0m[0m
+[smoother_server-10] [INFO] [1785700470.268288606] [smoother_server]: Cleaning up
+[smoother_server-10] [INFO] [1785700470.268482369] [smoother_server]: Cleaning up smoother: constrained of type nav2_constrained_smoother::ConstrainedSmoother
+[amcl-7] [INFO] [1785700470.268363233] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[amcl-7] [INFO] [1785700470.268466948] [amcl]: Running Nav2 LifecycleNode rcl preshutdown (amcl)
+[amcl-7] [INFO] [1785700470.268512376] [amcl]: Deactivating
+[amcl-7] [INFO] [1785700470.268534024] [amcl]: Destroying bond (amcl) to lifecycle manager.
+[map_server-6] [INFO] [1785700470.272570284] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[map_server-6] [INFO] [1785700470.272672003] [map_server]: Running Nav2 LifecycleNode rcl preshutdown (map_server)
+[map_server-6] [INFO] [1785700470.272738444] [map_server]: Deactivating
+[map_server-6] [INFO] [1785700470.272752289] [map_server]: Destroying bond (map_server) to lifecycle manager.
+[robot_state_publisher-4] [INFO] [1785700470.273051922] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[behavior_server-13] [INFO] [1785700470.276626069] [behavior_server]: Destroying bond (behavior_server) to lifecycle manager.
+[parameter_bridge-3] [INFO] [1785700470.277034105] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[opennav_docking-18] [INFO] [1785700470.278117880] [docking_server]: Destroying bond (docking_server) to lifecycle manager.
+[amcl-7] [INFO] [1785700470.278851246] [amcl]: Cleaning up
+[map_server-6] [INFO] [1785700470.285319358] [map_server]: Cleaning up
+[map_server-6] [INFO] [1785700470.285392527] [map_server]: Destroying bond (map_server) to lifecycle manager.
+[collision_monitor-17] [INFO] [1785700470.285562317] [collision_monitor]: Destroying
+[smoother_server-10] [INFO] [1785700470.290176701] [smoother_server]: Destroying bond (smoother_server) to lifecycle manager.
+[waypoint_follower-15] [INFO] [1785700470.291982476] [waypoint_follower]: Destroying bond (waypoint_follower) to lifecycle manager.
+[waypoint_follower-15] [INFO] [1785700470.293429623] [waypoint_follower]: Destroying
+[amcl-7] [INFO] [1785700470.295685733] [amcl]: Destroying bond (amcl) to lifecycle manager.
+[route_server-12] [INFO] [1785700470.299085317] [route_server]: Destroying bond (route_server) to lifecycle manager.
+[opennav_docking-18] [INFO] [1785700470.299189231] [docking_server]: Destroying
+[smoother_server-10] [INFO] [1785700470.300268959] [smoother_server]: Destroying
+[map_server-6] [INFO] [1785700470.302372397] [map_server]: Destroying
+[lifecycle_manager-8] [INFO] [1785700470.303773124] [lifecycle_manager_localization]: Destroying lifecycle_manager_localization
+[route_server-12] [INFO] [1785700470.307857253] [route_server]: Destroying
+[amcl-7] [INFO] [1785700470.315001085] [amcl]: Destroying
+[behavior_server-13] [INFO] [1785700470.335986004] [behavior_server]: Destroying
+[bt_navigator-14] [INFO] [1785700470.356711057] [bt_navigator]: Completed Cleaning up
+[bt_navigator-14] [INFO] [1785700470.356751037] [bt_navigator]: Destroying bond (bt_navigator) to lifecycle manager.
+[bt_navigator-14] [INFO] [1785700470.360560351] [bt_navigator]: Destroying
+[lifecycle_manager-19] [INFO] [1785700470.381631533] [lifecycle_manager_navigation]: Destroying lifecycle_manager_navigation
+[INFO] [parameter_bridge-3]: process has finished cleanly [pid 132752]
+[controller_server-9] [INFO] [1785700470.406381473] [controller_server]: Destroying bond (controller_server) to lifecycle manager.
+[INFO] [velocity_smoother-16]: process has finished cleanly [pid 132965]
+[controller_server-9] [INFO] [1785700470.416618063] [controller_server]: Cleaning up
+[controller_server-9] [INFO] [1785700470.416670031] [controller_server]: Cleaning up controller: FollowPath of type regulated_pure_pursuit_controller::RegulatedPurePursuitController
+[controller_server-9] [INFO] [1785700470.416756257] [local_costmap.local_costmap]: Cleaning up
+[INFO] [robot_state_publisher-4]: process has finished cleanly [pid 132753]
+[INFO] [collision_monitor-17]: process has finished cleanly [pid 132966]
+[controller_server-9] [INFO] [1785700470.429018655] [controller_server]: Destroying bond (controller_server) to lifecycle manager.
+[controller_server-9] [INFO] [1785700470.434351090] [local_costmap.local_costmap]: Destroying
+[INFO] [map_server-6]: process has finished cleanly [pid 132955]
+[INFO] [opennav_docking-18]: process has finished cleanly [pid 132969]
+[INFO] [smoother_server-10]: process has finished cleanly [pid 132959]
+[controller_server-9] [INFO] [1785700470.442095273] [controller_server]: Destroying
+[INFO] [lifecycle_manager-8]: process has finished cleanly [pid 132957]
+[INFO] [waypoint_follower-15]: process has finished cleanly [pid 132964]
+[INFO] [route_server-12]: process has finished cleanly [pid 132961]
+[INFO] [amcl-7]: process has finished cleanly [pid 132956]
+[INFO] [behavior_server-13]: process has finished cleanly [pid 132962]
+[INFO] [bt_navigator-14]: process has finished cleanly [pid 132963]
+[INFO] [lifecycle_manager-19]: process has finished cleanly [pid 132972]
+[INFO] [controller_server-9]: process has finished cleanly [pid 132958]
+[planner_server-11] [INFO] [1785700470.886018246] [planner_server]: Deactivating plugin Smac2D of type SmacPlanner2D
+[planner_server-11] [INFO] [1785700470.886104340] [planner_server]: Deactivating plugin ThetaStar of type nav2_theta_star_planner
+[planner_server-11] [INFO] [1785700470.886137230] [planner_server]: Deactivating plugin SmacHybrid of type SmacPlannerHybrid
+[planner_server-11] [INFO] [1785700470.886166928] [planner_server]: Deactivating plugin NavFnDijkstra of type NavfnPlanner
+[planner_server-11] [INFO] [1785700470.886192565] [planner_server]: Deactivating plugin NavFnAStar of type NavfnPlanner
+[planner_server-11] [INFO] [1785700470.886225353] [planner_server]: Destroying bond (planner_server) to lifecycle manager.
+[planner_server-11] [INFO] [1785700470.896553534] [planner_server]: Cleaning up
+[planner_server-11] [INFO] [1785700470.904735819] [global_costmap.global_costmap]: Cleaning up
+[planner_server-11] [INFO] [1785700470.907212288] [planner_server]: Cleaning up plugin Smac2D of type SmacPlanner2D
+[planner_server-11] [INFO] [1785700470.907384631] [planner_server]: CleaningUp plugin ThetaStar of type nav2_theta_star_planner
+[planner_server-11] [INFO] [1785700470.907396306] [planner_server]: Cleaning up plugin SmacHybrid of type SmacPlannerHybrid
+[planner_server-11] [INFO] [1785700470.907504492] [planner_server]: Cleaning up plugin NavFnDijkstra of type NavfnPlanner
+[planner_server-11] [INFO] [1785700470.907783429] [planner_server]: Cleaning up plugin NavFnAStar of type NavfnPlanner
+[planner_server-11] [INFO] [1785700470.907796778] [planner_server]: Destroying plugin Smac2D of type SmacPlanner2D
+[planner_server-11] [INFO] [1785700470.907810137] [planner_server]: Destroying plugin SmacHybrid of type SmacPlannerHybrid
+[planner_server-11] [INFO] [1785700470.907820496] [planner_server]: Destroying plugin NavFnDijkstra of type NavfnPlanner
+[planner_server-11] [INFO] [1785700470.907824594] [planner_server]: Destroying plugin NavFnAStar of type NavfnPlanner
+[planner_server-11] [INFO] [1785700470.914337094] [planner_server]: Destroying bond (planner_server) to lifecycle manager.
+[planner_server-11] [INFO] [1785700470.919088369] [global_costmap.global_costmap]: Destroying
+[planner_server-11] [INFO] [1785700470.923235823] [planner_server]: Destroying
+[INFO] [planner_server-11]: process has finished cleanly [pid 132960]
+[ERROR] [gazebo-1]: process[gazebo-1] failed to terminate '5' seconds after receiving 'SIGINT', escalating to 'SIGTERM'
+[INFO] [gazebo-1]: sending signal 'SIGTERM' to process[gazebo-1]
+[ERROR] [gazebo-1]: process has died [pid 132749, exit code -15, cmd 'ruby /opt/ros/jazzy/opt/gz_tools_vendor/bin/gz sim -r -s -v 3 --initial-sim-time 0.0 /home/linh-pham/agv_nav2_research_ws_bao/install/vacuum_robot_gazebo/share/vacuum_robot_gazebo/worlds/warehouse_dispatch.sdf --force-version 8'].
