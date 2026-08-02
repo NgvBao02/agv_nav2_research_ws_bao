@@ -204,7 +204,7 @@ private:
   std::size_t oscillation_minimum_sign_changes_{2U};
   double output_spacing_{0.05};
   unsigned char max_footprint_cost_{252};
-  PreprocessingMode preprocessing_mode_{PreprocessingMode::kConditionThenLos};
+  PreprocessingMode preprocessing_mode_{PreprocessingMode::kConditionOnly};
   CandidateSearchMode candidate_search_mode_{
     CandidateSearchMode::kHierarchicalAlphaTwoTrim};
   bool diagnostics_publish_enabled_{true};

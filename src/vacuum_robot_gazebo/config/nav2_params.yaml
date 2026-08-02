@@ -398,10 +398,10 @@ smoother_server:
       oscillation_deviation_resolution_ratio: 3.0
       oscillation_minimum_turn_angle: 0.20
       oscillation_minimum_sign_changes: 2
-      # PSTMO always conditions the planner path and then performs greedy LOS
-      # pruning with the live, unpadded footprint. Consecutive conditioned
-      # edges are ordinary final candidates, so a zero-shortcut result is the
-      # natural baseline rather than a separate no-LOS pipeline.
+      # Standalone PSTMO uses footprint-safe path conditioning only. Greedy LOS
+      # is deliberately disabled because a farthest-visible chord can remove
+      # intermediate geometry needed by the controller in difficult corridors.
+      # The hierarchical two-trim / coarse-to-fine alpha search is unchanged.
       output_spacing: 0.05
       sample_spacing: 0.02
       # CAD rolling-tread center distance; calibrate on the physical robot.

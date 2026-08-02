@@ -651,9 +651,13 @@ void AdaptivePivotG2Smoother::configure(
 
   diagnostics_publisher_ = node->create_publisher<std_msgs::msg::String>(
     "/research/pstmo/diagnostics", rclcpp::QoS(10));
+  const char * candidate_search =
+    candidate_search_mode_ == CandidateSearchMode::kHierarchicalAlphaTwoTrim ?
+    "hierarchical_alpha_two_trim" : "legacy_joint_d_q";
   RCLCPP_INFO(
-    logger_, "Configured PSTMO smoother '%s' with joint (d,q) shape search and %s preprocessing",
+    logger_, "Configured PSTMO smoother '%s' with %s search and %s preprocessing",
     plugin_name_.c_str(),
+    candidate_search,
     preprocessing_mode_ == PreprocessingMode::kConditionThenLos ?
     "condition_then_los" : "condition_only");
 }

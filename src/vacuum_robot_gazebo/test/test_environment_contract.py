@@ -228,7 +228,7 @@ def test_pstmo_preprocessing_modes_are_internal_and_diagnostics_are_single_pipel
     ).read_text(encoding='utf-8')
 
     assert 'kConditionThenLos' in header_source
-    assert 'preprocessing_mode_{PreprocessingMode::kConditionThenLos}' in header_source
+    assert 'preprocessing_mode_{PreprocessingMode::kConditionOnly}' in header_source
     assert (
         'candidate_search_mode_{\n'
         '    CandidateSearchMode::kHierarchicalAlphaTwoTrim}'
