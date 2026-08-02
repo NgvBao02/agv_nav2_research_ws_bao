@@ -17,6 +17,7 @@ find_package(tf2_ros REQUIRED)
 
 add_library(${PROJECT_NAME} SHARED
   src/adaptive_pivot_g2_smoother.cpp
+  src/footprint_safety.cpp
   src/safety_gated_hybrid_smoother.cpp
 )
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
@@ -55,6 +56,13 @@ install(FILES adaptive_pivot_g2_nav2_plugin.xml DESTINATION share/${PROJECT_NAME
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
+
+  find_package(ament_cmake_gtest REQUIRED)
+  ament_add_gtest(test_footprint_safety test/test_footprint_safety.cpp)
+  target_compile_features(test_footprint_safety PRIVATE cxx_std_17)
+  target_link_libraries(test_footprint_safety ${PROJECT_NAME})
+  ament_target_dependencies(
+    test_footprint_safety geometry_msgs nav2_costmap_2d)
 endif()
 
 ament_export_include_directories(include)

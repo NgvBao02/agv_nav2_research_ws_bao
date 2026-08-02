@@ -6,6 +6,7 @@ find_package(ament_cmake REQUIRED)
 add_library(${PROJECT_NAME} SHARED
   src/adaptive_search.cpp
   src/candidate_selection.cpp
+  src/hierarchical_shape_search.cpp
   src/hybrid_selection.cpp
   src/line_of_sight.cpp
   src/path_conditioning.cpp
@@ -50,6 +51,11 @@ if(BUILD_TESTING)
   ament_add_gtest(test_hybrid_selection test/test_hybrid_selection.cpp)
   target_compile_features(test_hybrid_selection PRIVATE cxx_std_17)
   target_link_libraries(test_hybrid_selection ${PROJECT_NAME})
+
+  ament_add_gtest(
+    test_hierarchical_shape_search test/test_hierarchical_shape_search.cpp)
+  target_compile_features(test_hierarchical_shape_search PRIVATE cxx_std_17)
+  target_link_libraries(test_hierarchical_shape_search ${PROJECT_NAME})
 
   ament_add_gtest(test_adaptive_optimization test/test_adaptive_optimization.cpp)
   target_compile_features(test_adaptive_optimization PRIVATE cxx_std_17)

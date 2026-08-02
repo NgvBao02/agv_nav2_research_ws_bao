@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="vi"><head><meta charset="utf-8"><title>ICEEIS 2026 — PSTMO với tìm kiếm α phân cấp</title>
+<style>
+body{font-family:'Times New Roman',serif;max-width:850px;margin:40px auto;
+line-height:1.45;font-size:12pt}
+h1{text-align:center;font-size:18pt}.notice{text-align:center;font-weight:bold}
+p{text-align:justify}.label{font-weight:bold}
+</style></head>
+<body><p class="notice">BẢN TIẾNG VIỆT CHỈ DÙNG ĐỂ ĐỐI CHIẾU — KHÔNG NỘP LÊN CMT</p>
+<h1>Phương pháp làm mượt đường đi và tối ưu hóa thao tác chuyển hướng có xét an toàn cho robot di động vi sai hai bánh</h1>
+<p><span class="label">Tóm tắt—</span>Các bộ lập kế hoạch toàn cục trong ROS 2/Nav2 thường tạo đường gấp khúc có đổi hướng đột ngột. Nghiên cứu này đề xuất phương pháp làm mượt đường đi và tối ưu hóa thao tác chuyển hướng PSTMO cho robot di động vi sai hai bánh. Sau bước điều kiện hóa, PSTMO luôn áp dụng line-of-sight (LOS) tham lam để chọn dây cung xa nhất an toàn khi quét footprint thật trong cả tịnh tiến và xoay; cạnh liên tiếp của polyline đã điều kiện hóa là ứng viên tự nhiên cuối cùng. Tại mỗi góc sau LOS, thuật toán sinh tối đa hai khoảng cắt d có cơ sở hình học: giá trị ưu tiên theo chiều dài hai cạnh và giá trị tương thích dành một nửa đoạn chung sau margin. Với từng d, tỷ lệ α=q/d được tìm trên lưới thô 0,1–0,5, tinh chỉnh trong khoảng hai hàng xóm của nghiệm thắng và dùng lưới lệch nửa bước khi toàn bộ lưới thô thất bại. Chỉ các chuyển tiếp Bézier bậc năm G² thỏa hình học, giới hạn bánh xe, động học, timing và swept-footprint mới được so sánh bằng năng lượng độ cong; time gate và quy hoạch động sau đó chọn giữa hai d và quay tại chỗ, đồng thời ngăn các chuyển tiếp chồng lấn. Đánh giá gồm 175 bản ghi của 7 tình huống đại diện, 5 bộ lập kế hoạch toàn cục và 5 phương án Raw, Simple, Savitzky–Golay, Constrained và PSTMO; 35/35 nhóm dùng cùng hash đường Raw. PSTMO, Raw, Savitzky–Golay và Constrained thành công 35/35, trong khi Simple thành công 34/35; mọi đầu ra PSTMO đều qua kiểm tra invariant cuối và không có mẫu va chạm footprint. Trên 34 nhóm mà cả năm phương án đều thành công, PSTMO đạt năng lượng độ cong 1,467 m⁻¹, độ cong cực đại 1,093 m⁻¹ và chiều dài 9,930 m, so với đối chứng Nav2 tốt nhất tương ứng 9,418 m⁻¹, 4,763 m⁻¹ và 10,240 m, tương ứng cải thiện 84,42%, 77,06% và 3,03%. PSTMO dùng 81 chuyển tiếp G² và 2 pivot trên 83 góc, với tổng góc pivot trung bình 0,08174 rad/đường. Thời gian thuật toán trung bình là 28,7 ms, cao hơn khoảng 0,1–16,1 ms của ba đối chứng. Kết quả cho thấy PSTMO cải thiện rõ rệt chiều dài và độ cong trong khi duy trì an toàn footprint; chi phí tính toán và thao tác quay tại chỗ còn cần được xác nhận bằng thử nghiệm vòng kín và phần cứng.</p>
+<p><span class="label">Từ khóa—</span>PSTMO; robot di động vi sai; làm mượt
+đường đi; line-of-sight tham lam; tìm kiếm thô–tinh; swept-footprint; ROS 2/Nav2.</p>
+</body></html>

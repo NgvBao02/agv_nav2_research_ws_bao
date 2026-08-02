@@ -144,7 +144,7 @@ TransitionCandidate generate_quintic_transition_impl(
   }
   if ((!use_explicit_trim && !finite_positive(options.design_radius)) ||
     (use_explicit_trim && !finite_positive(explicit_trim)) ||
-    !finite_positive(control_fraction) || control_fraction >= 0.5 ||
+    !finite_positive(control_fraction) || control_fraction > 0.5 ||
     !finite_positive(options.sample_spacing) ||
     (!use_explicit_trim &&
     (!finite_positive(options.max_trim_fraction) || options.max_trim_fraction >= 0.5)))
@@ -319,7 +319,7 @@ std::vector<double> generate_control_fraction_candidates(
 {
   std::vector<double> candidates;
   if (!std::isfinite(minimum_fraction) || minimum_fraction <= 0.0 ||
-    !std::isfinite(maximum_fraction) || maximum_fraction >= 0.5 ||
+    !std::isfinite(maximum_fraction) || maximum_fraction > 0.5 ||
     minimum_fraction > maximum_fraction || sample_count == 0U ||
     sample_count % 2U == 0U)
   {

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-"""Audit the final PSTMO data and rebuild the Vietnamese ICEEIS abstract."""
+"""Audit single-pipeline greedy LOS results and rebuild the PSTMO VI abstract."""
 
 from __future__ import annotations
 
@@ -12,9 +12,12 @@ import html
 import io
 import json
 import math
-from pathlib import Path
+import shutil
 import statistics
+import subprocess
+import tempfile
 import zipfile
+from pathlib import Path
 
 from docx import Document
 from docx.oxml.ns import qn
@@ -22,26 +25,35 @@ from docx.shared import Pt
 
 
 ROOT = Path(__file__).resolve().parents[1]
-BASELINE_DIR = (
-    ROOT / "results" / "current_pstmo_footprint_padding15_nav2_comparison_20260802"
-)
-GEOMETRY_DIR = (
-    ROOT / "results" / "pstmo_direct_dq_local08_adaptive_los_full_20260802"
-)
-CLOSED_LOOP_DIR = (
-    ROOT
-    / "results"
-    / "pstmo_direct_dq_local08_adaptive_los_closed_loop_20260802"
-)
+GEOMETRY_DIR = ROOT / "results" / "pstmo_greedy_los_single_pipeline_full_20260802"
+ABLATION_DIR = ROOT / "results" / "pstmo_joint_dq_condition_only_ablation_20260802"
 REQUESTED_DOCX = (
     ROOT / "abstract" / "ICEEIS_2026_ADAPTIVE_PIVOT_G2_ABSTRACT_VI.docx"
 )
-OUTPUT_DOCX = ROOT / "abstract" / "ICEEIS_2026_PSTMO_FOOTPRINT_LOS_ABSTRACT_VI.docx"
 REQUESTED_HTML = (
     ROOT / "abstract" / "ICEEIS_2026_ADAPTIVE_PIVOT_G2_ABSTRACT_VI.html"
 )
-OUTPUT_HTML = ROOT / "abstract" / "ICEEIS_2026_PSTMO_FOOTPRINT_LOS_ABSTRACT_VI.html"
-NAV2_PARAMS = ROOT / "src" / "vacuum_robot_gazebo" / "config" / "nav2_params.yaml"
+REQUESTED_PDF = (
+    ROOT / "abstract" / "ICEEIS_2026_ADAPTIVE_PIVOT_G2_ABSTRACT_VI.pdf"
+)
+OUTPUT_DOCX = (
+    ROOT / "abstract" / "ICEEIS_2026_PSTMO_GREEDY_LOS_ABSTRACT_VI.docx"
+)
+OUTPUT_HTML = (
+    ROOT / "abstract" / "ICEEIS_2026_PSTMO_GREEDY_LOS_ABSTRACT_VI.html"
+)
+OUTPUT_PDF = (
+    ROOT / "abstract" / "ICEEIS_2026_PSTMO_GREEDY_LOS_ABSTRACT_VI.pdf"
+)
+COMPAT_DOCX = (
+    ROOT / "abstract" / "ICEEIS_2026_PSTMO_FOOTPRINT_LOS_ABSTRACT_VI.docx"
+)
+COMPAT_HTML = (
+    ROOT / "abstract" / "ICEEIS_2026_PSTMO_FOOTPRINT_LOS_ABSTRACT_VI.html"
+)
+NAV2_PARAMS = (
+    ROOT / "src" / "vacuum_robot_gazebo" / "config" / "nav2_params.yaml"
+)
 
 METHODS = ("raw", "simple", "savitzky_golay", "constrained", "pstmo")
 METHOD_LABELS = {
@@ -60,68 +72,148 @@ EXPECTED_ENVIRONMENTS = {
     "warehouse_dispatch": "full_replenishment",
     "warehouse_long_aisles": "diagonal_replenishment",
 }
+GROUP_FIELDS = ("environment", "scenario", "planner", "repetition")
+COMPARISON_METRICS = (
+    "translation_path_length_m",
+    "translation_max_abs_curvature_1pm",
+    "translation_curvature_energy_1pm",
+    "pivot_total_angle_rad",
+    "footprint_clearance_min_m",
+    "algorithm_time_s",
+    "wall_time_s",
+)
 
 
 def as_float(value: object) -> float:
+    """Convert a benchmark field to a finite float."""
     result = float(value)
     if not math.isfinite(result):
         raise ValueError(f"Non-finite numeric value: {value!r}")
     return result
 
 
-def mean(rows: list[dict], key: str) -> float:
-    return statistics.fmean(as_float(row[key]) for row in rows)
-
-
 def percent_change(value: float, reference: float) -> float:
+    """Return a signed percentage change."""
+    if abs(reference) <= 1.0e-15:
+        return 0.0 if abs(value) <= 1.0e-15 else math.inf
     return 100.0 * (value - reference) / reference
 
 
 def sha256(path: Path) -> str:
+    """Hash a configuration artifact used by the benchmark."""
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def literal_dict(value: str) -> dict:
-    parsed = ast.literal_eval(value)
-    if not isinstance(parsed, dict):
-        raise ValueError("Expected a diagnostic dictionary")
-    return parsed
-
-
-def load_geometry() -> tuple[list[dict[str, str]], dict]:
-    """Combine unchanged Nav2 baselines with the final PSTMO rows."""
+def load_csv_directory(directory: Path) -> list[dict[str, str]]:
+    """Load exactly one benchmark CSV for every representative environment."""
     rows: list[dict[str, str]] = []
     for environment, scenario in EXPECTED_ENVIRONMENTS.items():
-        baseline_path = BASELINE_DIR / f"{environment}.csv"
-        final_path = GEOMETRY_DIR / f"{environment}.csv"
-        with baseline_path.open(newline="", encoding="utf-8") as stream:
-            baseline = list(csv.DictReader(stream))
-        with final_path.open(newline="", encoding="utf-8") as stream:
-            final = list(csv.DictReader(stream))
-        selected = [row for row in baseline if row["method"] != "pstmo"]
-        selected.extend(row for row in final if row["method"] == "pstmo")
-        if len(selected) != 25 or {row["scenario"] for row in selected} != {scenario}:
-            raise RuntimeError(f"Unexpected comparison design in {environment}")
+        path = directory / f"{environment}.csv"
+        with path.open(newline="", encoding="utf-8") as stream:
+            selected = list(csv.DictReader(stream))
+        if {row["scenario"] for row in selected} != {scenario}:
+            raise RuntimeError(f"Unexpected scenario set in {path}")
         for row in selected:
             row["environment"] = environment
         rows.extend(selected)
+    return rows
 
-    if len(rows) != 175 or {row["method"] for row in rows} != set(METHODS):
-        raise RuntimeError("The final comparison must contain 175 rows and five methods")
-    if any(row["method"] == "adaptive_hybrid" for row in rows):
-        raise RuntimeError("The excluded method appeared in the abstract data")
 
-    groups: dict[tuple[str, str, str, str], list[dict[str, str]]] = (
-        collections.defaultdict(list)
-    )
+def group_rows(rows: list[dict[str, str]]) -> dict[tuple[str, ...], list[dict[str, str]]]:
+    """Group paired records by environment, scenario, planner and repetition."""
+    groups: dict[tuple[str, ...], list[dict[str, str]]] = collections.defaultdict(list)
     for row in rows:
-        key = (
-            row["environment"],
-            row["scenario"],
-            row["planner"],
-            row["repetition"],
-        )
-        groups[key].append(row)
+        groups[tuple(row[field] for field in GROUP_FIELDS)].append(row)
+    return groups
+
+
+def validate_single_pipeline_contract(rows: list[dict[str, str]], mode: str) -> None:
+    """Validate diagnostics emitted by one PSTMO pipeline execution."""
+    if len(rows) != 35 or any(row["success"] != "True" for row in rows):
+        raise RuntimeError(f"PSTMO {mode} must succeed in all 35 cases")
+    required = {
+        "pstmo_preprocessing_mode": mode,
+        "pstmo_pipeline_execution_count": "1",
+        "pstmo_final_invariants_verified": "True",
+        "pstmo_search_mode": "joint_d_q",
+        "pstmo_trim_domain": "direct_metric",
+    }
+    for field, expected in required.items():
+        if any(row.get(field) != expected for row in rows):
+            raise RuntimeError(f"PSTMO contract mismatch: {field} != {expected}")
+    removed = {
+        "pstmo_los_selection_enabled",
+        "pstmo_los_selected",
+        "pstmo_los_fallback_to_input",
+        "pstmo_los_fallback_reason",
+        "pstmo_los_footprint_padding_m",
+    }
+    if any(field in row for row in rows for field in removed):
+        raise RuntimeError("A removed selector, fallback or padding field remains")
+    if sum(
+        int(as_float(row["footprint_collision_sample_count"])) for row in rows
+    ):
+        raise RuntimeError(f"A {mode} output contains footprint collision samples")
+
+
+def mean(rows: list[dict[str, str]], field: str) -> float:
+    """Calculate a finite arithmetic mean."""
+    return statistics.fmean(as_float(row[field]) for row in rows)
+
+
+def paired_comparison(
+    baseline: dict[tuple[str, ...], dict[str, str]],
+    proposed: dict[tuple[str, ...], dict[str, str]],
+) -> dict:
+    """Compare condition-only and condition-then-LOS paths on identical inputs."""
+    if baseline.keys() != proposed.keys() or len(proposed) != 35:
+        raise RuntimeError("LOS and condition-only paired keys do not match")
+    hash_matches = sum(
+        baseline[key]["raw_path_sha256"] == proposed[key]["raw_path_sha256"]
+        for key in proposed
+    )
+    if hash_matches != 35:
+        raise RuntimeError("LOS ablation raw-path hash mismatch")
+
+    metrics = {}
+    for field in COMPARISON_METRICS:
+        before = [as_float(baseline[key][field]) for key in proposed]
+        after = [as_float(proposed[key][field]) for key in proposed]
+        before_mean = statistics.fmean(before)
+        after_mean = statistics.fmean(after)
+        metrics[field] = {
+            "condition_only_mean": before_mean,
+            "condition_then_los_mean": after_mean,
+            "relative_change_percent": percent_change(after_mean, before_mean),
+            "lower_count": sum(
+                right < left - 1.0e-12 for left, right in zip(before, after)
+            ),
+            "equal_count": sum(
+                abs(right - left) <= 1.0e-12
+                for left, right in zip(before, after)
+            ),
+            "higher_count": sum(
+                right > left + 1.0e-12 for left, right in zip(before, after)
+            ),
+        }
+    return {
+        "paired_group_count": 35,
+        "raw_path_hash_match_count": hash_matches,
+        "condition_only_success_count": 35,
+        "condition_then_los_success_count": 35,
+        "metrics": metrics,
+    }
+
+
+def load_geometry() -> tuple[list[dict[str, str]], dict]:
+    """Audit final and ablation datasets and calculate report statistics."""
+    rows = load_csv_directory(GEOMETRY_DIR)
+    if len(rows) != 175 or {row["method"] for row in rows} != set(METHODS):
+        raise RuntimeError("Final comparison must contain 175 rows and five methods")
+    if any(row["method"] == "adaptive_hybrid" for row in rows):
+        raise RuntimeError("Adaptive Hybrid appeared in the PSTMO-only report")
+
+    groups = group_rows(rows)
     if len(groups) != 35:
         raise RuntimeError(f"Expected 35 paired groups, found {len(groups)}")
     for key, group in groups.items():
@@ -130,102 +222,54 @@ def load_geometry() -> tuple[list[dict[str, str]], dict]:
         if len({row["raw_path_sha256"] for row in group}) != 1:
             raise RuntimeError(f"Raw-path hash mismatch in {key}")
 
-    pstmo_rows = [row for row in rows if row["method"] == "pstmo"]
-    if len(pstmo_rows) != 35 or any(row["success"] != "True" for row in pstmo_rows):
-        raise RuntimeError("Final PSTMO must succeed in all 35 paired cases")
-    required_contract = {
-        "pstmo_los_selection_enabled": "True",
-        "pstmo_los_completed": "True",
-        "pstmo_los_no_los_completed": "True",
-        "pstmo_search_mode": "joint_d_q",
-        "pstmo_trim_domain": "direct_metric",
-        "pstmo_fallback": "none",
-    }
-    for field, expected in required_contract.items():
-        if any(row.get(field) != expected for row in pstmo_rows):
-            raise RuntimeError(f"Final PSTMO contract mismatch for {field}")
-    if any(
-        not math.isclose(
-            as_float(row["pstmo_los_footprint_padding_m"]),
-            0.15,
-            rel_tol=0.0,
-            abs_tol=1.0e-9,
+    success_counts = {
+        method: sum(
+            row["method"] == method and row["success"] == "True"
+            for row in rows
         )
-        for row in pstmo_rows
-    ):
-        raise RuntimeError("Footprint-aware LOS did not use 0.15 m padding")
-    collision_samples = sum(
-        int(as_float(row["footprint_collision_sample_count"])) for row in pstmo_rows
-    )
-    if collision_samples != 0:
-        raise RuntimeError("A final PSTMO path contains a footprint collision")
+        for method in METHODS
+    }
+    expected_success = {
+        "raw": 35,
+        "simple": 34,
+        "savitzky_golay": 35,
+        "constrained": 35,
+        "pstmo": 35,
+    }
+    if success_counts != expected_success:
+        raise RuntimeError(f"Unexpected success counts: {success_counts}")
 
-    los_selected = [row for row in pstmo_rows if row["pstmo_los_selected"] == "True"]
-    no_los_selected = [
-        row for row in pstmo_rows if row["pstmo_los_selected"] == "False"
+    pstmo_rows = [row for row in rows if row["method"] == "pstmo"]
+    validate_single_pipeline_contract(pstmo_rows, "condition_then_los")
+    if any(as_float(row["pstmo_los_accepted_shortcuts"]) < 0.0 for row in pstmo_rows):
+        raise RuntimeError("Invalid accepted shortcut count")
+
+    ablation_rows = load_csv_directory(ABLATION_DIR)
+    if len(ablation_rows) != 70 or {
+        row["method"] for row in ablation_rows
+    } != {"raw", "pstmo"}:
+        raise RuntimeError("Condition-only ablation must contain 70 Raw/PSTMO rows")
+    ablation_pstmo = [
+        row for row in ablation_rows if row["method"] == "pstmo"
     ]
-    if len(los_selected) != 25 or len(no_los_selected) != 10:
-        raise RuntimeError("Unexpected adaptive LOS decision counts")
-
-    quality_triplets = []
-    for row in pstmo_rows:
-        no_los = literal_dict(row["pstmo_los_no_los_quality"])
-        los = literal_dict(row["pstmo_los_quality"])
-        selected = los if row["pstmo_los_selected"] == "True" else no_los
-        if not all(branch.get("valid") and branch.get("safe") for branch in (no_los, los)):
-            raise RuntimeError("An internal LOS comparison branch was invalid or unsafe")
-        quality_triplets.append((no_los, los, selected))
-
-    quality_keys = (
-        "length_m",
-        "max_curvature_1pm",
-        "curvature_energy_1pm",
-        "pivot_rotation_rad",
-        "peak_proximity_cost",
-    )
-    branch_quality = {}
-    for name, index in (("no_los", 0), ("los", 1), ("adaptive", 2)):
-        branch_quality[name] = {
-            key: statistics.fmean(as_float(item[index][key]) for item in quality_triplets)
-            for key in quality_keys
-        }
-    adaptive_vs_no_los = {}
-    for key in quality_keys:
-        before = branch_quality["no_los"][key]
-        after = branch_quality["adaptive"][key]
-        lower_is_better = key != "peak_proximity_cost"
-        adaptive_vs_no_los[key] = {
-            "no_los_mean": before,
-            "adaptive_mean": after,
-            "relative_change_percent": percent_change(after, before),
-            "improved_pair_count": sum(
-                (item[2][key] < item[0][key] - 1.0e-12)
-                if lower_is_better
-                else (item[2][key] < item[0][key] - 1.0e-12)
-                for item in quality_triplets
-            ),
-        }
-
-    margins = [
-        as_float(row["pstmo_los_no_los_score"]) - as_float(row["pstmo_los_score"])
-        for row in los_selected
-    ]
-    q_values: list[float] = []
-    d_values: list[float] = []
-    for row in pstmo_rows:
-        corners = ast.literal_eval(row["pstmo_corner_search"])
-        for corner in corners:
-            if as_float(corner.get("selected_trim", 0.0)) > 0.0:
-                d_values.append(as_float(corner["selected_trim"]))
-                q_values.append(as_float(corner["selected_control_fraction"]))
+    validate_single_pipeline_contract(ablation_pstmo, "condition_only")
+    final_by_key = {
+        tuple(row[field] for field in GROUP_FIELDS): row for row in pstmo_rows
+    }
+    ablation_by_key = {
+        tuple(row[field] for field in GROUP_FIELDS): row
+        for row in ablation_pstmo
+    }
+    comparison = paired_comparison(ablation_by_key, final_by_key)
 
     common_groups = [
-        group for group in groups.values() if all(row["success"] == "True" for row in group)
+        group for group in groups.values()
+        if all(row["success"] == "True" for row in group)
     ]
     if len(common_groups) != 34:
-        raise RuntimeError(f"Expected 34 common-success groups, found {len(common_groups)}")
+        raise RuntimeError("Expected 34 all-method common-success groups")
     common_rows = [row for group in common_groups for row in group]
-    metric_keys = (
+    report_metrics = (
         "translation_path_length_m",
         "translation_max_abs_curvature_1pm",
         "translation_curvature_energy_1pm",
@@ -235,67 +279,98 @@ def load_geometry() -> tuple[list[dict[str, str]], dict]:
     )
     common_means = {
         method: {
-            key: mean(
-                [row for row in common_rows if row["method"] == method], key
+            field: mean(
+                [row for row in common_rows if row["method"] == method],
+                field,
             )
-            for key in metric_keys
+            for field in report_metrics
         }
         for method in METHODS
     }
-    success_counts = {
-        method: sum(
-            row["method"] == method and row["success"] == "True" for row in rows
-        )
-        for method in METHODS
-    }
-    if success_counts != {
-        "raw": 35,
-        "simple": 34,
-        "savitzky_golay": 35,
-        "constrained": 35,
-        "pstmo": 35,
-    }:
-        raise RuntimeError(f"Unexpected success counts: {success_counts}")
 
+    corner_records = []
+    for row in pstmo_rows:
+        parsed = ast.literal_eval(row["pstmo_corner_search"])
+        if not isinstance(parsed, list):
+            raise RuntimeError("Expected a list in pstmo_corner_search")
+        corner_records.extend(parsed)
+    transitions = [
+        corner for corner in corner_records
+        if as_float(corner.get("selected_trim", 0.0)) > 0.0
+    ]
+    q_values = [as_float(corner["selected_control_fraction"]) for corner in transitions]
+    d_values = [as_float(corner["selected_trim"]) for corner in transitions]
+
+    los_stat_fields = (
+        "pstmo_los_input_points",
+        "pstmo_los_output_points",
+        "pstmo_los_attempted_shortcuts",
+        "pstmo_los_accepted_shortcuts",
+        "pstmo_los_safety_rejections",
+        "pstmo_los_runtime_s",
+        "pstmo_runtime_s",
+    )
+    los_statistics = {}
+    for field in los_stat_fields:
+        values = [as_float(row[field]) for row in pstmo_rows]
+        name = field.removeprefix("pstmo_")
+        los_statistics[name] = {
+            "mean": statistics.fmean(values),
+            "minimum": min(values),
+            "maximum": max(values),
+            "sum": sum(values),
+        }
+
+    successful = [row for row in rows if row["success"] == "True"]
+    collision_record_count = sum(
+        as_float(row.get("footprint_collision_sample_count", "0")) > 0.0
+        for row in successful
+    )
     summary = {
         "design": {
             "environment_count": 7,
             "scenario_count": 7,
             "planner_count": 5,
             "methods": list(METHODS),
-            "record_count": 175,
+            "repetitions": 1,
             "paired_group_count": 35,
+            "record_count": 175,
             "common_success_group_count": 34,
         },
         "configuration": {
-            "line_of_sight_mode": "adaptive_full_path_selection",
-            "line_of_sight_footprint_padding_m": 0.15,
+            "preprocessing": "condition_then_greedy_los",
+            "line_of_sight_is_mandatory": True,
+            "line_of_sight_footprint_padding_m": 0.0,
+            "line_of_sight_clearance_objective": False,
+            "swept_translation_checked": True,
+            "swept_rotation_checked_at_start_junctions_and_goal": True,
+            "adjacent_conditioned_edge_is_normal_candidate": True,
+            "alternative_pipeline_fallback": False,
             "minimum_trim_distance_m": 0.02,
             "maximum_trim_distance_m": 0.8,
-            "control_fraction_reference": 0.35,
-            "los_minimum_score_improvement": 0.005,
             "nav2_params_sha256": sha256(NAV2_PARAMS),
         },
         "validation": {
             "raw_path_hash_consistent_group_count": 35,
-            "pstmo_success_count": 35,
-            "pstmo_fallback_count": 0,
-            "pstmo_footprint_collision_sample_count": 0,
-            "both_internal_branches_safe_count": 35,
+            "single_pipeline_diagnostic_count": 35,
+            "final_invariants_verified_count": 35,
+            "successful_record_count": len(successful),
+            "failed_record_count": len(rows) - len(successful),
+            "successful_footprint_collision_record_count": collision_record_count,
+            "pstmo_footprint_collision_sample_count": sum(
+                int(as_float(row["footprint_collision_sample_count"]))
+                for row in pstmo_rows
+            ),
+            "adaptive_hybrid_record_count": 0,
         },
         "success_count": success_counts,
-        "los_selection": {
-            "los_selected_count": len(los_selected),
-            "no_los_selected_count": len(no_los_selected),
-            "minimum_selected_score_improvement": min(margins),
-            "mean_selected_score_improvement": statistics.fmean(margins),
-            "maximum_selected_score_improvement": max(margins),
-            "branch_quality_means": branch_quality,
-            "adaptive_vs_no_los": adaptive_vs_no_los,
-        },
+        "greedy_los": los_statistics,
+        "condition_only_ablation": comparison,
         "joint_d_q": {
-            "selected_transition_count": len(q_values),
-            "angle_aware_q_count": sum(abs(value - 0.35) > 1.0e-8 for value in q_values),
+            "selected_transition_count": len(transitions),
+            "angle_aware_q_count": sum(
+                abs(value - 0.35) > 1.0e-8 for value in q_values
+            ),
             "control_fraction_mean": statistics.fmean(q_values),
             "control_fraction_min": min(q_values),
             "control_fraction_max": max(q_values),
@@ -308,165 +383,108 @@ def load_geometry() -> tuple[list[dict[str, str]], dict]:
     return rows, summary
 
 
-def load_closed_loop() -> dict:
-    records: list[dict] = []
-    for environment in ("research_warehouse", "narrow_aisles", "warehouse_dispatch"):
-        summaries = list((CLOSED_LOOP_DIR / environment).glob("*_summary.json"))
-        if len(summaries) != 1:
-            raise RuntimeError(f"Expected one closed-loop summary for {environment}")
-        selected = json.loads(summaries[0].read_text(encoding="utf-8"))["records"]
-        if len(selected) != 2 or {row["method"] for row in selected} != {"raw", "pstmo"}:
-            raise RuntimeError(f"Unexpected closed-loop design in {summaries[0]}")
-        if len({row["raw_path_sha256"] for row in selected}) != 1:
-            raise RuntimeError(f"Closed-loop raw-path mismatch in {summaries[0]}")
-        for row in selected:
-            row["environment"] = environment
-        records.extend(selected)
-    if len(records) != 6 or any(row.get("success") is not True for row in records):
-        raise RuntimeError("Every final closed-loop trial must succeed")
-    if any(
-        int(row.get("planned_footprint_collision_sample_count", 0)) != 0
-        or int(row.get("collision_monitor_interventions", 0)) != 0
-        for row in records
-    ):
-        raise RuntimeError("A closed-loop safety event occurred")
-
-    metric_keys = (
-        "execution_time_s",
-        "tracking_rmse_m",
-        "tracking_max_error_m",
-        "executed_curvature_energy_1pm",
-        "planned_translation_path_length_m",
-        "final_position_error_m",
-        "planned_footprint_clearance_min_m",
-    )
-    means = {}
-    for method in ("raw", "pstmo"):
-        selected = [row for row in records if row["method"] == method]
-        means[method] = {key: mean(selected, key) for key in metric_keys}
-    changes = {
-        key: percent_change(means["pstmo"][key], means["raw"][key])
-        for key in metric_keys
-    }
-    return {
-        "trial_count": 6,
-        "paired_group_count": 3,
-        "raw_path_hash_match_count": 3,
-        "raw_success_count": 3,
-        "pstmo_success_count": 3,
-        "planned_footprint_collision_sample_count": 0,
-        "collision_monitor_interventions": 0,
-        "method_means": means,
-        "pstmo_vs_raw_change_percent": changes,
-    }
-
-
 def vi_number(value: float, digits: int = 2) -> str:
+    """Format a number with a Vietnamese decimal comma."""
     return f"{value:.{digits}f}".replace(".", ",")
 
 
-def abstract_text(geometry: dict, closed: dict) -> str:
-    los = geometry["los_selection"]
-    comparison = los["adaptive_vs_no_los"]
-    dq = geometry["joint_d_q"]
+def abstract_text(geometry: dict) -> str:
+    """Build the Vietnamese abstract from audited values only."""
+    comparison = geometry["condition_only_ablation"]["metrics"]
     means = geometry["common_success_means"]
+    los = geometry["greedy_los"]
+    dq = geometry["joint_d_q"]
     pstmo = means["pstmo"]
-    closed_means = closed["method_means"]
-    raw_closed = closed_means["raw"]
-    pstmo_closed = closed_means["pstmo"]
-    closed_change = closed["pstmo_vs_raw_change_percent"]
-    other = METHODS[:-1]
-    best_other_energy = min(
-        means[method]["translation_curvature_energy_1pm"] for method in other
+    best_stock_energy = min(
+        means[method]["translation_curvature_energy_1pm"]
+        for method in ("simple", "savitzky_golay", "constrained")
     )
-    best_other_curvature = min(
-        means[method]["translation_max_abs_curvature_1pm"] for method in other
+    best_stock_curvature = min(
+        means[method]["translation_max_abs_curvature_1pm"]
+        for method in ("simple", "savitzky_golay", "constrained")
     )
-    best_other_length = min(
-        means[method]["translation_path_length_m"] for method in other
+    best_stock_length = min(
+        means[method]["translation_path_length_m"]
+        for method in ("simple", "savitzky_golay", "constrained")
     )
-
-    length = comparison["length_m"]
-    curvature = comparison["max_curvature_1pm"]
-    energy = comparison["curvature_energy_1pm"]
-    pivot = comparison["pivot_rotation_rad"]
-    proximity = comparison["peak_proximity_cost"]
+    length = comparison["translation_path_length_m"]
+    curvature = comparison["translation_max_abs_curvature_1pm"]
+    energy = comparison["translation_curvature_energy_1pm"]
+    clearance = comparison["footprint_clearance_min_m"]
+    runtime = comparison["algorithm_time_s"]
     return (
-        "Tóm tắt—Các bộ lập kế hoạch toàn cục trong ROS 2/Nav2 thường tạo đường "
-        "gấp khúc có đổi hướng đột ngột. Nghiên cứu này đề xuất phương pháp làm "
-        "mượt đường đi và tối ưu hóa thao tác chuyển hướng PSTMO cho robot di "
-        "động vi sai hai bánh. Mỗi góc được biểu diễn bằng quay tại chỗ hoặc "
-        "chuyển tiếp Bézier bậc năm liên tục hình học G². Khác với cách sinh tham "
-        "số trước đây, khoảng cắt d được tìm trực tiếp theo mét trong miền "
-        "[0,02; min(0,8, Lᵢₙ, Lₒᵤₜ)] thay vì suy ra từ bán kính của một cung tròn "
-        "không đồng nhất với đường Bézier. Với từng d, khoảng điều khiển q so sánh "
-        "tỷ lệ q/d theo góc với đúng mốc tham chiếu 0,35; các ứng viên được kiểm "
-        "tra giới hạn bánh xe, tham số hóa thời gian, vùng quét footprint và tối "
-        "ưu hóa toàn cục giữa các góc. Trong "
-        f"{dq['selected_transition_count']} chuyển tiếp được chọn, "
-        f"{dq['angle_aware_q_count']} chuyển tiếp ({vi_number(100.0 * dq['angle_aware_q_count'] / dq['selected_transition_count'], 1)}%) "
-        "dùng q/d khác 0,35. Tiền xử lý line-of-sight (LOS) dùng footprint đang "
-        "được Nav2 công bố, cộng biên vận hành 0,15 m và quét cả dịch chuyển lẫn "
-        "quay. Để LOS không làm giảm kết quả, PSTMO tạo hai đầu ra hoàn chỉnh từ "
-        "cùng đường Raw: một nhánh không LOS và một nhánh LOS xét footprint; LOS "
-        "chỉ được giữ khi điểm chất lượng toàn đường giảm ít nhất 0,005, nếu không "
-        "thuật toán giữ nhánh không LOS. Đánh giá hình học gồm 175 bản ghi trên 7 "
-        "tình huống, 5 global planner và 5 phương án Raw, Simple, Savitzky–Golay, "
-        "Constrained và PSTMO. Cả 35 nhóm ghép cặp có cùng hash đường Raw. Bộ chọn "
-        f"dùng LOS ở {los['los_selected_count']}/35 ca và giữ không LOS ở "
-        f"{los['no_los_selected_count']}/35 ca; PSTMO thành công 35/35, không "
-        "fallback và không có mẫu va chạm footprint. So với luôn dùng nhánh không "
-        "LOS của chính cấu hình mới, lựa chọn thích nghi giảm chiều dài trung bình "
-        f"từ {vi_number(length['no_los_mean'], 3)} xuống "
-        f"{vi_number(length['adaptive_mean'], 3)} m "
-        f"({vi_number(abs(length['relative_change_percent']))}%), giảm độ cong cực "
-        f"đại từ {vi_number(curvature['no_los_mean'], 3)} xuống "
-        f"{vi_number(curvature['adaptive_mean'], 3)} m⁻¹ "
-        f"({vi_number(abs(curvature['relative_change_percent']))}%), giảm năng "
-        f"lượng độ cong từ {vi_number(energy['no_los_mean'], 3)} xuống "
-        f"{vi_number(energy['adaptive_mean'], 3)} m⁻¹ "
-        f"({vi_number(abs(energy['relative_change_percent']))}%) và giảm tổng góc "
-        f"quay tại chỗ {vi_number(abs(pivot['relative_change_percent']))}%. Đánh "
-        "đổi là chi phí lân cận vật cản cực đại trung bình tăng từ "
-        f"{vi_number(proximity['no_los_mean'], 1)} lên "
-        f"{vi_number(proximity['adaptive_mean'], 1)} "
-        f"({vi_number(proximity['relative_change_percent'])}%). Trên 34 nhóm mà "
-        "mọi phương án đều thành công, PSTMO đạt năng lượng độ cong tịnh tiến "
-        f"{vi_number(pstmo['translation_curvature_energy_1pm'], 3)} m⁻¹, độ cong "
-        f"cực đại {vi_number(pstmo['translation_max_abs_curvature_1pm'], 3)} m⁻¹ "
-        f"và chiều dài {vi_number(pstmo['translation_path_length_m'], 3)} m, tốt "
-        f"hơn phương án đối chứng tốt nhất tương ứng {vi_number(best_other_energy, 3)} m⁻¹, "
-        f"{vi_number(best_other_curvature, 3)} m⁻¹ và {vi_number(best_other_length, 3)} m; "
-        f"thời gian thuật toán là {vi_number(1000.0 * pstmo['algorithm_time_s'], 1)} ms. "
-        "Trong ba cặp thử nghiệm vòng kín, Raw và PSTMO đều hoàn thành 3/3 mà "
-        "không kích hoạt bộ giám sát va chạm. PSTMO giảm thời gian hoàn thành từ "
-        f"{vi_number(raw_closed['execution_time_s'], 3)} xuống "
-        f"{vi_number(pstmo_closed['execution_time_s'], 3)} s "
-        f"({vi_number(abs(closed_change['execution_time_s']))}%), giảm năng lượng "
-        f"độ cong thực thi từ {vi_number(raw_closed['executed_curvature_energy_1pm'], 3)} "
-        f"xuống {vi_number(pstmo_closed['executed_curvature_energy_1pm'], 3)} m⁻¹ "
-        f"({vi_number(abs(closed_change['executed_curvature_energy_1pm']))}%) và "
-        "giảm nhẹ sai số bám cực đại, nhưng RMSE bám tăng từ "
-        f"{vi_number(100.0 * raw_closed['tracking_rmse_m'], 3)} lên "
-        f"{vi_number(100.0 * pstmo_closed['tracking_rmse_m'], 3)} cm. Kết quả cho "
-        "thấy LOS xét footprint có lợi rõ rệt khi được chọn theo chất lượng, nhưng "
-        "không nên ép dùng cho mọi đường; cần tăng số lần lặp và thử nghiệm phần "
-        "cứng để xác nhận khả năng khái quát."
+        "Tóm tắt—Các bộ lập kế hoạch toàn cục trong ROS 2/Nav2 thường tạo "
+        "đường gấp khúc có đổi hướng đột ngột. Nghiên cứu này đề xuất phương "
+        "pháp làm mượt đường đi và tối ưu hóa thao tác chuyển hướng PSTMO cho "
+        "robot di động vi sai hai bánh. Sau khi điều kiện hóa đường planner, "
+        "PSTMO luôn chạy line-of-sight (LOS) tham lam: từ mỗi điểm neo, thuật "
+        "toán chọn điểm xa nhất mà dịch chuyển theo dây cung và các phép xoay "
+        "tại start, đỉnh giữ lại và goal đều không va chạm khi quét bằng "
+        "footprint thật. LOS không phóng to footprint, không dùng clearance "
+        "riêng, không so sánh hai pipeline và không fallback; cạnh liên tiếp "
+        "của polyline đã điều kiện hóa là ứng viên tự nhiên cuối cùng. Mỗi góc "
+        "sau LOS được biểu diễn bằng quay tại chỗ hoặc chuyển tiếp Bézier bậc "
+        "năm liên tục hình học G². Khoảng cắt d được tìm trực tiếp theo mét; "
+        "với từng d, nhiều tỷ lệ q/d theo góc được kiểm tra giới hạn bánh xe, "
+        "tham số hóa thời gian và swept-footprint trước khi tối ưu hóa toàn "
+        "cục giữa các góc. "
+        f"Trong {dq['selected_transition_count']} chuyển tiếp được chọn, "
+        f"{dq['angle_aware_q_count']} chuyển tiếp dùng q/d khác 0,35. Đánh giá "
+        "gồm 175 bản ghi của 7 tình huống, 5 global planner và 5 phương án "
+        "Raw, Simple, Savitzky–Golay, Constrained và PSTMO; 35/35 nhóm có cùng "
+        "hash đường Raw. Một ablation độc lập condition-only dùng cùng source "
+        "và cùng 35 hash, trong đó mỗi cấu hình chỉ chạy một pipeline. So với "
+        "condition-only, LOS giảm chiều dài trung bình từ "
+        f"{vi_number(length['condition_only_mean'], 3)} xuống "
+        f"{vi_number(length['condition_then_los_mean'], 3)} m "
+        f"({vi_number(abs(length['relative_change_percent']))}%), giảm độ cong "
+        "cực đại từ "
+        f"{vi_number(curvature['condition_only_mean'], 3)} xuống "
+        f"{vi_number(curvature['condition_then_los_mean'], 3)} m⁻¹ "
+        f"({vi_number(abs(curvature['relative_change_percent']))}%) và giảm "
+        "năng lượng độ cong từ "
+        f"{vi_number(energy['condition_only_mean'], 3)} xuống "
+        f"{vi_number(energy['condition_then_los_mean'], 3)} m⁻¹ "
+        f"({vi_number(abs(energy['relative_change_percent']))}%). Do LOS giảm "
+        "số điểm neo, thời gian thuật toán giảm từ "
+        f"{vi_number(1000.0 * runtime['condition_only_mean'], 1)} xuống "
+        f"{vi_number(1000.0 * runtime['condition_then_los_mean'], 1)} ms dù "
+        f"bản thân LOS mất trung bình {vi_number(1000.0 * los['los_runtime_s']['mean'], 2)} ms. "
+        "Đánh đổi là khoảng hở footprint nhỏ nhất trung bình giảm từ "
+        f"{vi_number(clearance['condition_only_mean'], 3)} xuống "
+        f"{vi_number(clearance['condition_then_los_mean'], 3)} m. PSTMO và ba "
+        "đối chứng còn lại thành công 35/35, Simple thành công 34/35; không đầu "
+        "ra PSTMO nào có mẫu va chạm footprint. Trên 34 nhóm mọi phương án đều "
+        "thành công, PSTMO đạt năng lượng độ cong "
+        f"{vi_number(pstmo['translation_curvature_energy_1pm'], 3)} m⁻¹, độ "
+        f"cong cực đại {vi_number(pstmo['translation_max_abs_curvature_1pm'], 3)} m⁻¹ "
+        f"và chiều dài {vi_number(pstmo['translation_path_length_m'], 3)} m, "
+        "so với đối chứng Nav2 tốt nhất tương ứng "
+        f"{vi_number(best_stock_energy, 3)} m⁻¹, "
+        f"{vi_number(best_stock_curvature, 3)} m⁻¹ và "
+        f"{vi_number(best_stock_length, 3)} m. Kết quả cho thấy LOS tham lam "
+        "cải thiện hiệu quả hình học và thời gian xử lý, nhưng không chi phối "
+        "condition-only về clearance; inflation layer, thử nghiệm lặp, vòng "
+        "kín và phần cứng vẫn cần thiết để xác nhận dự phòng vận hành."
     )
 
 
 def replace_paragraph(paragraph, label: str, body: str) -> None:
+    """Replace a labeled DOCX paragraph while retaining paper typography."""
     paragraph.clear()
     first = paragraph.add_run(label)
     first.bold = True
     second = paragraph.add_run(body)
     for run in (first, second):
         run.font.name = "Times New Roman"
-        run._element.get_or_add_rPr().rFonts.set(qn("w:eastAsia"), "Times New Roman")
+        run._element.get_or_add_rPr().rFonts.set(
+            qn("w:eastAsia"), "Times New Roman"
+        )
         run.font.size = Pt(11)
 
 
 def deduplicate_docx_archive(path: Path) -> None:
+    """Remove duplicate ZIP entries sometimes introduced by office tooling."""
     buffer = io.BytesIO()
     with zipfile.ZipFile(path, "r") as source:
         latest = {info.filename: info for info in source.infolist()}
@@ -477,18 +495,17 @@ def deduplicate_docx_archive(path: Path) -> None:
 
 
 def write_docx(text: str) -> None:
+    """Update the requested DOCX and synchronized PSTMO copies."""
     document = Document(REQUESTED_DOCX)
     abstracts = [
-        paragraph
-        for paragraph in document.paragraphs
+        paragraph for paragraph in document.paragraphs
         if paragraph.text.strip().startswith("Tóm tắt—")
     ]
     if len(abstracts) != 1:
         raise RuntimeError("Could not uniquely locate the Vietnamese abstract")
     replace_paragraph(abstracts[0], "Tóm tắt—", text.removeprefix("Tóm tắt—"))
     keywords = [
-        paragraph
-        for paragraph in document.paragraphs
+        paragraph for paragraph in document.paragraphs
         if paragraph.text.strip().startswith("Từ khóa—")
     ]
     if len(keywords) != 1:
@@ -496,138 +513,161 @@ def write_docx(text: str) -> None:
     replace_paragraph(
         keywords[0],
         "Từ khóa—",
-        "PSTMO; robot di động vi sai; làm mượt đường đi; line-of-sight thích nghi; "
-        "an toàn footprint; ROS 2/Nav2.",
+        "PSTMO; robot di động vi sai; làm mượt đường đi; line-of-sight tham lam; "
+        "swept-footprint; ROS 2/Nav2.",
     )
-    document.core_properties.title = "ICEEIS 2026 — PSTMO với LOS xét footprint"
+    document.core_properties.title = "ICEEIS 2026 — PSTMO với LOS tham lam"
     document.core_properties.subject = "Bản tiếng Việt dùng để đối chiếu"
     document.core_properties.keywords = (
-        "PSTMO, adaptive footprint-aware line-of-sight, path smoothing, "
+        "PSTMO, greedy line-of-sight, swept footprint, path smoothing, "
         "differential drive, ROS 2, Nav2"
     )
     document.save(OUTPUT_DOCX)
     deduplicate_docx_archive(OUTPUT_DOCX)
-    REQUESTED_DOCX.write_bytes(OUTPUT_DOCX.read_bytes())
+    for target in (REQUESTED_DOCX, COMPAT_DOCX):
+        target.write_bytes(OUTPUT_DOCX.read_bytes())
 
 
 def write_html(text: str) -> None:
+    """Write browser-readable mirrors of the Vietnamese abstract."""
     title = (
         "Phương pháp làm mượt đường đi và tối ưu hóa thao tác chuyển hướng "
         "có xét an toàn cho robot di động vi sai hai bánh"
     )
     body = html.escape(text.removeprefix("Tóm tắt—"))
     output = f"""<!doctype html>
-<html lang="vi"><head><meta charset="utf-8"><title>ICEEIS 2026 — PSTMO với LOS xét footprint</title>
-<style>body{{font-family:'Times New Roman',serif;max-width:850px;margin:40px auto;line-height:1.45;font-size:12pt}}h1{{text-align:center;font-size:18pt}}.notice{{text-align:center;font-weight:bold}}p{{text-align:justify}}.label{{font-weight:bold}}</style></head>
+<html lang="vi"><head><meta charset="utf-8"><title>ICEEIS 2026 — PSTMO với LOS tham lam</title>
+<style>
+body{{font-family:'Times New Roman',serif;max-width:850px;margin:40px auto;
+line-height:1.45;font-size:12pt}}
+h1{{text-align:center;font-size:18pt}}.notice{{text-align:center;font-weight:bold}}
+p{{text-align:justify}}.label{{font-weight:bold}}
+</style></head>
 <body><p class="notice">BẢN TIẾNG VIỆT CHỈ DÙNG ĐỂ ĐỐI CHIẾU — KHÔNG NỘP LÊN CMT</p>
 <h1>{html.escape(title)}</h1>
 <p><span class="label">Tóm tắt—</span>{body}</p>
-<p><span class="label">Từ khóa—</span>PSTMO; robot di động vi sai; làm mượt đường đi; line-of-sight thích nghi; an toàn footprint; ROS 2/Nav2.</p>
+<p><span class="label">Từ khóa—</span>PSTMO; robot di động vi sai; làm mượt
+đường đi; line-of-sight tham lam; swept-footprint; ROS 2/Nav2.</p>
 </body></html>\n"""
-    OUTPUT_HTML.write_text(output, encoding="utf-8")
-    REQUESTED_HTML.write_text(output, encoding="utf-8")
+    for target in (OUTPUT_HTML, REQUESTED_HTML, COMPAT_HTML):
+        target.write_text(output, encoding="utf-8")
 
 
-def write_results_readme(geometry: dict, closed: dict) -> None:
+def write_pdf() -> None:
+    """Render the synchronized DOCX to PDF with LibreOffice."""
+    with tempfile.TemporaryDirectory(prefix="pstmo_abstract_") as directory:
+        subprocess.run(
+            [
+                "libreoffice",
+                "--headless",
+                "--convert-to",
+                "pdf",
+                "--outdir",
+                directory,
+                str(OUTPUT_DOCX),
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        rendered = Path(directory) / f"{OUTPUT_DOCX.stem}.pdf"
+        if not rendered.exists():
+            raise RuntimeError("LibreOffice did not produce the abstract PDF")
+        shutil.copy2(rendered, OUTPUT_PDF)
+        shutil.copy2(rendered, REQUESTED_PDF)
+
+
+def write_results_readme(geometry: dict) -> None:
+    """Write a concise, reproducible Vietnamese result report."""
     means = geometry["common_success_means"]
-    selection = geometry["los_selection"]
-    comparison = selection["adaptive_vs_no_los"]
-    dq = geometry["joint_d_q"]
+    comparison = geometry["condition_only_ablation"]["metrics"]
+    los = geometry["greedy_los"]
     lines = [
-        "# Kết quả cuối PSTMO với LOS thích nghi xét footprint",
+        "# PSTMO với LOS tham lam swept-footprint — benchmark cuối",
         "",
-        "LOS là tiền xử lý nội tại của PSTMO. Thuật toán đánh giá cả nhánh "
-        "không LOS và nhánh LOS trên cùng đường Raw, sau đó chỉ chọn LOS khi "
-        "điểm chất lượng toàn đường tốt hơn ít nhất 0,005.",
+        "PSTMO độc lập chạy đúng một pipeline `condition_polyline → greedy LOS → "
+        "joint (d,q) → stitch/final invariant`. Adaptive Hybrid không nằm trong "
+        "benchmark hoặc báo cáo này.",
         "",
         "## Thiết kế và kiểm định",
         "",
-        "- 7 môi trường, 7 tình huống, 5 global planner và 5 phương án;",
-        "- 35 nhóm ghép cặp, tổng cộng 175 bản ghi;",
-        "- 35/35 nhóm có cùng `raw_path_sha256` giữa các phương án;",
-        f"- LOS được chọn {selection['los_selected_count']}/35 ca; không LOS được "
-        f"chọn {selection['no_los_selected_count']}/35 ca;",
-        "- PSTMO thành công 35/35, không fallback và không có mẫu va chạm footprint;",
-        "- cả hai nhánh nội bộ hợp lệ và an toàn trong 35/35 ca;",
-        f"- d được tìm trực tiếp trong 0,02–0,8 m; {dq['angle_aware_q_count']}/"
-        f"{dq['selected_transition_count']} chuyển tiếp chọn q/d khác 0,35.",
+        "- 7 môi trường, 7 tình huống đại diện, 5 global planner;",
+        "- 5 phương án Raw, Simple, Savitzky–Golay, Constrained và PSTMO;",
+        "- 35 nhóm ghép cặp, 175 bản ghi; mọi phương án trong từng nhóm dùng "
+        "cùng `raw_path_sha256`;",
+        "- PSTMO, Raw, Savitzky–Golay và Constrained thành công 35/35; Simple "
+        "thành công 34/35;",
+        "- 35/35 bản ghi PSTMO có `condition_then_los`, "
+        "`pipeline_execution_count=1` và `final_invariants_verified=true`;",
+        "- PSTMO không có mẫu va chạm footprint; không có selector hai nhánh, "
+        "padding hay fallback;",
+        "- ablation condition-only chạy độc lập, cũng một pipeline, và khớp "
+        "35/35 Raw hash với cấu hình LOS.",
         "",
-        "## LOS thích nghi so với luôn dùng nhánh không LOS",
+        "## LOS so với condition-only trên đúng 35 đường Raw",
         "",
-        "| Chỉ số | Không LOS | Lựa chọn thích nghi | Thay đổi |",
-        "|---|---:|---:|---:|",
+        "| Chỉ số | Condition-only | Condition + LOS | Thay đổi | Thấp/Bằng/Cao |",
+        "|---|---:|---:|---:|---:|",
     ]
-    for key, label, unit in (
-        ("length_m", "Chiều dài", "m"),
-        ("max_curvature_1pm", "Độ cong cực đại", "1/m"),
-        ("curvature_energy_1pm", "Năng lượng độ cong", "1/m"),
-        ("pivot_rotation_rad", "Tổng góc quay tại chỗ", "rad"),
-        ("peak_proximity_cost", "Chi phí lân cận cực đại", "cost"),
-    ):
-        row = comparison[key]
+    labels = (
+        ("translation_path_length_m", "Chiều dài", "m", 3),
+        ("translation_max_abs_curvature_1pm", "Kmax", "1/m", 3),
+        ("translation_curvature_energy_1pm", "Eκ", "1/m", 3),
+        ("pivot_total_angle_rad", "Tổng quay tại chỗ", "rad", 4),
+        ("footprint_clearance_min_m", "Clearance nhỏ nhất", "m", 3),
+        ("algorithm_time_s", "Thời gian thuật toán", "ms", 1),
+        ("wall_time_s", "Wall time", "ms", 1),
+    )
+    for field, label, unit, digits in labels:
+        row = comparison[field]
+        scale = 1000.0 if unit == "ms" else 1.0
         lines.append(
-            f"| {label} | {row['no_los_mean']:.4f} {unit} | "
-            f"{row['adaptive_mean']:.4f} {unit} | "
-            f"{row['relative_change_percent']:+.2f}% |"
+            f"| {label} | {scale * row['condition_only_mean']:.{digits}f} {unit} | "
+            f"{scale * row['condition_then_los_mean']:.{digits}f} {unit} | "
+            f"{row['relative_change_percent']:+.2f}% | "
+            f"{row['lower_count']}/{row['equal_count']}/{row['higher_count']} |"
         )
     lines.extend(
         [
             "",
-            "Bốn chỉ số chuyển động đầu giảm; chi phí lân cận vật cản tăng là "
-            "đánh đổi. LOS không bị ép dùng trong 10 ca mà điểm toàn đường không "
-            "cải thiện đủ ngưỡng.",
+            f"LOS thử {int(los['los_attempted_shortcuts']['sum'])} shortcut, "
+            f"chấp nhận {int(los['los_accepted_shortcuts']['sum'])}, loại "
+            f"{int(los['los_safety_rejections']['sum'])}; thời gian LOS trung "
+            f"bình {1000.0 * los['los_runtime_s']['mean']:.2f} ms. Số điểm neo "
+            f"trung bình giảm từ {los['los_input_points']['mean']:.2f} xuống "
+            f"{los['los_output_points']['mean']:.2f}.",
             "",
-            "## So sánh hình học trên 34 nhóm cùng thành công",
+            "LOS giảm chiều dài, Kmax, Eκ và thời gian tổng; đổi lại clearance "
+            "giảm mạnh và tổng góc quay tại chỗ tăng nhẹ. Vì vậy LOS không "
+            "Pareto-trội condition-only trên mọi chỉ số, dù cả hai cấu hình đều "
+            "không có mẫu va chạm trong benchmark hình học.",
             "",
-            "| Phương án | Thành công | Chiều dài (m) | Kmax (1/m) | Eκ (1/m) | Clearance (m) | Thời gian thuật toán (ms) |",
+            "## So sánh trên 34 nhóm mọi phương án đều thành công",
+            "",
+            "| Phương án | L (m) | Kmax (1/m) | Eκ (1/m) | Clearance (m) | "
+            "Thuật toán (ms) | Wall (ms) |",
             "|---|---:|---:|---:|---:|---:|---:|",
         ]
     )
     for method in METHODS:
         row = means[method]
         lines.append(
-            f"| {METHOD_LABELS[method]} | {geometry['success_count'][method]}/35 | "
+            f"| {METHOD_LABELS[method]} | "
             f"{row['translation_path_length_m']:.3f} | "
             f"{row['translation_max_abs_curvature_1pm']:.3f} | "
             f"{row['translation_curvature_energy_1pm']:.3f} | "
             f"{row['footprint_clearance_min_m']:.3f} | "
-            f"{1000.0 * row['algorithm_time_s']:.1f} |"
-        )
-    raw = closed["method_means"]["raw"]
-    pstmo = closed["method_means"]["pstmo"]
-    change = closed["pstmo_vs_raw_change_percent"]
-    lines.extend(
-        [
-            "",
-            "## Kiểm chứng vòng kín trên ba cặp",
-            "",
-            "Raw và PSTMO đều hoàn thành 3/3; không có mẫu va chạm footprint "
-            "trên đường kế hoạch và không có can thiệp của bộ giám sát va chạm.",
-            "",
-            "| Chỉ số | Raw | PSTMO | Thay đổi |",
-            "|---|---:|---:|---:|",
-        ]
-    )
-    for key, label, scale, unit in (
-        ("execution_time_s", "Thời gian hoàn thành", 1.0, "s"),
-        ("executed_curvature_energy_1pm", "Eκ thực thi", 1.0, "1/m"),
-        ("planned_translation_path_length_m", "Chiều dài kế hoạch", 1.0, "m"),
-        ("tracking_max_error_m", "Sai số bám cực đại", 100.0, "cm"),
-        ("tracking_rmse_m", "RMSE bám", 100.0, "cm"),
-        ("final_position_error_m", "Sai số đích", 100.0, "cm"),
-        ("planned_footprint_clearance_min_m", "Clearance kế hoạch", 1.0, "m"),
-    ):
-        lines.append(
-            f"| {label} | {scale * raw[key]:.3f} {unit} | "
-            f"{scale * pstmo[key]:.3f} {unit} | {change[key]:+.2f}% |"
+            f"{1000.0 * row['algorithm_time_s']:.1f} | "
+            f"{1000.0 * row['wall_time_s']:.1f} |"
         )
     lines.extend(
         [
             "",
-            "Kết luận: với tiêu chí hiện tại, LOS thích nghi tốt hơn không LOS "
-            "về chiều dài, độ cong cực đại, năng lượng độ cong và lượng quay tại "
-            "chỗ; đánh đổi là đi gần vùng chi phí cao hơn. Kết quả vòng kín có "
-            "lợi về thời gian và năng lượng, nhưng RMSE bám và sai số đích tăng.",
+            "Kết luận: cấu hình LOS bắt buộc là lựa chọn tốt hơn nếu ưu tiên "
+            "đường ngắn, độ cong thấp và thời gian xử lý; nó không tốt hơn nếu "
+            "ưu tiên clearance. Inflation layer chịu trách nhiệm cho dự phòng "
+            "vận hành như thiết kế đã chốt, nhưng cần benchmark lặp, vòng kín "
+            "và phần cứng trước khi khẳng định an toàn vận hành.",
             "",
         ]
     )
@@ -635,21 +675,22 @@ def write_results_readme(geometry: dict, closed: dict) -> None:
 
 
 def main() -> None:
+    """Audit data and regenerate all synchronized report artifacts."""
     _, geometry = load_geometry()
-    closed = load_closed_loop()
-    geometry["closed_loop"] = closed
     (GEOMETRY_DIR / "aggregate_summary.json").write_text(
         json.dumps(geometry, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
-    text = abstract_text(geometry, closed)
+    text = abstract_text(geometry)
     write_docx(text)
     write_html(text)
-    write_results_readme(geometry, closed)
+    write_pdf()
+    write_results_readme(geometry)
     print(f"Wrote {GEOMETRY_DIR / 'aggregate_summary.json'}")
     print(f"Wrote {GEOMETRY_DIR / 'README.md'}")
-    print(f"Wrote {OUTPUT_DOCX}")
     print(f"Updated {REQUESTED_DOCX}")
+    print(f"Updated {REQUESTED_HTML}")
+    print(f"Updated {REQUESTED_PDF}")
 
 
 if __name__ == "__main__":

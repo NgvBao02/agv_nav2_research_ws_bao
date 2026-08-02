@@ -15,6 +15,7 @@
 #include <gtest/gtest.h>
 
 #include <cmath>
+#include <limits>
 #include <vector>
 
 #include "adaptive_pivot_g2/line_of_sight.hpp"
@@ -35,10 +36,11 @@ TEST(LineOfSight, ChoosesFarthestSafeEndpoint)
   const auto result = prune_line_of_sight(
     input,
     [](const Vec2 &, const Vec2 &) {return true;},
-    [](const Vec2 &, const Vec2 &, const Vec2 &) {return true;});
+    [](const Vec2 &, const Vec2 &, const Vec2 &) {return true;},
+    [](const Vec2 &, const Vec2 &) {return true;},
+    [](const Vec2 &, const Vec2 &) {return true;});
 
   ASSERT_TRUE(result.valid);
-  EXPECT_FALSE(result.fallback_to_input);
   ASSERT_EQ(result.points.size(), 2U);
   EXPECT_TRUE(same_point(result.points.front(), input.front()));
   EXPECT_TRUE(same_point(result.points.back(), input.back()));
@@ -53,16 +55,17 @@ TEST(LineOfSight, RejectsUnsafeShortcutAndKeepsSafeIntermediatePoint)
     [](const Vec2 & start, const Vec2 & finish) {
       return std::abs(finish.x - start.x) < 1.5;
     },
-    [](const Vec2 &, const Vec2 &, const Vec2 &) {return true;});
+    [](const Vec2 &, const Vec2 &, const Vec2 &) {return true;},
+    [](const Vec2 &, const Vec2 &) {return true;},
+    [](const Vec2 &, const Vec2 &) {return true;});
 
   ASSERT_TRUE(result.valid);
-  EXPECT_FALSE(result.fallback_to_input);
   ASSERT_EQ(result.points.size(), input.size());
   EXPECT_EQ(result.safety_rejections, 1U);
   EXPECT_EQ(result.accepted_shortcuts, 0U);
 }
 
-TEST(LineOfSight, FallsBackInsteadOfAcceptingUnsafeAdjacentEdge)
+TEST(LineOfSight, RejectsUnsafeAdjacentEdgeWithoutFallback)
 {
   const std::vector<Vec2> input{{0.0, 0.0}, {1.0, 0.0}, {2.0, 0.0}};
   const auto result = prune_line_of_sight(
@@ -71,18 +74,32 @@ TEST(LineOfSight, FallsBackInsteadOfAcceptingUnsafeAdjacentEdge)
       (void)finish;
       return !same_point(start, {0.0, 0.0});
     },
-    [](const Vec2 &, const Vec2 &, const Vec2 &) {return true;});
+    [](const Vec2 &, const Vec2 &, const Vec2 &) {return true;},
+    [](const Vec2 &, const Vec2 &) {return true;},
+    [](const Vec2 &, const Vec2 &) {return true;});
 
-  ASSERT_TRUE(result.valid);
-  EXPECT_TRUE(result.fallback_to_input);
-  ASSERT_EQ(result.points.size(), input.size());
-  for (std::size_t index = 0U; index < input.size(); ++index) {
-    EXPECT_TRUE(same_point(result.points[index], input[index]));
-  }
-  EXPECT_NE(result.fallback_reason.find("index 0"), std::string::npos);
+  EXPECT_FALSE(result.valid);
+  EXPECT_NE(result.rejection_reason.find("index 0"), std::string::npos);
 }
 
-TEST(LineOfSight, AppliesJunctionSafetyToRetainedTurns)
+TEST(LineOfSight, UnsafeStartRotationTriesANearerCandidate)
+{
+  const std::vector<Vec2> input{
+    {0.0, 0.0}, {1.0, 1.0}, {2.0, 0.0}};
+  const auto result = prune_line_of_sight(
+    input,
+    [](const Vec2 &, const Vec2 &) {return true;},
+    [](const Vec2 &, const Vec2 &, const Vec2 &) {return true;},
+    [](const Vec2 &, const Vec2 & next) {return next.y > 0.5;},
+    [](const Vec2 &, const Vec2 &) {return true;});
+
+  ASSERT_TRUE(result.valid);
+  ASSERT_EQ(result.points.size(), input.size());
+  EXPECT_EQ(result.accepted_shortcuts, 0U);
+  EXPECT_GT(result.safety_rejections, 0U);
+}
+
+TEST(LineOfSight, UnsafeRetainedJunctionTriesANearerCandidate)
 {
   const std::vector<Vec2> input{
     {0.0, 0.0}, {1.0, 0.0}, {2.0, 1.0}, {3.0, 1.0}, {4.0, 0.0}};
@@ -91,13 +108,125 @@ TEST(LineOfSight, AppliesJunctionSafetyToRetainedTurns)
     [](const Vec2 & start, const Vec2 & finish) {
       return finish.x - start.x <= 2.1;
     },
-    [](const Vec2 &, const Vec2 &, const Vec2 & next) {
-      return next.x < 4.0;
+    [](const Vec2 &, const Vec2 & vertex, const Vec2 & next) {
+      return !(std::abs(vertex.x - 2.0) < 1.0e-12 &&
+             std::abs(next.x - 4.0) < 1.0e-12);
+    },
+    [](const Vec2 &, const Vec2 &) {return true;},
+    [](const Vec2 &, const Vec2 &) {return true;});
+
+  ASSERT_TRUE(result.valid);
+  EXPECT_EQ(result.points.back().x, 4.0);
+  EXPECT_GT(result.safety_rejections, 0U);
+}
+
+TEST(LineOfSight, UnsafeGoalRotationTriesADifferentFinalChord)
+{
+  const std::vector<Vec2> input{
+    {0.0, 0.0}, {1.0, 1.0}, {2.0, 1.0}, {3.0, 0.0}};
+  const auto result = prune_line_of_sight(
+    input,
+    [](const Vec2 &, const Vec2 &) {return true;},
+    [](const Vec2 &, const Vec2 &, const Vec2 &) {return true;},
+    [](const Vec2 &, const Vec2 &) {return true;},
+    [](const Vec2 & previous, const Vec2 &) {return previous.x >= 1.5;});
+
+  ASSERT_TRUE(result.valid);
+  EXPECT_TRUE(same_point(result.points.back(), input.back()));
+  EXPECT_GT(result.safety_rejections, 0U);
+}
+
+TEST(LineOfSight, KeepsInputWhenOnlyAdjacentEdgesAreSafe)
+{
+  const std::vector<Vec2> input{
+    {0.0, 0.0}, {1.0, 0.0}, {2.0, 0.0}, {3.0, 0.0}};
+  const auto result = prune_line_of_sight(
+    input,
+    [](const Vec2 & start, const Vec2 & finish) {
+      return finish.x - start.x <= 1.0;
+    },
+    [](const Vec2 &, const Vec2 &, const Vec2 &) {return true;},
+    [](const Vec2 &, const Vec2 &) {return true;},
+    [](const Vec2 &, const Vec2 &) {return true;});
+
+  ASSERT_TRUE(result.valid);
+  ASSERT_EQ(result.points.size(), input.size());
+  EXPECT_EQ(result.accepted_shortcuts, 0U);
+}
+
+TEST(LineOfSight, PreservesASafeTwoPointInput)
+{
+  const std::vector<Vec2> input{{0.0, 0.0}, {1.0, 1.0}};
+  std::size_t endpoint_checks = 0U;
+  const auto result = prune_line_of_sight(
+    input,
+    [](const Vec2 &, const Vec2 &) {return true;},
+    [](const Vec2 &, const Vec2 &, const Vec2 &) {return true;},
+    [&endpoint_checks](const Vec2 &, const Vec2 &) {
+      ++endpoint_checks;
+      return true;
+    },
+    [&endpoint_checks](const Vec2 &, const Vec2 &) {
+      ++endpoint_checks;
+      return true;
     });
 
   ASSERT_TRUE(result.valid);
-  EXPECT_TRUE(result.fallback_to_input);
-  EXPECT_GT(result.safety_rejections, 0U);
+  ASSERT_EQ(result.points.size(), input.size());
+  EXPECT_TRUE(same_point(result.points.front(), input.front()));
+  EXPECT_TRUE(same_point(result.points.back(), input.back()));
+  EXPECT_EQ(result.attempted_shortcuts, 0U);
+  EXPECT_EQ(result.accepted_shortcuts, 0U);
+  EXPECT_EQ(endpoint_checks, 2U);
+}
+
+TEST(LineOfSight, RejectsFewerThanTwoDistinctPoints)
+{
+  for (const std::vector<Vec2> input : {
+        std::vector<Vec2>{},
+        std::vector<Vec2>{{0.0, 0.0}},
+        std::vector<Vec2>{{0.0, 0.0}, {0.0, 0.0}}})
+  {
+    const auto result = prune_line_of_sight(
+      input,
+      [](const Vec2 &, const Vec2 &) {return true;},
+      [](const Vec2 &, const Vec2 &, const Vec2 &) {return true;},
+      [](const Vec2 &, const Vec2 &) {return true;},
+      [](const Vec2 &, const Vec2 &) {return true;});
+    EXPECT_FALSE(result.valid);
+  }
+}
+
+TEST(LineOfSight, RemovesConsecutiveDuplicatePoints)
+{
+  const std::vector<Vec2> input{
+    {0.0, 0.0}, {0.0, 0.0}, {1.0, 0.0}, {1.0, 0.0}, {2.0, 0.0}};
+  const auto result = prune_line_of_sight(
+    input,
+    [](const Vec2 &, const Vec2 &) {return true;},
+    [](const Vec2 &, const Vec2 &, const Vec2 &) {return true;},
+    [](const Vec2 &, const Vec2 &) {return true;},
+    [](const Vec2 &, const Vec2 &) {return true;});
+
+  ASSERT_TRUE(result.valid);
+  ASSERT_EQ(result.points.size(), 2U);
+  EXPECT_TRUE(same_point(result.points.front(), input.front()));
+  EXPECT_TRUE(same_point(result.points.back(), input.back()));
+}
+
+TEST(LineOfSight, RejectsNonFiniteInput)
+{
+  const std::vector<Vec2> input{
+    {0.0, 0.0}, {std::numeric_limits<double>::quiet_NaN(), 0.0}, {1.0, 0.0}};
+  const auto result = prune_line_of_sight(
+    input,
+    [](const Vec2 &, const Vec2 &) {return true;},
+    [](const Vec2 &, const Vec2 &, const Vec2 &) {return true;},
+    [](const Vec2 &, const Vec2 &) {return true;},
+    [](const Vec2 &, const Vec2 &) {return true;});
+
+  EXPECT_FALSE(result.valid);
+  EXPECT_NE(result.rejection_reason.find("non-finite"), std::string::npos);
 }
 
 }  // namespace

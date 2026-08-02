@@ -146,17 +146,44 @@ def test_nav2_loads_the_declared_planner_families():
     assert planner['SmacHybrid']['smooth_path'] is False
     smoother = parameters['smoother_server']['ros__parameters']
     assert smoother['constrained']['path_downsampling_factor'] == 1
-    assert smoother['pstmo']['line_of_sight_pruning'] is True
     assert smoother['pstmo']['minimum_trim_distance'] == 0.02
     assert smoother['pstmo']['maximum_trim_distance'] == 0.8
-    assert smoother['pstmo']['trim_tolerance'] == 0.01
-    assert smoother['pstmo']['minimum_bezier_control_fraction'] == 0.08
-    assert smoother['pstmo']['maximum_bezier_control_fraction'] == 0.45
-    assert smoother['pstmo']['bezier_control_fraction_samples'] == 1
-    assert smoother['pstmo']['compare_los_against_no_los'] is True
-    assert smoother['pstmo']['los_selection_minimum_improvement'] == 0.005
-    assert smoother['pstmo']['line_of_sight_footprint_padding'] >= 0.15
-    assert smoother['adaptive_hybrid']['pivot']['line_of_sight_pruning'] is False
+    legacy_search_parameters = {
+        'initial_search_samples',
+        'maximum_evaluations_per_corner',
+        'trim_tolerance',
+        'objective_tolerance',
+        'retained_candidates_per_corner',
+        'minimum_bezier_control_fraction',
+        'maximum_bezier_control_fraction',
+        'bezier_control_fraction_samples',
+        'bezier_control_fraction',
+        'max_trim_fraction',
+    }
+    assert legacy_search_parameters.isdisjoint(smoother['pstmo'])
+    hybrid_pivot = smoother['adaptive_hybrid']['pivot']
+    assert hybrid_pivot['minimum_trim_distance'] == 0.02
+    assert hybrid_pivot['maximum_trim_distance'] == 0.8
+    assert hybrid_pivot['initial_search_samples'] == 6
+    assert hybrid_pivot['maximum_evaluations_per_corner'] == 20
+    assert hybrid_pivot['minimum_bezier_control_fraction'] == 0.08
+    assert hybrid_pivot['maximum_bezier_control_fraction'] == 0.45
+    assert hybrid_pivot['bezier_control_fraction_samples'] == 1
+    assert hybrid_pivot['bezier_control_fraction'] == 0.35
+    removed_los_parameters = {
+        'line_of_sight_pruning',
+        'line_of_sight_footprint_padding',
+        'compare_los_against_no_los',
+        'los_selection_minimum_improvement',
+        'los_path_length_weight',
+        'los_max_curvature_weight',
+        'los_curvature_energy_weight',
+        'los_pivot_rotation_weight',
+        'los_proximity_cost_weight',
+        'los_raw_fallback_penalty',
+    }
+    assert removed_los_parameters.isdisjoint(smoother['pstmo'])
+    assert removed_los_parameters.isdisjoint(smoother['adaptive_hybrid']['pivot'])
     assert (
         parameters['local_costmap']['local_costmap']['ros__parameters'][
             'initial_transform_timeout'
@@ -176,6 +203,68 @@ def test_nav2_loads_the_declared_planner_families():
     assert 'OnProcessExit' in launch_source
     assert 'target_action=spawn_robot' in launch_source
     assert 'nav2_start_delay' in launch_source
+
+
+def test_pstmo_preprocessing_modes_are_internal_and_diagnostics_are_single_pipeline():
+    workspace_src = PACKAGE_ROOT.parent
+    header_source = (
+        workspace_src
+        / 'adaptive_pivot_g2_nav2'
+        / 'include'
+        / 'adaptive_pivot_g2_nav2'
+        / 'adaptive_pivot_g2_smoother.hpp'
+    ).read_text(encoding='utf-8')
+    smoother_source = (
+        workspace_src
+        / 'adaptive_pivot_g2_nav2'
+        / 'src'
+        / 'adaptive_pivot_g2_smoother.cpp'
+    ).read_text(encoding='utf-8')
+    hybrid_source = (
+        workspace_src
+        / 'adaptive_pivot_g2_nav2'
+        / 'src'
+        / 'safety_gated_hybrid_smoother.cpp'
+    ).read_text(encoding='utf-8')
+
+    assert 'kConditionThenLos' in header_source
+    assert 'preprocessing_mode_{PreprocessingMode::kConditionThenLos}' in header_source
+    assert (
+        'candidate_search_mode_{\n'
+        '    CandidateSearchMode::kHierarchicalAlphaTwoTrim}'
+    ) in header_source
+    assert 'PreprocessingMode::kConditionOnly' in hybrid_source
+    assert 'CandidateSearchMode::kLegacyJointDq' in hybrid_source
+    assert 'return smooth_pipeline(path, max_time);' in smoother_source
+    assert 'padFootprint' not in smoother_source
+
+    required_diagnostics = {
+        'preprocessing_mode',
+        'pipeline_execution_count',
+        'final_invariants_verified',
+        'los_input_points',
+        'los_output_points',
+        'los_attempted_shortcuts',
+        'los_accepted_shortcuts',
+        'los_safety_rejections',
+        'los_runtime_s',
+        'los_rejection_reason',
+    }
+    for field in required_diagnostics:
+        assert f'\\"{field}\\"' in smoother_source
+
+    removed_diagnostics = {
+        'los_selection_enabled',
+        'los_selected',
+        'los_selection_reason',
+        'los_no_los_completed',
+        'los_no_los_quality',
+        'los_footprint_padding_m',
+        'los_fallback_to_input',
+        'los_fallback_reason',
+    }
+    for field in removed_diagnostics:
+        assert f'\\"{field}\\"' not in smoother_source
 
 
 def test_research_rviz_loads_the_custom_planner_selector():

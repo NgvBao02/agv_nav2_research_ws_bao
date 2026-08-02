@@ -1,0 +1,208 @@
+{
+  "common_success_means": {
+    "constrained": {
+      "algorithm_time_s": 0.021882352941176474,
+      "footprint_clearance_min_m": 0.2130883059818661,
+      "translation_curvature_energy_1pm": 28.06531895577461,
+      "translation_max_abs_curvature_1pm": 7.387544047138473,
+      "translation_path_length_m": 10.33245950999011,
+      "wall_time_s": 0.03087045123533351
+    },
+    "pstmo": {
+      "algorithm_time_s": 0.06988235294117648,
+      "footprint_clearance_min_m": 0.03734084309766996,
+      "translation_curvature_energy_1pm": 1.7122102294673063,
+      "translation_max_abs_curvature_1pm": 1.2691491361026492,
+      "translation_path_length_m": 9.924704262585244,
+      "wall_time_s": 0.08259763761770955
+    },
+    "raw": {
+      "algorithm_time_s": 0.0031764705882352945,
+      "footprint_clearance_min_m": 0.1612836838517393,
+      "translation_curvature_energy_1pm": 50.20670093314122,
+      "translation_max_abs_curvature_1pm": 11.18713832148593,
+      "translation_path_length_m": 10.314411614744847,
+      "wall_time_s": 0.009362203411750243
+    },
+    "savitzky_golay": {
+      "algorithm_time_s": 8.823529411764706e-05,
+      "footprint_clearance_min_m": 0.19124870421983733,
+      "translation_curvature_energy_1pm": 22.69914851129038,
+      "translation_max_abs_curvature_1pm": 6.934232330494715,
+      "translation_path_length_m": 10.295773787103837,
+      "wall_time_s": 0.007690231705831085
+    },
+    "simple": {
+      "algorithm_time_s": 0.0010588235294117648,
+      "footprint_clearance_min_m": 0.19077539571010912,
+      "translation_curvature_energy_1pm": 9.417812829038024,
+      "translation_max_abs_curvature_1pm": 4.762637215410802,
+      "translation_path_length_m": 10.24030442066681,
+      "wall_time_s": 0.009163879382359644
+    }
+  },
+  "condition_only_ablation": {
+    "condition_only_success_count": 35,
+    "condition_then_los_success_count": 35,
+    "metrics": {
+      "algorithm_time_s": {
+        "condition_only_mean": 0.15351428571428571,
+        "condition_then_los_mean": 0.07157142857142858,
+        "equal_count": 0,
+        "higher_count": 1,
+        "lower_count": 34,
+        "relative_change_percent": -53.378001116694584
+      },
+      "footprint_clearance_min_m": {
+        "condition_only_mean": 0.16229350412015342,
+        "condition_then_los_mean": 0.03669238075656211,
+        "equal_count": 1,
+        "higher_count": 0,
+        "lower_count": 34,
+        "relative_change_percent": -77.3913435688732
+      },
+      "pivot_total_angle_rad": {
+        "condition_only_mean": 0.06881408651491251,
+        "condition_then_los_mean": 0.07275312177093177,
+        "equal_count": 32,
+        "higher_count": 2,
+        "lower_count": 1,
+        "relative_change_percent": 5.724169941812186
+      },
+      "translation_curvature_energy_1pm": {
+        "condition_only_mean": 4.730192705999969,
+        "condition_then_los_mean": 1.8748377890712755,
+        "equal_count": 0,
+        "higher_count": 2,
+        "lower_count": 33,
+        "relative_change_percent": -60.36445224117076
+      },
+      "translation_max_abs_curvature_1pm": {
+        "condition_only_mean": 3.1812231280866823,
+        "condition_then_los_mean": 1.3415314165341787,
+        "equal_count": 0,
+        "higher_count": 3,
+        "lower_count": 32,
+        "relative_change_percent": -57.82969749308246
+      },
+      "translation_path_length_m": {
+        "condition_only_mean": 10.32519271642365,
+        "condition_then_los_mean": 10.060521251804344,
+        "equal_count": 0,
+        "higher_count": 0,
+        "lower_count": 35,
+        "relative_change_percent": -2.563356170566287
+      },
+      "wall_time_s": {
+        "condition_only_mean": 0.16660248754292947,
+        "condition_then_los_mean": 0.08426958388577727,
+        "equal_count": 0,
+        "higher_count": 1,
+        "lower_count": 34,
+        "relative_change_percent": -49.41877211523446
+      }
+    },
+    "paired_group_count": 35,
+    "raw_path_hash_match_count": 35
+  },
+  "configuration": {
+    "adjacent_conditioned_edge_is_normal_candidate": true,
+    "alternative_pipeline_fallback": false,
+    "line_of_sight_clearance_objective": false,
+    "line_of_sight_footprint_padding_m": 0.0,
+    "line_of_sight_is_mandatory": true,
+    "maximum_trim_distance_m": 0.8,
+    "minimum_trim_distance_m": 0.02,
+    "nav2_params_sha256": "8175fc5a507d820ff658fa61f258ca0db5099c6e8507b22d00cbb4e1d96571a0",
+    "preprocessing": "condition_then_greedy_los",
+    "swept_rotation_checked_at_start_junctions_and_goal": true,
+    "swept_translation_checked": true
+  },
+  "design": {
+    "common_success_group_count": 34,
+    "environment_count": 7,
+    "methods": [
+      "raw",
+      "simple",
+      "savitzky_golay",
+      "constrained",
+      "pstmo"
+    ],
+    "paired_group_count": 35,
+    "planner_count": 5,
+    "record_count": 175,
+    "repetitions": 1,
+    "scenario_count": 7
+  },
+  "greedy_los": {
+    "los_accepted_shortcuts": {
+      "maximum": 4.0,
+      "mean": 2.342857142857143,
+      "minimum": 1.0,
+      "sum": 82.0
+    },
+    "los_attempted_shortcuts": {
+      "maximum": 34.0,
+      "mean": 11.057142857142857,
+      "minimum": 2.0,
+      "sum": 387.0
+    },
+    "los_input_points": {
+      "maximum": 15.0,
+      "mean": 8.542857142857143,
+      "minimum": 4.0,
+      "sum": 299.0
+    },
+    "los_output_points": {
+      "maximum": 8.0,
+      "mean": 4.371428571428571,
+      "minimum": 3.0,
+      "sum": 153.0
+    },
+    "los_runtime_s": {
+      "maximum": 0.0142848,
+      "mean": 0.004950188285714285,
+      "minimum": 0.00108258,
+      "sum": 0.17325659
+    },
+    "los_safety_rejections": {
+      "maximum": 32.0,
+      "mean": 8.714285714285714,
+      "minimum": 1.0,
+      "sum": 305.0
+    },
+    "runtime_s": {
+      "maximum": 0.128988,
+      "mean": 0.07125779142857143,
+      "minimum": 0.0232568,
+      "sum": 2.4940227
+    }
+  },
+  "joint_d_q": {
+    "angle_aware_q_count": 62,
+    "control_fraction_max": 0.35,
+    "control_fraction_mean": 0.3264829875,
+    "control_fraction_min": 0.292254,
+    "selected_transition_count": 80,
+    "trim_distance_max_m": 0.8,
+    "trim_distance_mean_m": 0.6847126787500001,
+    "trim_distance_min_m": 0.0517631
+  },
+  "success_count": {
+    "constrained": 35,
+    "pstmo": 35,
+    "raw": 35,
+    "savitzky_golay": 35,
+    "simple": 34
+  },
+  "validation": {
+    "adaptive_hybrid_record_count": 0,
+    "failed_record_count": 1,
+    "final_invariants_verified_count": 35,
+    "pstmo_footprint_collision_sample_count": 0,
+    "raw_path_hash_consistent_group_count": 35,
+    "single_pipeline_diagnostic_count": 35,
+    "successful_footprint_collision_record_count": 0,
+    "successful_record_count": 174
+  }
+}

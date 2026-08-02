@@ -22,6 +22,7 @@
 
 #include "adaptive_pivot_g2/adaptive_search.hpp"
 #include "adaptive_pivot_g2/candidate_selection.hpp"
+#include "adaptive_pivot_g2/hierarchical_shape_search.hpp"
 #include "adaptive_pivot_g2/line_of_sight.hpp"
 #include "adaptive_pivot_g2/path_conditioning.hpp"
 #include "adaptive_pivot_g2/path_optimization.hpp"
@@ -39,7 +40,24 @@ namespace adaptive_pivot_g2_nav2
 class AdaptivePivotG2Smoother : public nav2_core::Smoother
 {
 public:
+  enum class PreprocessingMode
+  {
+    kConditionThenLos,
+    kConditionOnly
+  };
+
+  enum class CandidateSearchMode
+  {
+    kHierarchicalAlphaTwoTrim,
+    kLegacyJointDq
+  };
+
   AdaptivePivotG2Smoother() = default;
+  AdaptivePivotG2Smoother(
+    PreprocessingMode preprocessing_mode,
+    CandidateSearchMode candidate_search_mode)
+  : preprocessing_mode_(preprocessing_mode),
+    candidate_search_mode_(candidate_search_mode) {}
   ~AdaptivePivotG2Smoother() override = default;
 
   void configure(
@@ -55,7 +73,7 @@ public:
   bool smooth(nav_msgs::msg::Path & path, const rclcpp::Duration & max_time) override;
 
 private:
-  bool smooth_single_branch(
+  bool smooth_pipeline(
     nav_msgs::msg::Path & path, const rclcpp::Duration & max_time);
 
   struct TransitionState
@@ -91,6 +109,11 @@ private:
     std::size_t trim_evaluation_count{0};
     std::size_t evaluation_count{0};
     std::size_t feasible_count{0};
+    double preferred_trim{0.0};
+    double compatible_trim{0.0};
+    std::size_t coarse_shape_evaluations{0U};
+    std::size_t recovery_shape_evaluations{0U};
+    std::size_t refinement_shape_evaluations{0U};
     std::vector<TransitionState> transition_states;
     std::vector<adaptive_pivot_g2::CornerState> optimization_states;
   };
@@ -101,6 +124,7 @@ private:
     adaptive_pivot_g2::PathConditioningResult conditioning;
     adaptive_pivot_g2::LineOfSightPruningResult los_result;
     std::vector<geometry_msgs::msg::Point> safety_footprint;
+    double los_runtime_seconds{0.0};
     double conditioning_maximum_deviation{0.0};
     double oscillation_maximum_deviation{0.0};
   };
@@ -120,10 +144,10 @@ private:
     const adaptive_pivot_g2::PathConditioningResult & conditioning,
     std::size_t input_point_count,
     const adaptive_pivot_g2::LineOfSightPruningResult & los_result,
+    double los_runtime_seconds,
     double effective_conditioning_deviation,
     double effective_oscillation_deviation,
     double effective_segment_margin,
-    const std::string & fallback_status,
     const std::string & selected_stitch_rejection,
     std::size_t output_point_count,
     double runtime_seconds);
@@ -141,13 +165,11 @@ private:
     const std::vector<adaptive_pivot_g2::Vec2> & points,
     const std::vector<CornerDecision> & decisions,
     const std_msgs::msg::Header & header,
-    const geometry_msgs::msg::Quaternion & goal_orientation,
-    bool force_pivot) const;
+    const geometry_msgs::msg::Quaternion & goal_orientation) const;
 
   bool stitched_timing_is_valid(
     const std::vector<CornerDecision> & decisions,
     const nav_msgs::msg::Path & candidate_path,
-    bool force_pivot,
     double effective_segment_margin,
     std::string * rejection_reason = nullptr) const;
 
@@ -182,11 +204,9 @@ private:
   std::size_t oscillation_minimum_sign_changes_{2U};
   double output_spacing_{0.05};
   unsigned char max_footprint_cost_{252};
-  bool line_of_sight_pruning_{false};
-  double line_of_sight_footprint_padding_{0.15};
-  bool compare_los_against_no_los_{true};
-  double los_selection_minimum_improvement_{0.005};
-  adaptive_pivot_g2::PathQualityWeights path_quality_weights_;
+  PreprocessingMode preprocessing_mode_{PreprocessingMode::kConditionThenLos};
+  CandidateSearchMode candidate_search_mode_{
+    CandidateSearchMode::kHierarchicalAlphaTwoTrim};
   bool diagnostics_publish_enabled_{true};
   std::string last_diagnostics_message_;
   std::vector<geometry_msgs::msg::Point> fallback_footprint_;

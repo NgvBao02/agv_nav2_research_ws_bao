@@ -29,12 +29,13 @@ using LineOfSightSegmentPredicate =
   std::function<bool(const Vec2 &, const Vec2 &)>;
 using LineOfSightJunctionPredicate =
   std::function<bool(const Vec2 &, const Vec2 &, const Vec2 &)>;
+using LineOfSightEndpointPredicate =
+  std::function<bool(const Vec2 &, const Vec2 &)>;
 
 struct LineOfSightPruningResult
 {
   bool valid{false};
-  bool fallback_to_input{false};
-  std::string fallback_reason;
+  std::string rejection_reason;
   std::vector<Vec2> points;
   std::size_t attempted_shortcuts{0U};
   std::size_t accepted_shortcuts{0U};
@@ -43,16 +44,18 @@ struct LineOfSightPruningResult
 
 /// Greedily retain the farthest safe visible point from each anchor.
 ///
-/// Unlike a geometric point-only LOS test, both predicates are mandatory:
-/// `segment_is_safe` checks the complete swept motion on every candidate,
-/// including the adjacent input edge, and `junction_is_safe` checks the
-/// orientation sweep at every retained interior vertex. If no safe outgoing
-/// edge exists, the original input is returned as an explicit fallback rather
-/// than silently accepting an unchecked edge.
+/// Unlike a geometric point-only LOS test, all four predicates are mandatory:
+/// `segment_is_safe` checks the complete swept translation on every candidate,
+/// including the adjacent input edge. The remaining predicates check the
+/// orientation sweep at the start, every retained interior vertex, and the
+/// goal. If no safe outgoing edge exists, the result is invalid; an adjacent
+/// input edge is a normal final candidate and is never accepted as a fallback.
 LineOfSightPruningResult prune_line_of_sight(
   const std::vector<Vec2> & input,
   const LineOfSightSegmentPredicate & segment_is_safe,
-  const LineOfSightJunctionPredicate & junction_is_safe);
+  const LineOfSightJunctionPredicate & junction_is_safe,
+  const LineOfSightEndpointPredicate & start_rotation_is_safe,
+  const LineOfSightEndpointPredicate & goal_rotation_is_safe);
 
 }  // namespace adaptive_pivot_g2
 

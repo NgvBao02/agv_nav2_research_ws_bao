@@ -372,7 +372,9 @@ void SafetyGatedHybridSmoother::configure(
   fallback_footprint_[3].y = half_width;
 
   simple_smoother_ = std::make_unique<nav2_smoother::SimpleSmoother>();
-  pivot_smoother_ = std::make_unique<AdaptivePivotG2Smoother>();
+  pivot_smoother_ = std::make_unique<AdaptivePivotG2Smoother>(
+    AdaptivePivotG2Smoother::PreprocessingMode::kConditionOnly,
+    AdaptivePivotG2Smoother::CandidateSearchMode::kLegacyJointDq);
   simple_smoother_->configure(
     parent, plugin_name_ + ".simple", tf, costmap_subscriber, footprint_subscriber);
   pivot_smoother_->configure(

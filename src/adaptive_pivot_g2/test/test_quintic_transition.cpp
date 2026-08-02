@@ -161,5 +161,28 @@ TEST(QuinticTransition, JointShapeSearchCanReduceSharpTurnEnergy)
   EXPECT_NE(adaptive.control_fraction, fixed.control_fraction);
 }
 
+TEST(QuinticTransition, HalfControlFractionIsFiniteAndPreservesEndpointG2)
+{
+  const CornerInput corner{
+    {0.0, 0.0}, {1.0, 0.0}, {0.0, 1.0}, 2.0, 2.0};
+  TransitionOptions options;
+  options.sample_spacing = 0.005;
+  const auto boundary = generate_quintic_transition_for_shape(
+    corner, permissive_limits(), options, 1.0, 0.5);
+  const auto outside = generate_quintic_transition_for_shape(
+    corner, permissive_limits(), options, 1.0, 0.500001);
+
+  ASSERT_TRUE(boundary.valid) << boundary.rejection_reason;
+  ASSERT_GE(boundary.samples.size(), 2U);
+  EXPECT_NEAR(boundary.samples.front().curvature, 0.0, 1.0e-10);
+  EXPECT_NEAR(boundary.samples.back().curvature, 0.0, 1.0e-10);
+  for (const auto & sample : boundary.samples) {
+    EXPECT_TRUE(finite(sample.position));
+    EXPECT_TRUE(std::isfinite(sample.curvature));
+  }
+  EXPECT_FALSE(outside.valid);
+  EXPECT_EQ(outside.rejection_reason, "transition options are outside their valid range");
+}
+
 }  // namespace
 }  // namespace adaptive_pivot_g2
