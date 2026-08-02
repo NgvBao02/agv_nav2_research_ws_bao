@@ -240,6 +240,7 @@ def test_pstmo_preprocessing_modes_are_internal_and_diagnostics_are_single_pipel
 
     required_diagnostics = {
         'preprocessing_mode',
+        'los_executed',
         'pipeline_execution_count',
         'final_invariants_verified',
         'los_input_points',

@@ -129,6 +129,9 @@ class EvidenceCapture(Node):
         if (
             payload.get("search_mode") == "hierarchical_alpha_two_trim"
             and payload.get("preprocessing_mode") == self.expected_preprocessing
+            and payload.get("los_executed") is (
+                self.expected_preprocessing == "condition_then_los"
+            )
             and payload.get("pipeline_execution_count") == 1
             and payload.get("final_invariants_verified") is True
         ):

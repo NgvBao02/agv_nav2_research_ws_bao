@@ -503,13 +503,28 @@ def plot_case_composite(item, rows_for_case):
         elif r>0 and c==0: entry.set_facecolor(METHOD_COLOR[METHODS[r-1]]);entry.set_text_props(color="white",fontweight="bold")
         elif r>0 and cell[r-1][1]=="FAIL": entry.set_facecolor("#fee2e2")
     diag=item["pstmo_diagnostics"]
+    if diag.get("los_executed", True):
+        preprocessing_line = (
+            f"LOS: {diag['los_input_points']} → {diag['los_output_points']} điểm; "
+            f"accepted={diag['los_accepted_shortcuts']}, "
+            f"rejected={diag['los_safety_rejections']}\n"
+        )
+        runtime_line = (
+            f"PSTMO internal={1000*diag['runtime_s']:.2f} ms; "
+            f"LOS={1000*diag['los_runtime_s']:.2f} ms\n"
+        )
+    else:
+        preprocessing_line = (
+            "LOS executed: NO; shortcut attempts=0; LOS runtime=0.00 ms\n"
+        )
+        runtime_line = f"PSTMO internal={1000*diag['runtime_s']:.2f} ms\n"
     info=(f"Start = ({item['start'][0]:.2f}, {item['start'][1]:.2f}, ψ={item['start'][2]:.3f} rad)\n"
           f"Goal  = ({item['goal'][0]:.2f}, {item['goal'][1]:.2f}, ψ={item['goal'][2]:.3f} rad)\n"
           f"Raw hash = {item['paths']['raw']['sha256'][:16]}…\n"
           f"Conditioning: {diag['raw_input_points']} → {diag['conditioning_output_points']} điểm\n"
-          f"LOS: {diag['los_input_points']} → {diag['los_output_points']} điểm; accepted={diag['los_accepted_shortcuts']}, rejected={diag['los_safety_rejections']}\n"
+          f"{preprocessing_line}"
           f"G²={diag['g2_transitions']}; quay tại chỗ={diag['pivots']}; DP states={diag['dp_states']}\n"
-          f"PSTMO internal={1000*diag['runtime_s']:.2f} ms; LOS={1000*diag['los_runtime_s']:.2f} ms\n"
+          f"{runtime_line}"
           "Nguồn: Gazebo/RViz2 live + /research/path/* + /research/metrics + diagnostics.")
     ax_table.text(0,.32,info,ha="left",va="top",fontsize=9.2,linespacing=1.45,bbox=dict(boxstyle="round,pad=.55",facecolor="#f8fafc",edgecolor="#94a3b8"))
     fig.savefig(output,dpi=135,bbox_inches="tight",facecolor="white");plt.close(fig)

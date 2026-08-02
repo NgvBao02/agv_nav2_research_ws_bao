@@ -733,6 +733,9 @@ void AdaptivePivotG2Smoother::publish_diagnostics(
   diagnostics << "{\"method\":\"pstmo\",\"search_mode\":\"" << search_mode << '"'
               << ",\"trim_domain\":\"" << trim_domain << '"'
               << ",\"preprocessing_mode\":\"" << preprocessing_mode << '"'
+              << ",\"los_executed\":"
+              << (preprocessing_mode_ == PreprocessingMode::kConditionThenLos ?
+  "true" : "false")
               << ",\"pipeline_execution_count\":1"
               << ",\"final_invariants_verified\":true"
               << ",\"corners\":" << decisions.size()
