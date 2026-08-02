@@ -83,10 +83,14 @@ bool better_interval(const IntervalChoice & candidate, const IntervalChoice & cu
 
 }  // namespace
 
-AdaptiveSearchResult search_trim_distance(
+namespace
+{
+
+AdaptiveSearchResult search_trim_domain(
   double absolute_turn_angle,
-  double maximum_geometric_trim,
-  double minimum_meaningful_trim_resolution,
+  double minimum_trim,
+  double maximum_trim,
+  double effective_trim_tolerance,
   const AdaptiveSearchOptions & options,
   const TrimEvaluator & evaluator)
 {
@@ -94,9 +98,9 @@ AdaptiveSearchResult search_trim_distance(
   if (!options_are_valid(options) || !evaluator ||
     !std::isfinite(absolute_turn_angle) || absolute_turn_angle <= 0.0 ||
     absolute_turn_angle >= 3.14159265358979323846 ||
-    !std::isfinite(maximum_geometric_trim) || maximum_geometric_trim <= 0.0 ||
-    !std::isfinite(minimum_meaningful_trim_resolution) ||
-    minimum_meaningful_trim_resolution < 0.0)
+    !std::isfinite(minimum_trim) || minimum_trim <= 0.0 ||
+    !std::isfinite(maximum_trim) || maximum_trim < minimum_trim ||
+    !std::isfinite(effective_trim_tolerance) || effective_trim_tolerance <= 0.0)
   {
     return result;
   }
@@ -105,11 +109,9 @@ AdaptiveSearchResult search_trim_distance(
   if (!std::isfinite(tangent) || tangent <= kEpsilon) {
     return result;
   }
-  result.minimum_trim = options.minimum_radius * tangent;
-  result.maximum_trim = std::min(
-    options.maximum_radius * tangent, maximum_geometric_trim);
-  result.effective_trim_tolerance = std::max(
-    options.radius_tolerance * tangent, minimum_meaningful_trim_resolution);
+  result.minimum_trim = minimum_trim;
+  result.maximum_trim = maximum_trim;
+  result.effective_trim_tolerance = effective_trim_tolerance;
   if (!std::isfinite(result.minimum_trim) || !std::isfinite(result.maximum_trim) ||
     result.minimum_trim > result.maximum_trim + kEpsilon)
   {
@@ -232,6 +234,61 @@ AdaptiveSearchResult search_trim_distance(
     });
   result.feasible_count = result.ranked_feasible_samples.size();
   return result;
+}
+
+}  // namespace
+
+AdaptiveSearchResult search_trim_distance(
+  double absolute_turn_angle,
+  double maximum_geometric_trim,
+  double minimum_meaningful_trim_resolution,
+  const AdaptiveSearchOptions & options,
+  const TrimEvaluator & evaluator)
+{
+  if (!options_are_valid(options) ||
+    !std::isfinite(absolute_turn_angle) || absolute_turn_angle <= 0.0 ||
+    absolute_turn_angle >= 3.14159265358979323846 ||
+    !std::isfinite(maximum_geometric_trim) || maximum_geometric_trim <= 0.0 ||
+    !std::isfinite(minimum_meaningful_trim_resolution) ||
+    minimum_meaningful_trim_resolution < 0.0)
+  {
+    return {};
+  }
+  const double tangent = std::tan(0.5 * absolute_turn_angle);
+  if (!std::isfinite(tangent) || tangent <= kEpsilon) {
+    return {};
+  }
+  const double minimum_trim = options.minimum_radius * tangent;
+  const double maximum_trim = std::min(
+    options.maximum_radius * tangent, maximum_geometric_trim);
+  if (minimum_trim > maximum_trim + kEpsilon) {
+    return {};
+  }
+  return search_trim_domain(
+    absolute_turn_angle, minimum_trim, maximum_trim,
+    std::max(
+      options.radius_tolerance * tangent,
+      minimum_meaningful_trim_resolution),
+    options, evaluator);
+}
+
+AdaptiveSearchResult search_direct_trim_distance(
+  double absolute_turn_angle,
+  double minimum_trim,
+  double maximum_trim,
+  double minimum_meaningful_trim_resolution,
+  const AdaptiveSearchOptions & options,
+  const TrimEvaluator & evaluator)
+{
+  if (!std::isfinite(minimum_meaningful_trim_resolution) ||
+    minimum_meaningful_trim_resolution < 0.0)
+  {
+    return {};
+  }
+  return search_trim_domain(
+    absolute_turn_angle, minimum_trim, maximum_trim,
+    std::max(options.radius_tolerance, minimum_meaningful_trim_resolution),
+    options, evaluator);
 }
 
 }  // namespace adaptive_pivot_g2

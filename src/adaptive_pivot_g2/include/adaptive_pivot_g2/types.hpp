@@ -107,6 +107,11 @@ struct TransitionCandidate
   double turn_angle{0.0};
   double design_radius{0.0};
   double trim_distance{0.0};
+  // q in the quintic Bezier construction and its dimensionless ratio q / d.
+  // Keeping both values makes the selected two-parameter shape observable in
+  // diagnostics instead of hiding q behind a fixed global constant.
+  double control_distance{0.0};
+  double control_fraction{0.0};
   double path_length{0.0};
   double max_abs_curvature{0.0};
   double curvature_energy{0.0};

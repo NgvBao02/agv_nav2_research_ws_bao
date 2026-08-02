@@ -146,6 +146,17 @@ def test_nav2_loads_the_declared_planner_families():
     assert planner['SmacHybrid']['smooth_path'] is False
     smoother = parameters['smoother_server']['ros__parameters']
     assert smoother['constrained']['path_downsampling_factor'] == 1
+    assert smoother['pstmo']['line_of_sight_pruning'] is True
+    assert smoother['pstmo']['minimum_trim_distance'] == 0.02
+    assert smoother['pstmo']['maximum_trim_distance'] == 0.8
+    assert smoother['pstmo']['trim_tolerance'] == 0.01
+    assert smoother['pstmo']['minimum_bezier_control_fraction'] == 0.08
+    assert smoother['pstmo']['maximum_bezier_control_fraction'] == 0.45
+    assert smoother['pstmo']['bezier_control_fraction_samples'] == 1
+    assert smoother['pstmo']['compare_los_against_no_los'] is True
+    assert smoother['pstmo']['los_selection_minimum_improvement'] == 0.005
+    assert smoother['pstmo']['line_of_sight_footprint_padding'] >= 0.15
+    assert smoother['adaptive_hybrid']['pivot']['line_of_sight_pruning'] is False
     assert (
         parameters['local_costmap']['local_costmap']['ros__parameters'][
             'initial_transform_timeout'
@@ -215,7 +226,7 @@ def test_research_rviz_has_one_display_for_every_comparison_path():
         '/research/path/simple',
         '/research/path/savitzky_golay',
         '/research/path/constrained',
-        '/research/path/pivot_g2',
+        '/research/path/pstmo',
         '/research/path/adaptive_hybrid',
         '/research/path/executed',
     }
@@ -303,11 +314,11 @@ def test_motion_limits_are_consistent_across_nav2_and_gazebo():
         'simple_smoother',
         'savitzky_golay',
         'constrained',
-        'pivot_g2',
+        'pstmo',
         'adaptive_hybrid',
     ]
     pivot_profiles = [
-        smoother['pivot_g2'],
+        smoother['pstmo'],
         smoother['adaptive_hybrid']['pivot'],
     ]
     for profile in pivot_profiles:

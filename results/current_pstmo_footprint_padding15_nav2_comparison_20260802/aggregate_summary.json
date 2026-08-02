@@ -1,0 +1,235 @@
+{
+  "closed_loop": {
+    "collision_monitor_interventions": 0,
+    "method_means": {
+      "pstmo": {
+        "executed_curvature_energy_1pm": 2.4928373521513927,
+        "execution_time_s": 57.38,
+        "final_position_error_m": 0.03985030023846486,
+        "planned_translation_path_length_m": 11.131704616591584,
+        "tracking_max_error_m": 0.07263013096727518,
+        "tracking_rmse_m": 0.03032500339340113
+      },
+      "raw": {
+        "executed_curvature_energy_1pm": 3.4915889945183523,
+        "execution_time_s": 60.708000000000006,
+        "final_position_error_m": 0.036994418557821575,
+        "planned_translation_path_length_m": 11.301100113085596,
+        "tracking_max_error_m": 0.07689358500171817,
+        "tracking_rmse_m": 0.029505728781000894
+      }
+    },
+    "planned_footprint_collision_sample_count": 0,
+    "pstmo_success_count": 3,
+    "raw_success_count": 3,
+    "trial_count": 6
+  },
+  "closed_loop_los_ablation": {
+    "collision_monitor_interventions": 0,
+    "los_off_success_count": 3,
+    "los_on_success_count": 3,
+    "metrics": {
+      "executed_curvature_energy_1pm": {
+        "improved_pair_count": 3,
+        "los_off_mean": 2.9016092598854186,
+        "los_on_mean": 2.4928373521513927,
+        "relative_change_percent": -14.08776548190944
+      },
+      "execution_time_s": {
+        "improved_pair_count": 2,
+        "los_off_mean": 58.709,
+        "los_on_mean": 57.38,
+        "relative_change_percent": -2.2637074383825317
+      },
+      "final_position_error_m": {
+        "improved_pair_count": 3,
+        "los_off_mean": 0.04508364420340543,
+        "los_on_mean": 0.03985030023846486,
+        "relative_change_percent": -11.608076626035631
+      },
+      "planned_translation_path_length_m": {
+        "improved_pair_count": 2,
+        "los_off_mean": 11.223656014265657,
+        "los_on_mean": 11.131704616591584,
+        "relative_change_percent": -0.819264217980306
+      },
+      "tracking_max_error_m": {
+        "improved_pair_count": 2,
+        "los_off_mean": 0.0775886380893118,
+        "los_on_mean": 0.07263013096727518,
+        "relative_change_percent": -6.390764478078493
+      },
+      "tracking_rmse_m": {
+        "improved_pair_count": 1,
+        "los_off_mean": 0.029453292887025407,
+        "los_on_mean": 0.03032500339340113,
+        "relative_change_percent": 2.9596368382963547
+      }
+    },
+    "pair_count": 3,
+    "planned_footprint_collision_sample_count": 0,
+    "raw_path_hash_match_count": 3
+  },
+  "common_success_means": {
+    "constrained": {
+      "minimum_footprint_clearance_m": 0.2130883059818661,
+      "translation_curvature_energy_1pm": 28.06531895577461,
+      "translation_path_length_m": 10.33245950999011,
+      "wall_time_ms": 29.796021323550924
+    },
+    "pstmo": {
+      "algorithm_time_ms": 21.705882352941178,
+      "minimum_footprint_clearance_m": 0.14421586626329563,
+      "translation_curvature_energy_1pm": 6.177047480883663,
+      "translation_path_length_m": 10.059799092651545,
+      "wall_time_ms": 31.40581800005962
+    },
+    "raw": {
+      "minimum_footprint_clearance_m": 0.1612836838517393,
+      "translation_curvature_energy_1pm": 50.20670093314122,
+      "translation_path_length_m": 10.314411614744847,
+      "wall_time_ms": 9.142706764738678
+    },
+    "savitzky_golay": {
+      "minimum_footprint_clearance_m": 0.19124870421983733,
+      "translation_curvature_energy_1pm": 22.69914851129038,
+      "translation_path_length_m": 10.295773787103837,
+      "wall_time_ms": 7.643538735224223
+    },
+    "simple": {
+      "minimum_footprint_clearance_m": 0.19077539571010912,
+      "translation_curvature_energy_1pm": 9.417812829038024,
+      "translation_path_length_m": 10.24030442066681,
+      "wall_time_ms": 9.993851352967742
+    }
+  },
+  "configuration": {
+    "line_of_sight_footprint_padding_m": 0.15,
+    "line_of_sight_pruning": true,
+    "nav2_params_sha256": "dc756afbb846f1dc4daf9a495ef7f31fd86710258e1660657945b59a809b2c71"
+  },
+  "design": {
+    "common_success_group_count": 34,
+    "environment_count": 7,
+    "methods": [
+      "raw",
+      "simple",
+      "savitzky_golay",
+      "constrained",
+      "pstmo"
+    ],
+    "paired_group_count": 35,
+    "planner_count": 5,
+    "record_count": 175,
+    "scenario_count": 7
+  },
+  "failure": [
+    {
+      "environment": "warehouse_dispatch",
+      "error": "smoothing failed: status=6, code=503, message=''",
+      "method": "simple",
+      "planner": "SmacHybrid",
+      "scenario": "full_replenishment"
+    }
+  ],
+  "los_ablation": {
+    "collision_samples": {
+      "los_off": 0,
+      "los_on": 0
+    },
+    "los_off_success_count": 35,
+    "los_on_raw_output_fallback_count": 1,
+    "los_on_success_count": 35,
+    "metrics": {
+      "algorithm_time_s": {
+        "improved_pair_count": 27,
+        "los_off_mean": 0.030942857142857147,
+        "los_on_mean": 0.022285714285714287,
+        "median_paired_delta": -0.009000000000000001,
+        "relative_change_percent": -27.97783933518006,
+        "tied_pair_count": 2,
+        "worsened_pair_count": 6
+      },
+      "deviation_rmse_m": {
+        "improved_pair_count": 1,
+        "los_off_mean": 0.02915815872476602,
+        "los_on_mean": 0.08611097917912514,
+        "median_paired_delta": 0.054479537471506106,
+        "relative_change_percent": 195.32378910464325,
+        "tied_pair_count": 5,
+        "worsened_pair_count": 29
+      },
+      "footprint_clearance_min_m": {
+        "improved_pair_count": 4,
+        "los_off_mean": 0.1718548283000165,
+        "los_on_mean": 0.14051383183174132,
+        "median_paired_delta": -0.02587771789329163,
+        "relative_change_percent": -18.236901912096098,
+        "tied_pair_count": 10,
+        "worsened_pair_count": 21
+      },
+      "translation_curvature_energy_1pm": {
+        "improved_pair_count": 25,
+        "los_off_mean": 4.5946297758849415,
+        "los_on_mean": 6.212924737000604,
+        "median_paired_delta": -1.490892355914005,
+        "relative_change_percent": 35.22144416530216,
+        "tied_pair_count": 5,
+        "worsened_pair_count": 5
+      },
+      "translation_max_abs_curvature_1pm": {
+        "improved_pair_count": 25,
+        "los_off_mean": 3.1973577832747986,
+        "los_on_mean": 2.3988888800299555,
+        "median_paired_delta": -1.569485926377066,
+        "relative_change_percent": -24.972773063483533,
+        "tied_pair_count": 5,
+        "worsened_pair_count": 5
+      },
+      "translation_path_length_m": {
+        "improved_pair_count": 27,
+        "los_off_mean": 10.335441823868308,
+        "los_on_mean": 10.204437556924436,
+        "median_paired_delta": -0.12605286262465043,
+        "relative_change_percent": -1.2675245933012322,
+        "tied_pair_count": 5,
+        "worsened_pair_count": 3
+      },
+      "wall_time_s": {
+        "improved_pair_count": 28,
+        "los_off_mean": 0.042235829599979166,
+        "los_on_mean": 0.03205753542863801,
+        "median_paired_delta": -0.008538553999642318,
+        "relative_change_percent": -24.09871965992157,
+        "tied_pair_count": 0,
+        "worsened_pair_count": 7
+      }
+    },
+    "pair_count": 35,
+    "raw_path_hash_match_count": 35
+  },
+  "los_preprocessing": {
+    "accepted_mean_los_output_points": 4.6,
+    "accepted_mean_raw_input_points": 247.56666666666666,
+    "accepted_record_count": 30,
+    "fallback_record_count": 5,
+    "mean_los_output_points": 61.77142857142857,
+    "mean_raw_input_points": 270.0285714285714,
+    "mean_safety_rejections": 332.54285714285714,
+    "successful_record_count": 35
+  },
+  "success_count": {
+    "constrained": 35,
+    "pstmo": 35,
+    "raw": 35,
+    "savitzky_golay": 35,
+    "simple": 34
+  },
+  "validation": {
+    "pstmo_footprint_collision_sample_count": 0,
+    "pstmo_los_accepted_record_count": 30,
+    "pstmo_los_enabled_success_record_count": 35,
+    "pstmo_los_fallback_record_count": 5,
+    "raw_path_hash_consistent_group_count": 35
+  }
+}

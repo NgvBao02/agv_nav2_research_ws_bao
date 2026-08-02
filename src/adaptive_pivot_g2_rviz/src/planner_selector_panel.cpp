@@ -94,7 +94,7 @@ constexpr std::array<SmootherDisplay, 5> kSmootherDisplays = {{
   {"simple", "Nav2 Simple", "255, 190, 0"},
   {"savitzky_golay", "Nav2 Savitzky–Golay", "0, 220, 255"},
   {"constrained", "Nav2 Constrained", "50, 220, 90"},
-  {"pivot_g2", "Pivot‑G2 adaptive", "220, 40, 255"},
+  {"pstmo", "PSTMO", "220, 40, 255"},
   {"adaptive_hybrid", "Adaptive Hybrid", "80, 100, 255"},
 }};
 
@@ -109,7 +109,7 @@ constexpr std::array<ExecutionMethodDisplay, 6> kExecutionMethodDisplays = {{
   {"simple", "Nav2 Simple"},
   {"savitzky_golay", "Nav2 Savitzky–Golay"},
   {"constrained", "Nav2 Constrained"},
-  {"pivot_g2", "Pivot‑G2 adaptive"},
+  {"pstmo", "PSTMO"},
   {"adaptive_hybrid", "Adaptive Hybrid"},
 }};
 

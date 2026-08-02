@@ -208,7 +208,7 @@ def generate_launch_description():
                 default_value='simple',
                 description=(
                     'none, raw, simple, savitzky_golay, constrained, '
-                    'pivot_g2, or adaptive_hybrid'
+                    'pstmo, or adaptive_hybrid'
                 ),
             ),
             DeclareLaunchArgument(

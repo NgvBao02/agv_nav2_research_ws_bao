@@ -340,7 +340,7 @@ smoother_server:
     costmap_topic: global_costmap/costmap_raw
     footprint_topic: global_costmap/published_footprint
     robot_base_frame: base_link
-    smoother_plugins: ["simple_smoother", "savitzky_golay", "constrained", "pivot_g2", "adaptive_hybrid"]
+    smoother_plugins: ["simple_smoother", "savitzky_golay", "constrained", "pstmo", "adaptive_hybrid"]
     simple_smoother:
       plugin: "nav2_smoother::SimpleSmoother"
       tolerance: 1.0e-10
@@ -371,17 +371,22 @@ smoother_server:
       optimizer:
         max_iterations: 70
         debug_optimizer: false
-    pivot_g2:
+    pstmo:
       plugin: "adaptive_pivot_g2_nav2/AdaptivePivotG2Smoother"
-      minimum_radius: 0.10
-      maximum_physical_radius: 1.50
+      # Search d directly in metres. Physical curvature and wheel feasibility
+      # are evaluated on the actual Bezier candidate, not inferred from a
+      # circular-radius analogy that becomes inaccurate when q varies.
+      minimum_trim_distance: 0.02
+      maximum_trim_distance: 0.8
       initial_search_samples: 6
       maximum_evaluations_per_corner: 20
-      radius_tolerance: 0.01
+      trim_tolerance: 0.01
       objective_tolerance: 0.01
       # Zero selects max(output_spacing, 2*sample_spacing, costmap resolution).
       segment_margin: 0.0
-      retained_candidates_per_corner: 5
+      # Retain a compact Pareto basis (cost, energy, peak curvature,
+      # clearance, time and d-extremes) for global adjacent-corner DP.
+      retained_candidates_per_corner: 9
       # Scale for integral(kappa^2 ds), whose unit is 1/m.
       curvature_energy_scale: 1.0
       delta_time_selection: 0.15
@@ -400,13 +405,37 @@ smoother_server:
       oscillation_deviation_resolution_ratio: 3.0
       oscillation_minimum_turn_angle: 0.20
       oscillation_minimum_sign_changes: 2
-      # Disabled in the primary benchmark.  Applying LOS only inside Pivot-G2
-      # would change its input path while the baselines keep the raw path and
-      # would confound pruning gains with smoothing gains.  Keep the feature in
-      # the plugin for a separately labelled Pivot-G2+LOS ablation.
-      line_of_sight_pruning: false
+      # LOS pruning is part of the proposed PSTMO preprocessing pipeline. All
+      # methods receive the same external Raw path; PSTMO then applies its own
+      # footprint-checked conditioning before turning-maneuver optimization.
+      line_of_sight_pruning: true
+      # Inflate the live robot footprint only for LOS and the PSTMO motions
+      # derived from an accepted LOS polyline. This enforces a 15 cm operational
+      # reserve around the 0.44 x 0.34 m body, covering the observed tracking
+      # error and controller lookahead instead of only avoiding static contact.
+      line_of_sight_footprint_padding: 0.15
+      # Evaluate complete PSTMO outputs with and without LOS on the same Raw
+      # path. LOS is selected only when the stable whole-path score improves;
+      # a tie keeps the original corridor.
+      compare_los_against_no_los: true
+      los_selection_minimum_improvement: 0.005
+      los_path_length_weight: 0.15
+      los_max_curvature_weight: 0.25
+      los_curvature_energy_weight: 0.35
+      los_pivot_rotation_weight: 0.10
+      los_proximity_cost_weight: 0.15
+      los_raw_fallback_penalty: 0.50
       output_spacing: 0.05
       sample_spacing: 0.02
+      # Joint shape search: d is the trim distance and q is the tangent-handle
+      # distance. For every d, compare the angle-aware curvature-energy shape
+      # against the exact former q/d=0.35 reference, then check both with the
+      # swept footprint. The limits below are hard validity bounds.
+      minimum_bezier_control_fraction: 0.08
+      maximum_bezier_control_fraction: 0.45
+      bezier_control_fraction_samples: 1
+      # Backward-compatible default for direct, single-shape core API calls;
+      # the PSTMO Nav2 plugin above no longer fixes q=0.35d.
       bezier_control_fraction: 0.35
       max_trim_fraction: 0.45
       # CAD rolling-tread center distance; calibrate on the physical robot.

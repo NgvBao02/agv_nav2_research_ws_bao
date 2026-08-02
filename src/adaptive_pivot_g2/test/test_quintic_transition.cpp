@@ -56,6 +56,8 @@ TEST(QuinticTransition, SatisfiesEndpointG2Conditions)
   ASSERT_GE(candidate.samples.size(), 2U);
   EXPECT_NEAR(candidate.turn_angle, 0.5 * kPi, 1.0e-12);
   EXPECT_NEAR(candidate.trim_distance, 0.35, 1.0e-12);
+  EXPECT_NEAR(candidate.control_fraction, 0.35, 1.0e-12);
+  EXPECT_NEAR(candidate.control_distance, 0.1225, 1.0e-12);
   EXPECT_NEAR(candidate.samples.front().position.x, -0.35, 1.0e-12);
   EXPECT_NEAR(candidate.samples.front().position.y, 0.0, 1.0e-12);
   EXPECT_NEAR(candidate.samples.back().position.x, 0.0, 1.0e-12);
@@ -113,6 +115,50 @@ TEST(QuinticTransition, RejectsInnerWheelReversalForWideTrack)
 
   EXPECT_FALSE(candidate.valid);
   EXPECT_EQ(candidate.rejection_reason, "transition requires a reversing inner wheel");
+}
+
+TEST(QuinticTransition, AngleAwareControlFractionContractsForSharpTurns)
+{
+  const double shallow = recommended_control_fraction(30.0 * kPi / 180.0);
+  const double right_angle = recommended_control_fraction(0.5 * kPi);
+  const double sharp = recommended_control_fraction(150.0 * kPi / 180.0);
+
+  EXPECT_GT(shallow, right_angle);
+  EXPECT_GT(right_angle, sharp);
+  EXPECT_NEAR(shallow, 0.3263, 5.0e-3);
+  EXPECT_NEAR(sharp, 0.1630, 1.0e-2);
+}
+
+TEST(QuinticTransition, ControlFractionBankIncludesCentreAndBounds)
+{
+  const auto candidates = generate_control_fraction_candidates(
+    0.5 * kPi, 0.08, 0.45, 7U);
+
+  ASSERT_EQ(candidates.size(), 7U);
+  EXPECT_DOUBLE_EQ(candidates.front(), 0.08);
+  EXPECT_DOUBLE_EQ(candidates.back(), 0.45);
+  EXPECT_NEAR(candidates[3], recommended_control_fraction(0.5 * kPi), 1.0e-12);
+  EXPECT_TRUE(std::is_sorted(candidates.begin(), candidates.end()));
+}
+
+TEST(QuinticTransition, JointShapeSearchCanReduceSharpTurnEnergy)
+{
+  const double angle = 120.0 * kPi / 180.0;
+  const CornerInput corner{
+    {0.0, 0.0}, {1.0, 0.0}, {std::cos(angle), std::sin(angle)}, 3.0, 3.0};
+  TransitionOptions options;
+  options.sample_spacing = 0.005;
+  const auto fixed = generate_quintic_transition_for_shape(
+    corner, permissive_limits(), options, 1.0, 0.35);
+  const auto adaptive = generate_quintic_transition_for_shape(
+    corner, permissive_limits(), options, 1.0,
+    recommended_control_fraction(angle));
+
+  ASSERT_TRUE(fixed.valid) << fixed.rejection_reason;
+  ASSERT_TRUE(adaptive.valid) << adaptive.rejection_reason;
+  EXPECT_LT(adaptive.curvature_energy, 0.85 * fixed.curvature_energy);
+  EXPECT_LT(adaptive.max_abs_curvature, fixed.max_abs_curvature);
+  EXPECT_NE(adaptive.control_fraction, fixed.control_fraction);
 }
 
 }  // namespace

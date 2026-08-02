@@ -1,0 +1,192 @@
+{
+  "closed_loop": {
+    "collision_monitor_interventions": 0,
+    "method_means": {
+      "pstmo": {
+        "executed_curvature_energy_1pm": 2.3005007655249012,
+        "execution_time_s": 56.90200000000001,
+        "final_position_error_m": 0.043386043525753204,
+        "planned_footprint_clearance_min_m": 0.12209750490053,
+        "planned_translation_path_length_m": 11.12347187576797,
+        "tracking_max_error_m": 0.07412805823701651,
+        "tracking_rmse_m": 0.0313982180088404
+      },
+      "raw": {
+        "executed_curvature_energy_1pm": 3.517223345654893,
+        "execution_time_s": 61.074000000000005,
+        "final_position_error_m": 0.03519075381653634,
+        "planned_footprint_clearance_min_m": 0.10839993111097533,
+        "planned_translation_path_length_m": 11.301100113085596,
+        "tracking_max_error_m": 0.07474253909603727,
+        "tracking_rmse_m": 0.028901528526972153
+      }
+    },
+    "paired_group_count": 3,
+    "planned_footprint_collision_sample_count": 0,
+    "pstmo_success_count": 3,
+    "pstmo_vs_raw_change_percent": {
+      "executed_curvature_energy_1pm": -34.59327033164119,
+      "execution_time_s": -6.831057405770044,
+      "final_position_error_m": 23.288190278452785,
+      "planned_footprint_clearance_min_m": 12.636146212613047,
+      "planned_translation_path_length_m": -1.5717782830005098,
+      "tracking_max_error_m": -0.8221300299033281,
+      "tracking_rmse_m": 8.638607053388988
+    },
+    "raw_path_hash_match_count": 3,
+    "raw_success_count": 3,
+    "trial_count": 6
+  },
+  "common_success_means": {
+    "constrained": {
+      "algorithm_time_s": 0.021264705882352943,
+      "footprint_clearance_min_m": 0.2130883059818661,
+      "translation_curvature_energy_1pm": 28.06531895577461,
+      "translation_max_abs_curvature_1pm": 7.387544047138473,
+      "translation_path_length_m": 10.33245950999011,
+      "wall_time_s": 0.029796021323550925
+    },
+    "pstmo": {
+      "algorithm_time_s": 0.12150000000000001,
+      "footprint_clearance_min_m": 0.15082926736074787,
+      "translation_curvature_energy_1pm": 3.005231665471789,
+      "translation_max_abs_curvature_1pm": 2.0709883453982516,
+      "translation_path_length_m": 10.063345980635383,
+      "wall_time_s": 0.132966640382245
+    },
+    "raw": {
+      "algorithm_time_s": 0.0035294117647058825,
+      "footprint_clearance_min_m": 0.1612836838517393,
+      "translation_curvature_energy_1pm": 50.20670093314122,
+      "translation_max_abs_curvature_1pm": 11.18713832148593,
+      "translation_path_length_m": 10.314411614744847,
+      "wall_time_s": 0.009142706764738677
+    },
+    "savitzky_golay": {
+      "algorithm_time_s": 0.0,
+      "footprint_clearance_min_m": 0.19124870421983733,
+      "translation_curvature_energy_1pm": 22.69914851129038,
+      "translation_max_abs_curvature_1pm": 6.934232330494715,
+      "translation_path_length_m": 10.295773787103837,
+      "wall_time_s": 0.007643538735224224
+    },
+    "simple": {
+      "algorithm_time_s": 0.0015,
+      "footprint_clearance_min_m": 0.19077539571010912,
+      "translation_curvature_energy_1pm": 9.417812829038024,
+      "translation_max_abs_curvature_1pm": 4.762637215410802,
+      "translation_path_length_m": 10.24030442066681,
+      "wall_time_s": 0.009993851352967742
+    }
+  },
+  "configuration": {
+    "control_fraction_reference": 0.35,
+    "line_of_sight_footprint_padding_m": 0.15,
+    "line_of_sight_mode": "adaptive_full_path_selection",
+    "los_minimum_score_improvement": 0.005,
+    "maximum_trim_distance_m": 0.8,
+    "minimum_trim_distance_m": 0.02,
+    "nav2_params_sha256": "74b5ad8c97c2318696916af1c53f225a63894d30a9efbceefd9a62321b064ed4"
+  },
+  "design": {
+    "common_success_group_count": 34,
+    "environment_count": 7,
+    "methods": [
+      "raw",
+      "simple",
+      "savitzky_golay",
+      "constrained",
+      "pstmo"
+    ],
+    "paired_group_count": 35,
+    "planner_count": 5,
+    "record_count": 175,
+    "scenario_count": 7
+  },
+  "joint_d_q": {
+    "angle_aware_q_count": 75,
+    "control_fraction_max": 0.35,
+    "control_fraction_mean": 0.33689188970588235,
+    "control_fraction_min": 0.313703,
+    "selected_transition_count": 136,
+    "trim_distance_max_m": 0.8,
+    "trim_distance_mean_m": 0.33412329779411765,
+    "trim_distance_min_m": 0.0517631
+  },
+  "los_selection": {
+    "adaptive_vs_no_los": {
+      "curvature_energy_1pm": {
+        "adaptive_mean": 3.1646692857142855,
+        "improved_pair_count": 23,
+        "no_los_mean": 4.730191714285715,
+        "relative_change_percent": -33.09638431447449
+      },
+      "length_m": {
+        "adaptive_mean": 10.208128285714286,
+        "improved_pair_count": 25,
+        "no_los_mean": 10.325187428571429,
+        "relative_change_percent": -1.1337241446409116
+      },
+      "max_curvature_1pm": {
+        "adaptive_mean": 2.1145288285714288,
+        "improved_pair_count": 25,
+        "no_los_mean": 3.1812234285714287,
+        "relative_change_percent": -33.53095511681848
+      },
+      "peak_proximity_cost": {
+        "adaptive_mean": 245.65714285714284,
+        "improved_pair_count": 0,
+        "no_los_mean": 223.5142857142857,
+        "relative_change_percent": 9.906685414802503
+      },
+      "pivot_rotation_rad": {
+        "adaptive_mean": 0.03926648571428572,
+        "improved_pair_count": 1,
+        "no_los_mean": 0.0688142,
+        "relative_change_percent": -42.93839685081609
+      }
+    },
+    "branch_quality_means": {
+      "adaptive": {
+        "curvature_energy_1pm": 3.1646692857142855,
+        "length_m": 10.208128285714286,
+        "max_curvature_1pm": 2.1145288285714288,
+        "peak_proximity_cost": 245.65714285714284,
+        "pivot_rotation_rad": 0.03926648571428572
+      },
+      "los": {
+        "curvature_energy_1pm": 2.8636929822285717,
+        "length_m": 10.183496857142858,
+        "max_curvature_1pm": 1.9788986857142998,
+        "peak_proximity_cost": 252.77142857142857,
+        "pivot_rotation_rad": 0.12500734285714285
+      },
+      "no_los": {
+        "curvature_energy_1pm": 4.730191714285715,
+        "length_m": 10.325187428571429,
+        "max_curvature_1pm": 3.1812234285714287,
+        "peak_proximity_cost": 223.5142857142857,
+        "pivot_rotation_rad": 0.0688142
+      }
+    },
+    "los_selected_count": 25,
+    "maximum_selected_score_improvement": 0.15477300000000005,
+    "mean_selected_score_improvement": 0.061997039999999996,
+    "minimum_selected_score_improvement": 0.005112000000000005,
+    "no_los_selected_count": 10
+  },
+  "success_count": {
+    "constrained": 35,
+    "pstmo": 35,
+    "raw": 35,
+    "savitzky_golay": 35,
+    "simple": 34
+  },
+  "validation": {
+    "both_internal_branches_safe_count": 35,
+    "pstmo_fallback_count": 0,
+    "pstmo_footprint_collision_sample_count": 0,
+    "pstmo_success_count": 35,
+    "raw_path_hash_consistent_group_count": 35
+  }
+}

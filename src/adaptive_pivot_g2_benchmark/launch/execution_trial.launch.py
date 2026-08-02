@@ -96,10 +96,10 @@ def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument('scenario_file', default_value=default_scenarios),
         DeclareLaunchArgument('scenario', default_value='lower_left_diagonal'),
-        DeclareLaunchArgument('method', default_value='pivot_g2'),
+        DeclareLaunchArgument('method', default_value='pstmo'),
         DeclareLaunchArgument('planner', default_value='ThetaStar'),
         DeclareLaunchArgument(
-            'output_json', default_value='/tmp/pivot_g2_execution_trial.json'
+            'output_json', default_value='/tmp/pstmo_execution_trial.json'
         ),
         DeclareLaunchArgument('gui', default_value='false'),
         OpaqueFunction(function=_launch_setup),

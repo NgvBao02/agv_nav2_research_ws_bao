@@ -28,12 +28,14 @@
 #include <vector>
 
 #include "adaptive_pivot_g2/candidate_selection.hpp"
+#include "adaptive_pivot_g2/line_of_sight.hpp"
 #include "adaptive_pivot_g2/path_conditioning.hpp"
 #include "adaptive_pivot_g2/path_optimization.hpp"
 #include "adaptive_pivot_g2/quintic_transition.hpp"
 #include "adaptive_pivot_g2/time_parameterization.hpp"
 #include "nav2_core/smoother_exceptions.hpp"
 #include "nav2_costmap_2d/cost_values.hpp"
+#include "nav2_costmap_2d/footprint.hpp"
 #include "nav2_costmap_2d/footprint_collision_checker.hpp"
 #include "pluginlib/class_list_macros.hpp"
 
@@ -99,6 +101,16 @@ double signed_angle(const Vec2 & incoming, const Vec2 & outgoing)
   return std::atan2(
     adaptive_pivot_g2::cross(incoming, outgoing),
     adaptive_pivot_g2::dot(incoming, outgoing));
+}
+
+double normalized_angle(double angle)
+{
+  return std::atan2(std::sin(angle), std::cos(angle));
+}
+
+double yaw_of(const geometry_msgs::msg::Quaternion & orientation)
+{
+  return 2.0 * std::atan2(orientation.z, orientation.w);
 }
 
 geometry_msgs::msg::PoseStamped make_pose(
@@ -300,33 +312,254 @@ std::vector<Vec2> remove_duplicate_points(const nav_msgs::msg::Path & path)
   return points;
 }
 
-std::vector<Vec2> prune_line_of_sight(
+double polyline_length(const std::vector<Vec2> & points)
+{
+  double length = 0.0;
+  for (std::size_t index = 1U; index < points.size(); ++index) {
+    length += adaptive_pivot_g2::distance(points[index - 1U], points[index]);
+  }
+  return length;
+}
+
+std::vector<Vec2> resample_polyline(
   const std::vector<Vec2> & input,
+  double spacing)
+{
+  std::vector<Vec2> cleaned;
+  cleaned.reserve(input.size());
+  for (const auto & point : input) {
+    if (cleaned.empty() ||
+      adaptive_pivot_g2::distance(cleaned.back(), point) > 1.0e-9)
+    {
+      cleaned.push_back(point);
+    }
+  }
+  if (cleaned.size() < 2U || !std::isfinite(spacing) || spacing <= 0.0) {
+    return cleaned;
+  }
+
+  std::vector<Vec2> sampled{cleaned.front()};
+  double traversed = 0.0;
+  double next_distance = spacing;
+  for (std::size_t index = 1U; index < cleaned.size(); ++index) {
+    const Vec2 start = cleaned[index - 1U];
+    const Vec2 delta = cleaned[index] - start;
+    const double segment_length = adaptive_pivot_g2::norm(delta);
+    const double segment_end = traversed + segment_length;
+    while (next_distance <= segment_end + kEpsilon) {
+      const double ratio = (next_distance - traversed) / segment_length;
+      sampled.push_back(start + delta * ratio);
+      next_distance += spacing;
+    }
+    traversed = segment_end;
+  }
+  if (adaptive_pivot_g2::distance(sampled.back(), cleaned.back()) > 1.0e-9) {
+    sampled.push_back(cleaned.back());
+  }
+  return sampled;
+}
+
+bool paths_are_equivalent(
+  const nav_msgs::msg::Path & lhs,
+  const nav_msgs::msg::Path & rhs)
+{
+  if (lhs.poses.size() != rhs.poses.size()) {
+    return false;
+  }
+  for (std::size_t index = 0U; index < lhs.poses.size(); ++index) {
+    if (adaptive_pivot_g2::distance(
+        position_of(lhs.poses[index]), position_of(rhs.poses[index])) > 1.0e-9 ||
+      std::abs(normalized_angle(
+        yaw_of(lhs.poses[index].pose.orientation) -
+        yaw_of(rhs.poses[index].pose.orientation))) > 1.0e-9)
+    {
+      return false;
+    }
+  }
+  return true;
+}
+
+adaptive_pivot_g2::PathQualityMetrics evaluate_path_quality(
+  const nav_msgs::msg::Path & candidate,
+  const nav_msgs::msg::Path & raw,
   const std::shared_ptr<Costmap> & costmap,
   CollisionChecker & checker,
   const std::vector<geometry_msgs::msg::Point> & footprint,
-  unsigned char max_footprint_cost)
+  unsigned char max_footprint_cost,
+  double spacing,
+  double minimum_pivot_angle)
 {
-  if (input.size() < 3) {
-    return input;
+  adaptive_pivot_g2::PathQualityMetrics metrics;
+  if (candidate.poses.size() < 2U || !costmap) {
+    return metrics;
   }
-  std::vector<Vec2> output;
-  output.reserve(input.size());
-  std::size_t anchor = 0;
-  output.push_back(input.front());
-  while (anchor + 1 < input.size()) {
-    std::size_t candidate = input.size() - 1;
-    while (candidate > anchor + 1 &&
-      !line_is_safe(
-        input[anchor], input[candidate], costmap, checker, footprint,
+  metrics.raw_fallback = paths_are_equivalent(candidate, raw);
+  metrics.path_length = 0.0;
+  metrics.max_abs_curvature = 0.0;
+  metrics.curvature_energy = 0.0;
+  metrics.pivot_rotation = 0.0;
+  metrics.peak_proximity_cost = 0.0;
+  std::vector<std::vector<Vec2>> translation_segments{
+    {position_of(candidate.poses.front())}};
+  for (std::size_t index = 0U; index < candidate.poses.size(); ++index) {
+    const auto & pose = candidate.poses[index];
+    double proximity_cost = 0.0;
+    if (!pose_is_safe(
+        position_of(pose), yaw_of(pose.pose.orientation), costmap, checker,
+        footprint, max_footprint_cost, &proximity_cost))
+    {
+      return metrics;
+    }
+    metrics.peak_proximity_cost = std::max(
+      metrics.peak_proximity_cost, proximity_cost);
+    if (index == 0U) {
+      continue;
+    }
+
+    const Vec2 previous = position_of(candidate.poses[index - 1U]);
+    const Vec2 current = position_of(pose);
+    const double translation = adaptive_pivot_g2::distance(previous, current);
+    const double yaw_change = std::abs(normalized_angle(
+        yaw_of(pose.pose.orientation) -
+        yaw_of(candidate.poses[index - 1U].pose.orientation)));
+    if (translation <= 1.0e-4) {
+      if (yaw_change >= minimum_pivot_angle) {
+        metrics.pivot_rotation += yaw_change;
+        translation_segments.push_back({current});
+      }
+    } else {
+      translation_segments.back().push_back(current);
+    }
+  }
+
+  for (const auto & segment : translation_segments) {
+    if (segment.size() < 2U) {
+      continue;
+    }
+    const auto sampled = resample_polyline(segment, spacing);
+    metrics.path_length += polyline_length(sampled);
+    for (std::size_t index = 1U; index + 1U < sampled.size(); ++index) {
+      const Vec2 first = sampled[index - 1U];
+      const Vec2 middle = sampled[index];
+      const Vec2 last = sampled[index + 1U];
+      const double side_a = adaptive_pivot_g2::distance(first, middle);
+      const double side_b = adaptive_pivot_g2::distance(middle, last);
+      const double chord = adaptive_pivot_g2::distance(first, last);
+      const double denominator = side_a * side_b * chord;
+      if (denominator <= 1.0e-12) {
+        continue;
+      }
+      const double curvature = 2.0 * std::abs(adaptive_pivot_g2::cross(
+          middle - first, last - first)) / denominator;
+      metrics.max_abs_curvature = std::max(
+        metrics.max_abs_curvature, curvature);
+      metrics.curvature_energy += curvature * curvature * 0.5 * (side_a + side_b);
+    }
+  }
+  metrics.safe = true;
+  metrics.valid = std::isfinite(metrics.path_length) && metrics.path_length > 0.0;
+  return metrics;
+}
+
+bool polyline_motion_is_safe(
+  const std::vector<Vec2> & points,
+  double start_heading,
+  double goal_heading,
+  const std::shared_ptr<Costmap> & costmap,
+  CollisionChecker & checker,
+  const std::vector<geometry_msgs::msg::Point> & footprint,
+  unsigned char max_footprint_cost,
+  std::string * rejection_reason = nullptr)
+{
+  const auto reject = [rejection_reason](const std::string & reason) {
+      if (rejection_reason != nullptr) {
+        *rejection_reason = reason;
+      }
+      return false;
+    };
+  if (points.size() < 2U) {
+    return reject("fewer_than_two_points");
+  }
+
+  const Vec2 first_delta = points[1U] - points[0U];
+  const double first_heading = std::atan2(first_delta.y, first_delta.x);
+  if (!pivot_is_safe(
+      points.front(), start_heading, normalized_angle(first_heading - start_heading),
+      costmap, checker, footprint, max_footprint_cost))
+  {
+    return reject("unsafe_start_rotation");
+  }
+
+  for (std::size_t index = 0U; index + 1U < points.size(); ++index) {
+    if (!line_is_safe(
+        points[index], points[index + 1U], costmap, checker, footprint,
         max_footprint_cost))
     {
-      --candidate;
+      return reject("unsafe_segment_" + std::to_string(index));
     }
-    output.push_back(input[candidate]);
-    anchor = candidate;
+    if (index + 2U < points.size()) {
+      const Vec2 incoming = points[index + 1U] - points[index];
+      const Vec2 outgoing = points[index + 2U] - points[index + 1U];
+      const double incoming_heading = std::atan2(incoming.y, incoming.x);
+      const double outgoing_heading = std::atan2(outgoing.y, outgoing.x);
+      if (!pivot_is_safe(
+          points[index + 1U], incoming_heading,
+          normalized_angle(outgoing_heading - incoming_heading), costmap, checker,
+          footprint, max_footprint_cost))
+      {
+        return reject("unsafe_junction_rotation_" + std::to_string(index + 1U));
+      }
+    }
   }
-  return output;
+
+  const Vec2 final_delta = points.back() - points[points.size() - 2U];
+  const double final_heading = std::atan2(final_delta.y, final_delta.x);
+  if (!pivot_is_safe(
+      points.back(), final_heading, normalized_angle(goal_heading - final_heading),
+      costmap, checker, footprint, max_footprint_cost))
+  {
+    return reject("unsafe_goal_rotation");
+  }
+  return true;
+}
+
+adaptive_pivot_g2::LineOfSightPruningResult footprint_aware_line_of_sight(
+  const std::vector<Vec2> & input,
+  double start_heading,
+  double goal_heading,
+  const std::shared_ptr<Costmap> & costmap,
+  CollisionChecker & checker,
+  const std::vector<geometry_msgs::msg::Point> & padded_footprint,
+  unsigned char max_footprint_cost)
+{
+  auto result = adaptive_pivot_g2::prune_line_of_sight(
+    input,
+    [&](const Vec2 & start, const Vec2 & finish) {
+      return line_is_safe(
+        start, finish, costmap, checker, padded_footprint, max_footprint_cost);
+    },
+    [&](const Vec2 & previous, const Vec2 & vertex, const Vec2 & next) {
+      const Vec2 incoming = vertex - previous;
+      const Vec2 outgoing = next - vertex;
+      const double incoming_heading = std::atan2(incoming.y, incoming.x);
+      const double outgoing_heading = std::atan2(outgoing.y, outgoing.x);
+      return pivot_is_safe(
+        vertex, incoming_heading,
+        normalized_angle(outgoing_heading - incoming_heading), costmap, checker,
+        padded_footprint, max_footprint_cost);
+    });
+  if (result.valid && !result.fallback_to_input) {
+    std::string motion_rejection;
+    if (!polyline_motion_is_safe(
+        result.points, start_heading, goal_heading, costmap, checker,
+        padded_footprint, max_footprint_cost, &motion_rejection))
+    {
+      result.fallback_to_input = true;
+      result.fallback_reason = motion_rejection;
+      result.points = input;
+    }
+  }
+  return result;
 }
 
 struct ConditioningRun
@@ -379,7 +612,7 @@ std::vector<Vec2> validated_conditioned_points(
 {
   if (!conditioning.result.valid) {
     throw nav2_core::FailedToSmoothPath(
-            "Pivot-G2 path conditioning failed: " +
+            "PSTMO path conditioning failed: " +
             conditioning.result.rejection_reason);
   }
   return conditioning.result.points;
@@ -508,7 +741,7 @@ void AdaptivePivotG2Smoother::configure(
 {
   const auto node = parent.lock();
   if (!node) {
-    throw nav2_core::FailedToSmoothPath("Pivot-G2 lifecycle node expired during configure");
+    throw nav2_core::FailedToSmoothPath("PSTMO lifecycle node expired during configure");
   }
   node_ = parent;
   plugin_name_ = std::move(name);
@@ -517,22 +750,22 @@ void AdaptivePivotG2Smoother::configure(
   footprint_subscriber_ = std::move(footprint_subscriber);
 
   const std::string prefix = plugin_name_ + ".";
-  adaptive_search_options_.minimum_radius = declare_and_get<double>(
-    node, prefix + "minimum_radius", 0.10);
-  adaptive_search_options_.maximum_radius = declare_and_get<double>(
-    node, prefix + "maximum_physical_radius", 1.50);
+  minimum_trim_distance_ = declare_and_get<double>(
+    node, prefix + "minimum_trim_distance", 0.02);
+  maximum_trim_distance_ = declare_and_get<double>(
+    node, prefix + "maximum_trim_distance", 0.8);
   const int64_t initial_search_samples = declare_and_get<int64_t>(
     node, prefix + "initial_search_samples", 6);
   const int64_t maximum_evaluations = declare_and_get<int64_t>(
     node, prefix + "maximum_evaluations_per_corner", 20);
   adaptive_search_options_.radius_tolerance = declare_and_get<double>(
-    node, prefix + "radius_tolerance", 0.01);
+    node, prefix + "trim_tolerance", 0.01);
   adaptive_search_options_.objective_tolerance = declare_and_get<double>(
     node, prefix + "objective_tolerance", 0.01);
   segment_margin_override_ = declare_and_get<double>(
     node, prefix + "segment_margin", 0.0);
   const int64_t retained_candidates = declare_and_get<int64_t>(
-    node, prefix + "retained_candidates_per_corner", 5);
+    node, prefix + "retained_candidates_per_corner", 9);
   curvature_energy_scale_ = declare_and_get<double>(
     node, prefix + "curvature_energy_scale", 1.0);
   delta_time_selection_ = declare_and_get<double>(
@@ -568,9 +801,38 @@ void AdaptivePivotG2Smoother::configure(
     std::clamp<int64_t>(max_footprint_cost, 0, 252));
   line_of_sight_pruning_ = declare_and_get<bool>(
     node, prefix + "line_of_sight_pruning", false);
+  line_of_sight_footprint_padding_ = declare_and_get<double>(
+    node, prefix + "line_of_sight_footprint_padding", 0.15);
+  minimum_control_fraction_ = declare_and_get<double>(
+    node, prefix + "minimum_bezier_control_fraction", 0.08);
+  maximum_control_fraction_ = declare_and_get<double>(
+    node, prefix + "maximum_bezier_control_fraction", 0.45);
+  const int64_t control_fraction_samples = declare_and_get<int64_t>(
+    node, prefix + "bezier_control_fraction_samples", 1);
+  compare_los_against_no_los_ = declare_and_get<bool>(
+    node, prefix + "compare_los_against_no_los", true);
+  los_selection_minimum_improvement_ = declare_and_get<double>(
+    node, prefix + "los_selection_minimum_improvement", 0.005);
+  path_quality_weights_.path_length = declare_and_get<double>(
+    node, prefix + "los_path_length_weight", 0.15);
+  path_quality_weights_.max_abs_curvature = declare_and_get<double>(
+    node, prefix + "los_max_curvature_weight", 0.25);
+  path_quality_weights_.curvature_energy = declare_and_get<double>(
+    node, prefix + "los_curvature_energy_weight", 0.35);
+  path_quality_weights_.pivot_rotation = declare_and_get<double>(
+    node, prefix + "los_pivot_rotation_weight", 0.10);
+  path_quality_weights_.proximity_cost = declare_and_get<double>(
+    node, prefix + "los_proximity_cost_weight", 0.15);
+  path_quality_weights_.raw_fallback_penalty = declare_and_get<double>(
+    node, prefix + "los_raw_fallback_penalty", 0.50);
 
   const double selection_weight_sum = selection_weights_.clearance +
     selection_weights_.angular_speed + selection_weights_.curvature_energy;
+  const double path_quality_weight_sum = path_quality_weights_.path_length +
+    path_quality_weights_.max_abs_curvature +
+    path_quality_weights_.curvature_energy +
+    path_quality_weights_.pivot_rotation +
+    path_quality_weights_.proximity_cost;
   if (!std::isfinite(delta_time_selection_) || delta_time_selection_ < 0.0 ||
     !std::isfinite(time_competitive_slack_) || time_competitive_slack_ < 0.0 ||
     !std::isfinite(selection_weights_.clearance) || selection_weights_.clearance < 0.0 ||
@@ -584,6 +846,9 @@ void AdaptivePivotG2Smoother::configure(
     !std::isfinite(adaptive_search_options_.maximum_radius) ||
     adaptive_search_options_.maximum_radius <
     adaptive_search_options_.minimum_radius ||
+    !std::isfinite(minimum_trim_distance_) || minimum_trim_distance_ <= 0.0 ||
+    !std::isfinite(maximum_trim_distance_) ||
+    maximum_trim_distance_ < minimum_trim_distance_ ||
     initial_search_samples < 2 || maximum_evaluations < initial_search_samples ||
     !std::isfinite(adaptive_search_options_.radius_tolerance) ||
     adaptive_search_options_.radius_tolerance <= 0.0 ||
@@ -605,9 +870,33 @@ void AdaptivePivotG2Smoother::configure(
     oscillation_minimum_turn_angle_ <= std::acos(-1.0)) ||
     oscillation_minimum_sign_changes < 1 ||
     retained_candidates < 1 ||
-    !std::isfinite(curvature_energy_scale_) || curvature_energy_scale_ <= 0.0)
+    !std::isfinite(curvature_energy_scale_) || curvature_energy_scale_ <= 0.0 ||
+    !std::isfinite(line_of_sight_footprint_padding_) ||
+    line_of_sight_footprint_padding_ < 0.0 ||
+    !std::isfinite(minimum_control_fraction_) ||
+    minimum_control_fraction_ <= 0.0 ||
+    !std::isfinite(maximum_control_fraction_) ||
+    maximum_control_fraction_ >= 0.5 ||
+    minimum_control_fraction_ > maximum_control_fraction_ ||
+    control_fraction_samples < 1 || control_fraction_samples > 15 ||
+    control_fraction_samples % 2 == 0 ||
+    !std::isfinite(los_selection_minimum_improvement_) ||
+    los_selection_minimum_improvement_ < 0.0 ||
+    !std::isfinite(path_quality_weights_.path_length) ||
+    path_quality_weights_.path_length < 0.0 ||
+    !std::isfinite(path_quality_weights_.max_abs_curvature) ||
+    path_quality_weights_.max_abs_curvature < 0.0 ||
+    !std::isfinite(path_quality_weights_.curvature_energy) ||
+    path_quality_weights_.curvature_energy < 0.0 ||
+    !std::isfinite(path_quality_weights_.pivot_rotation) ||
+    path_quality_weights_.pivot_rotation < 0.0 ||
+    !std::isfinite(path_quality_weights_.proximity_cost) ||
+    path_quality_weights_.proximity_cost < 0.0 ||
+    !std::isfinite(path_quality_weights_.raw_fallback_penalty) ||
+    path_quality_weights_.raw_fallback_penalty < 0.0 ||
+    !std::isfinite(path_quality_weight_sum) || path_quality_weight_sum <= kEpsilon)
   {
-    throw nav2_core::FailedToSmoothPath("Pivot-G2 candidate selection parameters are invalid");
+    throw nav2_core::FailedToSmoothPath("PSTMO candidate selection parameters are invalid");
   }
   adaptive_search_options_.initial_samples =
     static_cast<std::size_t>(initial_search_samples);
@@ -617,6 +906,8 @@ void AdaptivePivotG2Smoother::configure(
     static_cast<std::size_t>(retained_candidates);
   oscillation_minimum_sign_changes_ =
     static_cast<std::size_t>(oscillation_minimum_sign_changes);
+  control_fraction_samples_ =
+    static_cast<std::size_t>(control_fraction_samples);
 
   transition_options_.control_fraction = declare_and_get<double>(
     node, prefix + "bezier_control_fraction", 0.35);
@@ -671,7 +962,7 @@ void AdaptivePivotG2Smoother::configure(
     corner_angle_threshold_ > std::acos(-1.0))
   {
     throw nav2_core::FailedToSmoothPath(
-            "Pivot-G2 geometry, motion limits, or footprint parameters are invalid");
+            "PSTMO geometry, motion limits, or footprint parameters are invalid");
   }
   const double half_length = 0.5 * footprint_length;
   const double half_width = 0.5 * footprint_width;
@@ -686,9 +977,9 @@ void AdaptivePivotG2Smoother::configure(
   fallback_footprint_[3].y = half_width;
 
   diagnostics_publisher_ = node->create_publisher<std_msgs::msg::String>(
-    "/research/pivot_g2/diagnostics", rclcpp::QoS(10));
+    "/research/pstmo/diagnostics", rclcpp::QoS(10));
   RCLCPP_INFO(
-    logger_, "Configured Pivot-G2 smoother '%s' with adaptive radius search",
+    logger_, "Configured PSTMO smoother '%s' with joint (d,q) shape search",
     plugin_name_.c_str());
 }
 
@@ -719,6 +1010,7 @@ void AdaptivePivotG2Smoother::publish_diagnostics(
   const std::map<std::string, std::size_t> & rejection_counts,
   const adaptive_pivot_g2::PathConditioningResult & conditioning,
   std::size_t input_point_count,
+  const adaptive_pivot_g2::LineOfSightPruningResult & los_result,
   double effective_conditioning_deviation,
   double effective_oscillation_deviation,
   double effective_segment_margin,
@@ -744,7 +1036,8 @@ void AdaptivePivotG2Smoother::publish_diagnostics(
   const std::size_t pivot_count =
     decisions.size() - transition_count - pass_through_count;
   std::ostringstream diagnostics;
-  diagnostics << "{\"method\":\"pivot_g2\",\"search_mode\":\"adaptive\""
+  diagnostics << "{\"method\":\"pstmo\",\"search_mode\":\"joint_d_q\""
+              << ",\"trim_domain\":\"direct_metric\""
               << ",\"corners\":" << decisions.size()
               << ",\"g2_transitions\":" << transition_count
               << ",\"pivots\":" << pivot_count
@@ -755,7 +1048,24 @@ void AdaptivePivotG2Smoother::publish_diagnostics(
               << ",\"dp_states\":" << path_optimization.state_count
               << ",\"compatible_edges\":"
               << path_optimization.compatible_edge_count
-              << ",\"conditioning_input_points\":" << input_point_count
+              << ",\"raw_input_points\":" << input_point_count
+              << ",\"los_enabled\":"
+              << (line_of_sight_pruning_ ? "true" : "false")
+              << ",\"los_footprint_padding_m\":"
+              << line_of_sight_footprint_padding_
+              << ",\"los_output_points\":" << los_result.points.size()
+              << ",\"los_attempted_shortcuts\":"
+              << los_result.attempted_shortcuts
+              << ",\"los_accepted_shortcuts\":"
+              << los_result.accepted_shortcuts
+              << ",\"los_safety_rejections\":"
+              << los_result.safety_rejections
+              << ",\"los_fallback_to_input\":"
+              << (los_result.fallback_to_input ? "true" : "false")
+              << ",\"los_fallback_reason\":";
+  append_json_string(diagnostics, los_result.fallback_reason);
+  diagnostics
+              << ",\"conditioning_input_points\":" << los_result.points.size()
               << ",\"conditioning_output_points\":" << conditioning.points.size()
               << ",\"conditioning_max_deviation\":"
               << effective_conditioning_deviation
@@ -801,10 +1111,14 @@ void AdaptivePivotG2Smoother::publish_diagnostics(
                 << ",\"pivot_safe\":" << (decision.pivot_safe ? "true" : "false")
                 << ",\"pass_through\":"
                 << (decision.pass_through ? "true" : "false")
-                << ",\"radius_min\":" << decision.minimum_search_radius
-                << ",\"radius_max\":" << decision.maximum_search_radius
+                << ",\"equivalent_radius_min\":"
+                << decision.minimum_search_radius
+                << ",\"equivalent_radius_max\":"
+                << decision.maximum_search_radius
                 << ",\"trim_min\":" << decision.minimum_search_trim
                 << ",\"trim_max\":" << decision.maximum_search_trim
+                << ",\"trim_evaluations\":"
+                << decision.trim_evaluation_count
                 << ",\"evaluations\":" << decision.evaluation_count
                 << ",\"safe_feasible\":" << decision.feasible_count
                 << ",\"states\":" << decision.optimization_states.size()
@@ -814,6 +1128,12 @@ void AdaptivePivotG2Smoother::publish_diagnostics(
                 << ",\"selected_trim\":"
                 << (decision.use_transition ?
     decision.transition.trim_distance : 0.0)
+                << ",\"selected_control_distance\":"
+                << (decision.use_transition ?
+    decision.transition.control_distance : 0.0)
+                << ",\"selected_control_fraction\":"
+                << (decision.use_transition ?
+    decision.transition.control_fraction : 0.0)
                 << ",\"selected_score\":"
                 << (decision.use_transition ? decision.selection_score : 0.0)
                 << '}';
@@ -837,15 +1157,18 @@ void AdaptivePivotG2Smoother::publish_diagnostics(
     first_rejection = false;
   }
   diagnostics << "},\"runtime_s\":" << runtime_seconds << "}";
-  if (diagnostics_publisher_ && diagnostics_publisher_->is_activated()) {
+  last_diagnostics_message_ = diagnostics.str();
+  if (diagnostics_publish_enabled_ && diagnostics_publisher_ &&
+    diagnostics_publisher_->is_activated())
+  {
     std_msgs::msg::String message;
-    message.data = diagnostics.str();
+    message.data = last_diagnostics_message_;
     diagnostics_publisher_->publish(message);
   }
-  RCLCPP_DEBUG(logger_, "%s", diagnostics.str().c_str());
+  RCLCPP_DEBUG(logger_, "%s", last_diagnostics_message_.c_str());
   RCLCPP_INFO(
     logger_,
-    "Pivot-G2 adaptive: %zu corners, %zu G2, %zu pivots, %zu pass-through, "
+    "PSTMO: %zu corners, %zu G2, %zu pivots, %zu pass-through, "
     "%zu evaluations, %.6f s",
     decisions.size(), transition_count, pivot_count, pass_through_count,
     evaluation_count, runtime_seconds);
@@ -1090,16 +1413,290 @@ bool AdaptivePivotG2Smoother::smooth(
   nav_msgs::msg::Path & path,
   const rclcpp::Duration & max_time)
 {
+  if (!line_of_sight_pruning_ || !compare_los_against_no_los_) {
+    return smooth_single_branch(path, max_time);
+  }
+  const double total_budget = max_time.seconds();
+  if (!std::isfinite(total_budget) || total_budget <= 0.0) {
+    return false;
+  }
+
+  const auto selection_started = std::chrono::steady_clock::now();
+  const nav_msgs::msg::Path raw_path = path;
+  nav_msgs::msg::Path no_los_path = raw_path;
+  nav_msgs::msg::Path los_path = raw_path;
+  const double branch_budget_seconds = 0.48 * total_budget;
+  const auto branch_budget = rclcpp::Duration::from_seconds(branch_budget_seconds);
+  const bool configured_los = line_of_sight_pruning_;
+  const bool configured_diagnostics = diagnostics_publish_enabled_;
+  diagnostics_publish_enabled_ = false;
+
+  const auto run_branch = [this, &branch_budget](
+    bool use_los, nav_msgs::msg::Path & candidate,
+    std::string & diagnostics, std::string & error) {
+      line_of_sight_pruning_ = use_los;
+      last_diagnostics_message_.clear();
+      try {
+        const bool completed = smooth_single_branch(candidate, branch_budget);
+        diagnostics = last_diagnostics_message_;
+        if (!completed) {
+          error = "branch_time_budget_exhausted";
+        }
+        return completed;
+      } catch (const std::exception & exception) {
+        diagnostics = last_diagnostics_message_;
+        error = exception.what();
+        return false;
+      }
+    };
+
+  std::string no_los_diagnostics;
+  std::string los_diagnostics;
+  std::string no_los_error;
+  std::string los_error;
+  const bool no_los_completed = run_branch(
+    false, no_los_path, no_los_diagnostics, no_los_error);
+  const bool los_completed = run_branch(
+    true, los_path, los_diagnostics, los_error);
+  line_of_sight_pruning_ = configured_los;
+  diagnostics_publish_enabled_ = configured_diagnostics;
+
+  const auto costmap = costmap_subscriber_ ? costmap_subscriber_->getCostmap() : nullptr;
+  if (!costmap) {
+    throw nav2_core::FailedToSmoothPath(
+            "PSTMO LOS branch selector has no costmap");
+  }
+  std::vector<geometry_msgs::msg::Point> footprint;
+  std_msgs::msg::Header footprint_header;
+  if (!footprint_subscriber_ ||
+    !footprint_subscriber_->getFootprintInRobotFrame(footprint, footprint_header) ||
+    footprint.size() < 3U)
+  {
+    footprint = fallback_footprint_;
+  }
+  CollisionChecker collision_checker(costmap);
+  adaptive_pivot_g2::PathQualityMetrics no_los_quality;
+  adaptive_pivot_g2::PathQualityMetrics los_quality;
+  if (no_los_completed) {
+    no_los_quality = evaluate_path_quality(
+      no_los_path, raw_path, costmap, collision_checker, footprint,
+      max_footprint_cost_, output_spacing_, corner_angle_threshold_);
+  }
+  if (los_completed) {
+    los_quality = evaluate_path_quality(
+      los_path, raw_path, costmap, collision_checker, footprint,
+      max_footprint_cost_, output_spacing_, corner_angle_threshold_);
+  }
+  const double raw_length = polyline_length(remove_duplicate_points(raw_path));
+  const auto selection = adaptive_pivot_g2::select_los_branch(
+    no_los_quality, los_quality, raw_length, limits_.wheel_separation,
+    curvature_energy_scale_, static_cast<double>(max_footprint_cost_),
+    los_selection_minimum_improvement_, path_quality_weights_);
+  if (!selection.valid) {
+    std::ostringstream reason;
+    reason << "PSTMO LOS and no-LOS branches are invalid"
+           << " (no_los=" << no_los_error << ", los=" << los_error << ')';
+    throw nav2_core::FailedToSmoothPath(reason.str());
+  }
+
+  path = selection.use_los ? std::move(los_path) : std::move(no_los_path);
+  std::string selected_diagnostics = selection.use_los ?
+    los_diagnostics : no_los_diagnostics;
+  if (selected_diagnostics.empty()) {
+    selected_diagnostics = "{\"method\":\"pstmo\"}";
+  }
+  if (selected_diagnostics.back() == '}') {
+    selected_diagnostics.pop_back();
+  }
+  const std::chrono::duration<double> selection_elapsed =
+    std::chrono::steady_clock::now() - selection_started;
+  const auto append_number = [](std::ostringstream & stream, double value) {
+      if (std::isfinite(value)) {
+        stream << value;
+      } else {
+        stream << "null";
+      }
+    };
+  const auto append_quality = [&append_number](
+    std::ostringstream & stream,
+    const adaptive_pivot_g2::PathQualityMetrics & quality) {
+      stream << "{\"valid\":" << (quality.valid ? "true" : "false")
+             << ",\"safe\":" << (quality.safe ? "true" : "false")
+             << ",\"raw_fallback\":"
+             << (quality.raw_fallback ? "true" : "false")
+             << ",\"length_m\":";
+      append_number(stream, quality.path_length);
+      stream << ",\"max_curvature_1pm\":";
+      append_number(stream, quality.max_abs_curvature);
+      stream << ",\"curvature_energy_1pm\":";
+      append_number(stream, quality.curvature_energy);
+      stream << ",\"pivot_rotation_rad\":";
+      append_number(stream, quality.pivot_rotation);
+      stream << ",\"peak_proximity_cost\":";
+      append_number(stream, quality.peak_proximity_cost);
+      stream << '}';
+    };
+  std::ostringstream enriched;
+  enriched << selected_diagnostics
+           << ",\"los_selection_enabled\":true"
+           << ",\"los_selected\":" << (selection.use_los ? "true" : "false")
+           << ",\"los_selection_reason\":";
+  append_json_string(enriched, selection.reason);
+  enriched << ",\"los_no_los_completed\":"
+           << (no_los_completed ? "true" : "false")
+           << ",\"los_completed\":" << (los_completed ? "true" : "false")
+           << ",\"los_no_los_error\":";
+  append_json_string(enriched, no_los_error);
+  enriched << ",\"los_error\":";
+  append_json_string(enriched, los_error);
+  enriched << ",\"los_no_los_score\":";
+  append_number(enriched, selection.no_los_score);
+  enriched << ",\"los_score\":";
+  append_number(enriched, selection.los_score);
+  enriched << ",\"los_no_los_quality\":";
+  append_quality(enriched, no_los_quality);
+  enriched << ",\"los_quality\":";
+  append_quality(enriched, los_quality);
+  enriched << ",\"los_selection_runtime_s\":" << selection_elapsed.count()
+           << '}';
+  last_diagnostics_message_ = enriched.str();
+  if (diagnostics_publish_enabled_ && diagnostics_publisher_ &&
+    diagnostics_publisher_->is_activated())
+  {
+    std_msgs::msg::String message;
+    message.data = last_diagnostics_message_;
+    diagnostics_publisher_->publish(message);
+  }
+  RCLCPP_INFO(
+    logger_, "PSTMO LOS selector chose %s (no-LOS=%.6f, LOS=%.6f, reason=%s)",
+    selection.use_los ? "LOS" : "no-LOS", selection.no_los_score,
+    selection.los_score, selection.reason.c_str());
+  return true;
+}
+
+std::vector<double> AdaptivePivotG2Smoother::control_fractions_for_angle(
+  double turn_angle) const
+{
+  auto fractions = adaptive_pivot_g2::generate_control_fraction_candidates(
+    std::abs(turn_angle), minimum_control_fraction_, maximum_control_fraction_,
+    control_fraction_samples_);
+  if (fractions.empty()) {
+    throw nav2_core::FailedToSmoothPath(
+            "PSTMO could not construct the q/d search domain");
+  }
+  // Retaining the former single-shape value makes the joint search a strict
+  // superset even when the angle-aware bank does not land on it exactly.
+  if (transition_options_.control_fraction >= minimum_control_fraction_ &&
+    transition_options_.control_fraction <= maximum_control_fraction_ &&
+    std::none_of(
+      fractions.begin(), fractions.end(),
+      [this](double value) {
+        return std::abs(value - transition_options_.control_fraction) <= kEpsilon;
+      }))
+  {
+    fractions.push_back(transition_options_.control_fraction);
+    std::sort(fractions.begin(), fractions.end());
+  }
+  return fractions;
+}
+
+AdaptivePivotG2Smoother::PreparedPath AdaptivePivotG2Smoother::prepare_path(
+  const nav_msgs::msg::Path & path,
+  const std::vector<Vec2> & raw_points,
+  const std::shared_ptr<Costmap> & costmap,
+  const std::vector<geometry_msgs::msg::Point> & footprint) const
+{
+  PreparedPath prepared;
+  prepared.los_result.valid = true;
+  prepared.los_result.points = raw_points;
+  prepared.safety_footprint = footprint;
+  std::vector<geometry_msgs::msg::Point> padded_footprint = footprint;
+  nav2_costmap_2d::padFootprint(
+    padded_footprint, line_of_sight_footprint_padding_);
+  CollisionChecker collision_checker(costmap);
+  bool enforce_los_footprint = false;
+  if (line_of_sight_pruning_) {
+    prepared.los_result = footprint_aware_line_of_sight(
+      raw_points, yaw_of(path.poses.front().pose.orientation),
+      yaw_of(path.poses.back().pose.orientation), costmap, collision_checker,
+      padded_footprint, max_footprint_cost_);
+    if (!prepared.los_result.valid) {
+      throw nav2_core::FailedToSmoothPath(
+              "PSTMO LOS preprocessing failed: " +
+              prepared.los_result.fallback_reason);
+    }
+    if (prepared.los_result.fallback_to_input) {
+      RCLCPP_WARN(
+        logger_, "PSTMO LOS retained the input path: %s",
+        prepared.los_result.fallback_reason.c_str());
+    } else {
+      enforce_los_footprint = true;
+      prepared.safety_footprint = padded_footprint;
+    }
+  }
+
+  prepared.points = prepared.los_result.points;
+  auto conditioning = condition_planner_path(
+    prepared.points, path_conditioning_max_deviation_,
+    path_conditioning_resolution_ratio_, oscillation_maximum_span_,
+    oscillation_maximum_deviation_, oscillation_deviation_resolution_ratio_,
+    oscillation_minimum_turn_angle_, oscillation_minimum_sign_changes_,
+    costmap, collision_checker, prepared.safety_footprint, max_footprint_cost_);
+  prepared.points = validated_conditioned_points(conditioning);
+  prepared.conditioning = std::move(conditioning.result);
+  prepared.conditioning_maximum_deviation = conditioning.maximum_deviation;
+  prepared.oscillation_maximum_deviation =
+    conditioning.oscillation_maximum_deviation;
+  if (!enforce_los_footprint) {
+    return prepared;
+  }
+
+  std::string motion_rejection;
+  if (polyline_motion_is_safe(
+      prepared.points, yaw_of(path.poses.front().pose.orientation),
+      yaw_of(path.poses.back().pose.orientation), costmap, collision_checker,
+      prepared.safety_footprint, max_footprint_cost_, &motion_rejection))
+  {
+    return prepared;
+  }
+
+  prepared.los_result.fallback_to_input = true;
+  prepared.los_result.fallback_reason = "conditioned_" + motion_rejection;
+  prepared.los_result.points = raw_points;
+  prepared.safety_footprint = footprint;
+  prepared.points = raw_points;
+  conditioning = condition_planner_path(
+    prepared.points, path_conditioning_max_deviation_,
+    path_conditioning_resolution_ratio_, oscillation_maximum_span_,
+    oscillation_maximum_deviation_, oscillation_deviation_resolution_ratio_,
+    oscillation_minimum_turn_angle_, oscillation_minimum_sign_changes_,
+    costmap, collision_checker, prepared.safety_footprint, max_footprint_cost_);
+  prepared.points = validated_conditioned_points(conditioning);
+  prepared.conditioning = std::move(conditioning.result);
+  prepared.conditioning_maximum_deviation = conditioning.maximum_deviation;
+  prepared.oscillation_maximum_deviation =
+    conditioning.oscillation_maximum_deviation;
+  RCLCPP_WARN(
+    logger_, "PSTMO LOS conditioning reverted to the input corridor: %s",
+    prepared.los_result.fallback_reason.c_str());
+  return prepared;
+}
+
+bool AdaptivePivotG2Smoother::smooth_single_branch(
+  nav_msgs::msg::Path & path,
+  const rclcpp::Duration & max_time)
+{
   if (path.poses.size() < 2) {
-    throw nav2_core::InvalidPath("Pivot-G2 needs at least two path poses");
+    throw nav2_core::InvalidPath("PSTMO needs at least two path poses");
   }
   if (!costmap_subscriber_) {
-    throw nav2_core::FailedToSmoothPath("Pivot-G2 has no costmap subscriber");
+    throw nav2_core::FailedToSmoothPath("PSTMO has no costmap subscriber");
   }
   const auto costmap = costmap_subscriber_->getCostmap();
   if (!costmap) {
-    throw nav2_core::FailedToSmoothPath("Pivot-G2 has not received a costmap");
+    throw nav2_core::FailedToSmoothPath("PSTMO has not received a costmap");
   }
+  const nav_msgs::msg::Path input_path = path;
   const auto started = std::chrono::steady_clock::now();
   const auto timed_out = [&]() {
       const std::chrono::duration<double> elapsed = std::chrono::steady_clock::now() - started;
@@ -1113,26 +1710,24 @@ bool AdaptivePivotG2Smoother::smooth(
     footprint.size() < 3)
   {
     footprint = fallback_footprint_;
-    RCLCPP_WARN(logger_, "Using configured fallback footprint for Pivot-G2 collision checks");
+    RCLCPP_WARN(logger_, "Using configured fallback footprint for PSTMO collision checks");
   }
   CollisionChecker collision_checker(costmap);
 
-  std::vector<Vec2> points = remove_duplicate_points(path);
-  if (points.size() < 2) {
-    throw nav2_core::InvalidPath("Pivot-G2 input collapses to fewer than two positions");
+  const std::vector<Vec2> raw_points = remove_duplicate_points(path);
+  if (raw_points.size() < 2) {
+    throw nav2_core::InvalidPath("PSTMO input collapses to fewer than two positions");
   }
-  const std::size_t input_point_count = points.size();
-  if (line_of_sight_pruning_) {
-    points = prune_line_of_sight(
-      points, costmap, collision_checker, footprint, max_footprint_cost_);
-  }
-  const auto conditioning = condition_planner_path(
-    points, path_conditioning_max_deviation_,
-    path_conditioning_resolution_ratio_, oscillation_maximum_span_,
-    oscillation_maximum_deviation_, oscillation_deviation_resolution_ratio_,
-    oscillation_minimum_turn_angle_, oscillation_minimum_sign_changes_,
-    costmap, collision_checker, footprint, max_footprint_cost_);
-  points = validated_conditioned_points(conditioning);
+  const std::size_t input_point_count = raw_points.size();
+  PreparedPath prepared = prepare_path(path, raw_points, costmap, footprint);
+  std::vector<Vec2> points = std::move(prepared.points);
+  auto conditioning = std::move(prepared.conditioning);
+  auto los_result = std::move(prepared.los_result);
+  const auto & safety_footprint = prepared.safety_footprint;
+  const double conditioning_maximum_deviation =
+    prepared.conditioning_maximum_deviation;
+  const double oscillation_maximum_deviation =
+    prepared.oscillation_maximum_deviation;
   if (timed_out()) {
     return false;
   }
@@ -1174,7 +1769,7 @@ bool AdaptivePivotG2Smoother::smooth(
     }
     decision.pivot_safe = pivot_is_safe(
       decision.vertex, incoming_heading, turn_angle,
-      costmap, collision_checker, footprint, max_footprint_cost_);
+      costmap, collision_checker, safety_footprint, max_footprint_cost_);
 
     std::vector<TransitionState> evaluations;
     double common_trim = 0.0;
@@ -1182,8 +1777,14 @@ bool AdaptivePivotG2Smoother::smooth(
       points[index], incoming, outgoing, incoming_length, outgoing_length};
     const double meaningful_trim_resolution = 0.5 * std::min(
         transition_options_.sample_spacing, costmap->getResolution());
-    const auto search = adaptive_pivot_g2::search_trim_distance(
-        std::abs(turn_angle), std::min(incoming_length, outgoing_length),
+    const auto control_fractions = control_fractions_for_angle(turn_angle);
+    std::size_t shape_evaluation_count = 0U;
+    const double minimum_search_trim = std::max(
+      minimum_trim_distance_, meaningful_trim_resolution);
+    const double maximum_search_trim = std::min({
+        maximum_trim_distance_, incoming_length, outgoing_length});
+    const auto search = adaptive_pivot_g2::search_direct_trim_distance(
+        std::abs(turn_angle), minimum_search_trim, maximum_search_trim,
         meaningful_trim_resolution, adaptive_search_options_,
       [&](double trim_distance) {
         if (timed_out()) {
@@ -1191,54 +1792,85 @@ bool AdaptivePivotG2Smoother::smooth(
           adaptive_pivot_g2::SearchSampleStatus::kInfeasible,
           std::numeric_limits<double>::infinity(), 0U, "time_budget"};
         }
-        TransitionCandidate candidate =
-        adaptive_pivot_g2::generate_quintic_transition_for_trim(
-            corner, limits_, transition_options_, trim_distance);
-        if (!candidate.valid) {
-          return adaptive_pivot_g2::SearchEvaluation{
-          adaptive_pivot_g2::SearchSampleStatus::kInfeasible,
-          std::numeric_limits<double>::infinity(), 0U,
-          candidate.rejection_reason};
+        adaptive_pivot_g2::SearchEvaluation best;
+        adaptive_pivot_g2::SearchEvaluation reference;
+        bool saw_unsafe_shape = false;
+        std::string last_rejection{"no_control_shape_evaluated"};
+        for (const double control_fraction : control_fractions) {
+          ++shape_evaluation_count;
+          TransitionCandidate candidate =
+          adaptive_pivot_g2::generate_quintic_transition_for_shape(
+              corner, limits_, transition_options_, trim_distance,
+              control_fraction);
+          if (!candidate.valid) {
+            last_rejection = candidate.rejection_reason;
+            ++rejection_counts["shape_" + last_rejection];
+            continue;
+          }
+          double peak_cost = 0.0;
+          if (!transition_is_safe(
+                candidate, costmap, collision_checker, safety_footprint,
+                max_footprint_cost_, peak_cost))
+          {
+            saw_unsafe_shape = true;
+            last_rejection = "swept_footprint";
+            ++rejection_counts["shape_swept_footprint"];
+            continue;
+          }
+          const auto profile = adaptive_pivot_g2::parameterize_time(
+              candidate.samples, limits_, maximum_straight_speed(limits_),
+              maximum_straight_speed(limits_));
+          if (!profile.valid) {
+            last_rejection = profile.rejection_reason;
+            ++rejection_counts["shape_" + last_rejection];
+            continue;
+          }
+          double max_abs_angular_speed = 0.0;
+          for (const double angular_speed : profile.angular_speed) {
+            max_abs_angular_speed = std::max(
+                max_abs_angular_speed, std::abs(angular_speed));
+          }
+          const double objective_cost =
+          adaptive_pivot_g2::stable_candidate_cost(
+              peak_cost, max_abs_angular_speed, candidate.curvature_energy,
+              limits_.max_angular_speed, curvature_energy_scale_,
+              selection_weights_);
+          const std::size_t payload_index = evaluations.size();
+          evaluations.push_back(
+            {std::move(candidate), profile.total_time,
+              std::numeric_limits<double>::infinity(), peak_cost,
+              max_abs_angular_speed, objective_cost});
+          if (best.status != adaptive_pivot_g2::SearchSampleStatus::kFeasible ||
+          objective_cost < best.objective - kEpsilon)
+          {
+            best = adaptive_pivot_g2::SearchEvaluation{
+              adaptive_pivot_g2::SearchSampleStatus::kFeasible,
+              objective_cost, payload_index, ""};
+          }
+          if (std::abs(
+              control_fraction - transition_options_.control_fraction) <= kEpsilon)
+          {
+            reference = adaptive_pivot_g2::SearchEvaluation{
+              adaptive_pivot_g2::SearchSampleStatus::kFeasible,
+              objective_cost, payload_index, ""};
+          }
         }
-        double peak_cost = 0.0;
-        if (!transition_is_safe(
-              candidate, costmap, collision_checker, footprint,
-              max_footprint_cost_, peak_cost))
-        {
-          return adaptive_pivot_g2::SearchEvaluation{
-          adaptive_pivot_g2::SearchSampleStatus::kUnsafe,
-          std::numeric_limits<double>::infinity(), 0U,
-          "swept_footprint"};
+        // Drive refinement of d with the established reference shape whenever
+        // it is feasible. All q variants remain in `evaluations` for local
+        // Pareto retention and global DP selection.
+        if (reference.status == adaptive_pivot_g2::SearchSampleStatus::kFeasible) {
+          return reference;
         }
-        const auto profile = adaptive_pivot_g2::parameterize_time(
-            candidate.samples, limits_, maximum_straight_speed(limits_),
-            maximum_straight_speed(limits_));
-        if (!profile.valid) {
-          return adaptive_pivot_g2::SearchEvaluation{
-          adaptive_pivot_g2::SearchSampleStatus::kInfeasible,
-          std::numeric_limits<double>::infinity(), 0U,
-          profile.rejection_reason};
+        if (best.status == adaptive_pivot_g2::SearchSampleStatus::kFeasible) {
+          return best;
         }
-        double max_abs_angular_speed = 0.0;
-        for (const double angular_speed : profile.angular_speed) {
-          max_abs_angular_speed = std::max(
-              max_abs_angular_speed, std::abs(angular_speed));
-        }
-        const double objective_cost =
-        adaptive_pivot_g2::stable_candidate_cost(
-            peak_cost, max_abs_angular_speed, candidate.curvature_energy,
-            limits_.max_angular_speed, curvature_energy_scale_,
-            selection_weights_);
-        const std::size_t payload_index = evaluations.size();
-        evaluations.push_back(
-          {std::move(candidate), profile.total_time,
-            std::numeric_limits<double>::infinity(), peak_cost,
-            max_abs_angular_speed, objective_cost});
         return adaptive_pivot_g2::SearchEvaluation{
-        adaptive_pivot_g2::SearchSampleStatus::kFeasible,
-        objective_cost, payload_index, ""};
+        saw_unsafe_shape ? adaptive_pivot_g2::SearchSampleStatus::kUnsafe :
+        adaptive_pivot_g2::SearchSampleStatus::kInfeasible,
+        std::numeric_limits<double>::infinity(), 0U, last_rejection};
         });
-    decision.evaluation_count = search.samples.size();
+    decision.trim_evaluation_count = search.samples.size();
+    decision.evaluation_count = shape_evaluation_count;
     decision.feasible_count = search.feasible_count;
     if (search.valid_domain) {
       const double half_angle_tangent = std::tan(0.5 * std::abs(turn_angle));
@@ -1312,8 +1944,13 @@ bool AdaptivePivotG2Smoother::smooth(
           return evaluations[lhs].objective_cost <
                  evaluations[rhs].objective_cost;
         }
-        return evaluations[lhs].candidate.trim_distance <
-               evaluations[rhs].candidate.trim_distance;
+        const double left_trim = evaluations[lhs].candidate.trim_distance;
+        const double right_trim = evaluations[rhs].candidate.trim_distance;
+        if (std::abs(left_trim - right_trim) > kEpsilon) {
+          return left_trim < right_trim;
+        }
+        return evaluations[lhs].candidate.control_fraction <
+               evaluations[rhs].candidate.control_fraction;
         });
 
     std::vector<std::size_t> retained;
@@ -1326,12 +1963,44 @@ bool AdaptivePivotG2Smoother::smooth(
         }
       };
     if (!competitive.empty()) {
+      // Preserve a compact Pareto-like basis before filling by the aggregate
+      // local objective. Joint (d,q) search otherwise lets several nearly
+      // identical shapes occupy all retained slots and deprives the global DP
+      // of the alternatives it needs to resolve adjacent-corner overlap.
       retain(competitive.front());
+      retain(*std::min_element(
+          competitive.begin(), competitive.end(),
+          [&evaluations](std::size_t lhs, std::size_t rhs) {
+            return evaluations[lhs].candidate.curvature_energy <
+                   evaluations[rhs].candidate.curvature_energy;
+        }));
+      retain(*std::min_element(
+          competitive.begin(), competitive.end(),
+          [&evaluations](std::size_t lhs, std::size_t rhs) {
+            return evaluations[lhs].candidate.max_abs_curvature <
+                   evaluations[rhs].candidate.max_abs_curvature;
+        }));
+      retain(*std::min_element(
+          competitive.begin(), competitive.end(),
+          [&evaluations](std::size_t lhs, std::size_t rhs) {
+            return evaluations[lhs].peak_cost < evaluations[rhs].peak_cost;
+        }));
+      retain(*std::min_element(
+          competitive.begin(), competitive.end(),
+          [&evaluations](std::size_t lhs, std::size_t rhs) {
+            return evaluations[lhs].common_window_time <
+                   evaluations[rhs].common_window_time;
+        }));
       const auto trim_order = std::minmax_element(
           competitive.begin(), competitive.end(),
         [&evaluations](std::size_t lhs, std::size_t rhs) {
-          return evaluations[lhs].candidate.trim_distance <
-                 evaluations[rhs].candidate.trim_distance;
+          const double left_trim = evaluations[lhs].candidate.trim_distance;
+          const double right_trim = evaluations[rhs].candidate.trim_distance;
+          if (std::abs(left_trim - right_trim) > kEpsilon) {
+            return left_trim < right_trim;
+          }
+          return evaluations[lhs].candidate.control_fraction <
+                 evaluations[rhs].candidate.control_fraction;
           });
       retain(*trim_order.first);
       retain(*trim_order.second);
@@ -1352,12 +2021,12 @@ bool AdaptivePivotG2Smoother::smooth(
     if (decision.optimization_states.empty()) {
       RCLCPP_WARN(
           logger_,
-          "Adaptive Pivot-G2 corner %zu has no safe state "
+          "PSTMO corner %zu has no safe state "
           "(pivot_safe=%d, feasible=%zu, competitive=%zu)",
           index, decision.pivot_safe, decision.feasible_count,
           decision.competitive_count);
       throw nav2_core::FailedToSmoothPath(
-                "Adaptive Pivot-G2 found no safe pivot or G2 state");
+                "PSTMO found no safe pivot or G2 state");
     }
     decision.transition_states = std::move(evaluations);
     decisions.push_back(std::move(decision));
@@ -1389,14 +2058,14 @@ bool AdaptivePivotG2Smoother::smooth(
           }));
     RCLCPP_WARN(
         logger_,
-        "Adaptive Pivot-G2 DP found no compatible sequence "
+        "PSTMO DP found no compatible sequence "
         "(corners=%zu, states=%zu, compatible_edges=%zu, "
         "min_segment=%.9f, margin=%.9f, segments_below_margin=%zu)",
         decisions.size(), path_optimization.state_count,
         path_optimization.compatible_edge_count, minimum_shared_segment,
         effective_segment_margin, segments_below_margin);
     throw nav2_core::FailedToSmoothPath(
-              "Adaptive Pivot-G2 has no globally compatible corner-state sequence");
+              "PSTMO has no globally compatible corner-state sequence");
   }
   for (std::size_t index = 0; index < decisions.size(); ++index) {
     const auto & state = decisions[index].optimization_states[
@@ -1433,11 +2102,11 @@ bool AdaptivePivotG2Smoother::smooth(
     decisions, output, false, effective_segment_margin,
     &selected_timing_rejection);
   bool selected_sweep_valid = stitched_path_is_safe(
-    output, costmap, collision_checker, footprint, max_footprint_cost_,
+    output, costmap, collision_checker, safety_footprint, max_footprint_cost_,
     corner_angle_threshold_, &selected_stitch_rejection);
   if (selected_sweep_valid &&
     !terminal_rotation_is_safe(
-      output, costmap, collision_checker, footprint, max_footprint_cost_))
+      output, costmap, collision_checker, safety_footprint, max_footprint_cost_))
   {
     selected_sweep_valid = false;
     selected_stitch_rejection = "unsafe_terminal_rotation";
@@ -1460,11 +2129,11 @@ bool AdaptivePivotG2Smoother::smooth(
       decisions, pivot_fallback, true, effective_segment_margin,
       &fallback_timing_rejection);
     bool fallback_sweep_valid = stitched_path_is_safe(
-      pivot_fallback, costmap, collision_checker, footprint,
+      pivot_fallback, costmap, collision_checker, safety_footprint,
       max_footprint_cost_, corner_angle_threshold_, &fallback_stitch_rejection);
     if (fallback_sweep_valid &&
       !terminal_rotation_is_safe(
-        pivot_fallback, costmap, collision_checker, footprint,
+        pivot_fallback, costmap, collision_checker, safety_footprint,
         max_footprint_cost_))
     {
       fallback_sweep_valid = false;
@@ -1473,27 +2142,55 @@ bool AdaptivePivotG2Smoother::smooth(
     if (!all_pivots_safe || !fallback_endpoints_valid ||
       !fallback_timing_valid || !fallback_sweep_valid)
     {
-      std::ostringstream reason;
-      reason << "Adaptive Pivot-G2 stitched path and all-pivot fallback are unsafe"
-             << " (selected: endpoints=" << selected_endpoints_valid
-             << ", timing=" << selected_timing_valid
-             << ", sweep=" << selected_sweep_valid
-             << ", reason=" << selected_stitch_rejection
-             << "; fallback: pivots=" << all_pivots_safe
-             << ", endpoints=" << fallback_endpoints_valid
-             << ", timing=" << fallback_timing_valid
-             << ", timing_reason=" << fallback_timing_rejection
-             << ", sweep=" << fallback_sweep_valid
-             << ", reason=" << fallback_stitch_rejection << ')';
-      RCLCPP_WARN(logger_, "%s", reason.str().c_str());
-      throw nav2_core::FailedToSmoothPath(
+      std::string raw_input_rejection;
+      bool raw_input_safe = stitched_path_is_safe(
+        input_path, costmap, collision_checker, footprint, max_footprint_cost_,
+        corner_angle_threshold_, &raw_input_rejection);
+      if (raw_input_safe &&
+        !terminal_rotation_is_safe(
+          input_path, costmap, collision_checker, footprint, max_footprint_cost_))
+      {
+        raw_input_safe = false;
+        raw_input_rejection = "unsafe_terminal_rotation";
+      }
+      if (raw_input_safe) {
+        output = input_path;
+        for (auto & decision : decisions) {
+          decision.use_transition = false;
+        }
+        fallback_status = "raw_input";
+        selected_stitch_rejection +=
+          selected_stitch_rejection.empty() ? "raw_input_fallback" :
+          ";raw_input_fallback";
+        RCLCPP_WARN(
+          logger_,
+          "PSTMO returned the footprint-safe input path after both optimized "
+          "outputs were rejected");
+      } else {
+        std::ostringstream reason;
+        reason << "PSTMO stitched path, all-pivot fallback, and input path are unsafe"
+               << " (selected: endpoints=" << selected_endpoints_valid
+               << ", timing=" << selected_timing_valid
+               << ", sweep=" << selected_sweep_valid
+               << ", reason=" << selected_stitch_rejection
+               << "; fallback: pivots=" << all_pivots_safe
+               << ", endpoints=" << fallback_endpoints_valid
+               << ", timing=" << fallback_timing_valid
+               << ", timing_reason=" << fallback_timing_rejection
+               << ", sweep=" << fallback_sweep_valid
+               << ", reason=" << fallback_stitch_rejection
+               << "; input_reason=" << raw_input_rejection << ')';
+        RCLCPP_WARN(logger_, "%s", reason.str().c_str());
+        throw nav2_core::FailedToSmoothPath(
               reason.str());
+      }
+    } else {
+      output = std::move(pivot_fallback);
+      for (auto & decision : decisions) {
+        decision.use_transition = false;
+      }
+      fallback_status = "all_pivot";
     }
-    output = std::move(pivot_fallback);
-    for (auto & decision : decisions) {
-      decision.use_transition = false;
-    }
-    fallback_status = "all_pivot";
   }
   if (timed_out()) {
     return false;
@@ -1502,9 +2199,9 @@ bool AdaptivePivotG2Smoother::smooth(
 
   const std::chrono::duration<double> elapsed = std::chrono::steady_clock::now() - started;
   publish_diagnostics(
-    decisions, path_optimization, rejection_counts, conditioning.result,
-    input_point_count, conditioning.maximum_deviation,
-    conditioning.oscillation_maximum_deviation,
+    decisions, path_optimization, rejection_counts, conditioning,
+    input_point_count, los_result, conditioning_maximum_deviation,
+    oscillation_maximum_deviation,
     effective_segment_margin, fallback_status, selected_stitch_rejection,
     path.poses.size(), elapsed.count());
   return true;

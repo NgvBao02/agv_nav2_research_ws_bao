@@ -15,6 +15,9 @@
 #ifndef ADAPTIVE_PIVOT_G2__QUINTIC_TRANSITION_HPP_
 #define ADAPTIVE_PIVOT_G2__QUINTIC_TRANSITION_HPP_
 
+#include <cstddef>
+#include <vector>
+
 #include "adaptive_pivot_g2/types.hpp"
 
 namespace adaptive_pivot_g2
@@ -34,6 +37,31 @@ TransitionCandidate generate_quintic_transition_for_trim(
   const RobotLimits & limits,
   const TransitionOptions & options,
   double trim_distance);
+
+/// Return an angle-aware q/d value close to the minimum-curvature-energy
+/// shape of this symmetric quintic family. The result is only a search centre;
+/// obstacle-aware optimization must still evaluate neighboring shapes.
+double recommended_control_fraction(double absolute_turn_angle);
+
+/// Generate a deterministic, sorted q/d search bank around the angle-aware
+/// centre. The odd sample count includes the centre and reaches both bounds.
+std::vector<double> generate_control_fraction_candidates(
+  double absolute_turn_angle,
+  double minimum_fraction,
+  double maximum_fraction,
+  std::size_t sample_count);
+
+/// Generate a quintic G2 transition for an explicit pair (d, q/d).
+///
+/// The construction keeps P1-P0 == P2-P1 and P5-P4 == P4-P3, so the second
+/// derivative and curvature remain zero at both straight-line junctions for
+/// every valid control_fraction. The caller owns the two-dimensional search.
+TransitionCandidate generate_quintic_transition_for_shape(
+  const CornerInput & corner,
+  const RobotLimits & limits,
+  const TransitionOptions & options,
+  double trim_distance,
+  double control_fraction);
 
 }  // namespace adaptive_pivot_g2
 

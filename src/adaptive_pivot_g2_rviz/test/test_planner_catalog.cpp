@@ -84,7 +84,7 @@ TEST(SmootherCatalog, AcceptsOnlyExactConfiguredIds)
   EXPECT_TRUE(is_supported_smoother("simple"));
   EXPECT_TRUE(is_supported_smoother("savitzky_golay"));
   EXPECT_TRUE(is_supported_smoother("constrained"));
-  EXPECT_TRUE(is_supported_smoother("pivot_g2"));
+  EXPECT_TRUE(is_supported_smoother("pstmo"));
   EXPECT_TRUE(is_supported_smoother("adaptive_hybrid"));
   EXPECT_FALSE(is_supported_smoother("pivot_g2_fixed"));
   EXPECT_FALSE(is_supported_smoother("adaptive_hybrid_fixed"));
@@ -101,7 +101,7 @@ TEST(SmootherCatalog, ExecutionMethodsIncludeRawAndConfiguredSmoothers)
   EXPECT_TRUE(is_supported_execution_method("simple"));
   EXPECT_TRUE(is_supported_execution_method("savitzky_golay"));
   EXPECT_TRUE(is_supported_execution_method("constrained"));
-  EXPECT_TRUE(is_supported_execution_method("pivot_g2"));
+  EXPECT_TRUE(is_supported_execution_method("pstmo"));
   EXPECT_TRUE(is_supported_execution_method("adaptive_hybrid"));
   EXPECT_FALSE(is_supported_execution_method("none"));
   EXPECT_FALSE(is_supported_execution_method("pivot_g2_fixed"));

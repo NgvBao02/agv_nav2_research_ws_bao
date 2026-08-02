@@ -17,6 +17,7 @@
 
 #include <cstddef>
 #include <limits>
+#include <string>
 #include <vector>
 
 namespace adaptive_pivot_g2
@@ -50,6 +51,37 @@ struct CandidateSelection
   double selected_score{-std::numeric_limits<double>::infinity()};
 };
 
+struct PathQualityMetrics
+{
+  bool valid{false};
+  bool safe{false};
+  bool raw_fallback{false};
+  double path_length{std::numeric_limits<double>::infinity()};
+  double max_abs_curvature{std::numeric_limits<double>::infinity()};
+  double curvature_energy{std::numeric_limits<double>::infinity()};
+  double pivot_rotation{std::numeric_limits<double>::infinity()};
+  double peak_proximity_cost{std::numeric_limits<double>::infinity()};
+};
+
+struct PathQualityWeights
+{
+  double path_length{0.15};
+  double max_abs_curvature{0.25};
+  double curvature_energy{0.35};
+  double pivot_rotation{0.10};
+  double proximity_cost{0.15};
+  double raw_fallback_penalty{0.50};
+};
+
+struct LosBranchSelection
+{
+  bool valid{false};
+  bool use_los{false};
+  double no_los_score{std::numeric_limits<double>::infinity()};
+  double los_score{std::numeric_limits<double>::infinity()};
+  std::string reason{"no_valid_branch"};
+};
+
 /// Select the highest-utility candidate inside a near-fastest time gate.
 ///
 /// The three objectives are min-max normalized only across candidates whose
@@ -73,6 +105,29 @@ double stable_candidate_cost(
   double max_angular_speed,
   double curvature_energy_scale,
   const SelectionWeights & weights);
+
+/// Score a complete, already safety-checked path on stable physical scales.
+/// Lower is better. Pivot effort is explicit so an all-pivot path cannot win
+/// merely because its translational curvature is zero.
+double stable_path_quality_score(
+  const PathQualityMetrics & metrics,
+  double reference_path_length,
+  double wheel_separation,
+  double curvature_energy_scale,
+  double maximum_proximity_cost,
+  const PathQualityWeights & weights);
+
+/// Select LOS only when it beats the no-LOS result by minimum_improvement.
+/// A tie deliberately keeps the original corridor.
+LosBranchSelection select_los_branch(
+  const PathQualityMetrics & no_los,
+  const PathQualityMetrics & los,
+  double reference_path_length,
+  double wheel_separation,
+  double curvature_energy_scale,
+  double maximum_proximity_cost,
+  double minimum_improvement,
+  const PathQualityWeights & weights);
 
 }  // namespace adaptive_pivot_g2
 

@@ -22,6 +22,7 @@
 
 #include "adaptive_pivot_g2/adaptive_search.hpp"
 #include "adaptive_pivot_g2/candidate_selection.hpp"
+#include "adaptive_pivot_g2/line_of_sight.hpp"
 #include "adaptive_pivot_g2/path_conditioning.hpp"
 #include "adaptive_pivot_g2/path_optimization.hpp"
 #include "adaptive_pivot_g2/types.hpp"
@@ -54,6 +55,9 @@ public:
   bool smooth(nav_msgs::msg::Path & path, const rclcpp::Duration & max_time) override;
 
 private:
+  bool smooth_single_branch(
+    nav_msgs::msg::Path & path, const rclcpp::Duration & max_time);
+
   struct TransitionState
   {
     adaptive_pivot_g2::TransitionCandidate candidate;
@@ -84,11 +88,30 @@ private:
     double maximum_search_radius{0.0};
     double minimum_search_trim{0.0};
     double maximum_search_trim{0.0};
+    std::size_t trim_evaluation_count{0};
     std::size_t evaluation_count{0};
     std::size_t feasible_count{0};
     std::vector<TransitionState> transition_states;
     std::vector<adaptive_pivot_g2::CornerState> optimization_states;
   };
+
+  struct PreparedPath
+  {
+    std::vector<adaptive_pivot_g2::Vec2> points;
+    adaptive_pivot_g2::PathConditioningResult conditioning;
+    adaptive_pivot_g2::LineOfSightPruningResult los_result;
+    std::vector<geometry_msgs::msg::Point> safety_footprint;
+    double conditioning_maximum_deviation{0.0};
+    double oscillation_maximum_deviation{0.0};
+  };
+
+  PreparedPath prepare_path(
+    const nav_msgs::msg::Path & path,
+    const std::vector<adaptive_pivot_g2::Vec2> & raw_points,
+    const std::shared_ptr<nav2_costmap_2d::Costmap2D> & costmap,
+    const std::vector<geometry_msgs::msg::Point> & footprint) const;
+
+  std::vector<double> control_fractions_for_angle(double turn_angle) const;
 
   void publish_diagnostics(
     const std::vector<CornerDecision> & decisions,
@@ -96,6 +119,7 @@ private:
     const std::map<std::string, std::size_t> & rejection_counts,
     const adaptive_pivot_g2::PathConditioningResult & conditioning,
     std::size_t input_point_count,
+    const adaptive_pivot_g2::LineOfSightPruningResult & los_result,
     double effective_conditioning_deviation,
     double effective_oscillation_deviation,
     double effective_segment_margin,
@@ -137,7 +161,12 @@ private:
   adaptive_pivot_g2::RobotLimits limits_;
   adaptive_pivot_g2::TransitionOptions transition_options_;
   adaptive_pivot_g2::AdaptiveSearchOptions adaptive_search_options_;
-  std::size_t retained_candidates_per_corner_{5};
+  double minimum_trim_distance_{0.02};
+  double maximum_trim_distance_{0.8};
+  double minimum_control_fraction_{0.08};
+  double maximum_control_fraction_{0.45};
+  std::size_t control_fraction_samples_{1U};
+  std::size_t retained_candidates_per_corner_{9};
   double curvature_energy_scale_{1.0};
   double segment_margin_override_{0.0};
   double delta_time_selection_{0.15};
@@ -154,6 +183,12 @@ private:
   double output_spacing_{0.05};
   unsigned char max_footprint_cost_{252};
   bool line_of_sight_pruning_{false};
+  double line_of_sight_footprint_padding_{0.15};
+  bool compare_los_against_no_los_{true};
+  double los_selection_minimum_improvement_{0.005};
+  adaptive_pivot_g2::PathQualityWeights path_quality_weights_;
+  bool diagnostics_publish_enabled_{true};
+  std::string last_diagnostics_message_;
   std::vector<geometry_msgs::msg::Point> fallback_footprint_;
 };
 

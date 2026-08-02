@@ -26,7 +26,7 @@ inline constexpr std::array<std::string_view, 5> kSmootherIds = {
   "simple",
   "savitzky_golay",
   "constrained",
-  "pivot_g2",
+  "pstmo",
   "adaptive_hybrid",
 };
 
@@ -37,7 +37,7 @@ inline constexpr std::array<std::string_view, 6> kExecutionMethodIds = {
   "simple",
   "savitzky_golay",
   "constrained",
-  "pivot_g2",
+  "pstmo",
   "adaptive_hybrid",
 };
 

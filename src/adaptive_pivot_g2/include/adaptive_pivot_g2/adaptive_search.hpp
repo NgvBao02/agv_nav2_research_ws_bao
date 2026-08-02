@@ -85,6 +85,21 @@ AdaptiveSearchResult search_trim_distance(
   const AdaptiveSearchOptions & options,
   const TrimEvaluator & evaluator);
 
+/// Search d directly on a metric trim interval.
+///
+/// Unlike search_trim_distance(), this API does not derive d from a circular
+/// design radius. It is the appropriate domain when the Bezier shape variable
+/// q is optimized independently and the circular-radius analogy no longer
+/// predicts the actual peak curvature. The angle is retained only to report
+/// the equivalent reference radius of each sample.
+AdaptiveSearchResult search_direct_trim_distance(
+  double absolute_turn_angle,
+  double minimum_trim,
+  double maximum_trim,
+  double minimum_meaningful_trim_resolution,
+  const AdaptiveSearchOptions & options,
+  const TrimEvaluator & evaluator);
+
 }  // namespace adaptive_pivot_g2
 
 #endif  // ADAPTIVE_PIVOT_G2__ADAPTIVE_SEARCH_HPP_

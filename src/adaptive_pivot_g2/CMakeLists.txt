@@ -7,6 +7,7 @@ add_library(${PROJECT_NAME} SHARED
   src/adaptive_search.cpp
   src/candidate_selection.cpp
   src/hybrid_selection.cpp
+  src/line_of_sight.cpp
   src/path_conditioning.cpp
   src/path_optimization.cpp
   src/quintic_transition.cpp
@@ -57,6 +58,10 @@ if(BUILD_TESTING)
   ament_add_gtest(test_path_conditioning test/test_path_conditioning.cpp)
   target_compile_features(test_path_conditioning PRIVATE cxx_std_17)
   target_link_libraries(test_path_conditioning ${PROJECT_NAME})
+
+  ament_add_gtest(test_line_of_sight test/test_line_of_sight.cpp)
+  target_compile_features(test_line_of_sight PRIVATE cxx_std_17)
+  target_link_libraries(test_line_of_sight ${PROJECT_NAME})
 endif()
 
 ament_export_include_directories(include)

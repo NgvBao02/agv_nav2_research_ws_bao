@@ -396,7 +396,7 @@ class TestRobotDescriptionContract:
             > power['motor_rail']['regulated_voltage_v']
         )
 
-        smoother = self.nav2['smoother_server']['ros__parameters']['pivot_g2']
+        smoother = self.nav2['smoother_server']['ros__parameters']['pstmo']
         assert math.isclose(smoother['wheel_separation'], WHEEL_SEPARATION)
         for costmap_name in ('local_costmap', 'global_costmap'):
             parameters = self.nav2[costmap_name][costmap_name]['ros__parameters']

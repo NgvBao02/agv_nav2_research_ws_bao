@@ -117,5 +117,83 @@ TEST(CandidateSelection, StableCostClampsInscribedInflationCost)
   EXPECT_DOUBLE_EQ(cost, 1.0);
 }
 
+PathQualityMetrics nominal_path_quality()
+{
+  PathQualityMetrics metrics;
+  metrics.valid = true;
+  metrics.safe = true;
+  metrics.path_length = 10.0;
+  metrics.max_abs_curvature = 2.0;
+  metrics.curvature_energy = 4.0;
+  metrics.pivot_rotation = 0.0;
+  metrics.peak_proximity_cost = 100.0;
+  return metrics;
+}
+
+TEST(CandidateSelection, LosBranchRequiresARealQualityImprovement)
+{
+  const auto no_los = nominal_path_quality();
+  auto los = no_los;
+  los.path_length = 9.5;
+  los.max_abs_curvature = 1.5;
+  los.curvature_energy = 3.0;
+
+  const auto selected = select_los_branch(
+    no_los, los, 10.0, 0.2548, 1.0, 252.0, 0.005,
+    PathQualityWeights{});
+
+  ASSERT_TRUE(selected.valid);
+  EXPECT_TRUE(selected.use_los);
+  EXPECT_EQ(selected.reason, "los_quality_improvement");
+  EXPECT_LT(selected.los_score, selected.no_los_score);
+}
+
+TEST(CandidateSelection, LosTieKeepsOriginalCorridor)
+{
+  const auto metrics = nominal_path_quality();
+  const auto selected = select_los_branch(
+    metrics, metrics, 10.0, 0.2548, 1.0, 252.0, 0.0,
+    PathQualityWeights{});
+
+  ASSERT_TRUE(selected.valid);
+  EXPECT_FALSE(selected.use_los);
+  EXPECT_EQ(selected.reason, "no_los_quality_not_worse");
+}
+
+TEST(CandidateSelection, RawFallbackPenaltyRejectsBadLosOutlier)
+{
+  const auto no_los = nominal_path_quality();
+  auto los = no_los;
+  los.path_length = 9.0;
+  los.raw_fallback = true;
+
+  const auto selected = select_los_branch(
+    no_los, los, 10.0, 0.2548, 1.0, 252.0, 0.005,
+    PathQualityWeights{});
+
+  ASSERT_TRUE(selected.valid);
+  EXPECT_FALSE(selected.use_los);
+  EXPECT_LT(selected.no_los_score, selected.los_score);
+}
+
+TEST(CandidateSelection, AllPivotPathPaysExplicitRotationCost)
+{
+  auto smooth = nominal_path_quality();
+  auto pivot = smooth;
+  smooth.curvature_energy = 1.0;
+  pivot.curvature_energy = 0.0;
+  pivot.max_abs_curvature = 0.0;
+  pivot.pivot_rotation = 2.0;
+
+  const double smooth_score = stable_path_quality_score(
+    smooth, 10.0, 0.2548, 1.0, 252.0, PathQualityWeights{});
+  const double pivot_score = stable_path_quality_score(
+    pivot, 10.0, 0.2548, 1.0, 252.0, PathQualityWeights{});
+
+  EXPECT_TRUE(std::isfinite(smooth_score));
+  EXPECT_TRUE(std::isfinite(pivot_score));
+  EXPECT_GT(pivot_score, smooth_score);
+}
+
 }  // namespace
 }  // namespace adaptive_pivot_g2

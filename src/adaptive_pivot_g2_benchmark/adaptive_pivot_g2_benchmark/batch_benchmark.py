@@ -51,7 +51,7 @@ SMOOTHERS = {
     'simple': 'simple_smoother',
     'savitzky_golay': 'savitzky_golay',
     'constrained': 'constrained',
-    'pivot_g2': 'pivot_g2',
+    'pstmo': 'pstmo',
     'adaptive_hybrid': 'adaptive_hybrid',
 }
 
@@ -128,8 +128,8 @@ class BatchBenchmark(Node):
             / 'research_scenarios.yaml'
         )
         self.declare_parameter('scenario_file', default_scenarios)
-        self.declare_parameter('output_csv', '/tmp/pivot_g2_benchmark.csv')
-        self.declare_parameter('output_json', '/tmp/pivot_g2_benchmark_summary.json')
+        self.declare_parameter('output_csv', '/tmp/pstmo_benchmark.csv')
+        self.declare_parameter('output_json', '/tmp/pstmo_benchmark_summary.json')
         self.declare_parameter(
             'planners',
             [
@@ -207,7 +207,7 @@ class BatchBenchmark(Node):
         )
         self.create_subscription(
             String,
-            '/research/pivot_g2/diagnostics',
+            '/research/pstmo/diagnostics',
             self._diagnostics_callback,
             10,
         )
@@ -222,7 +222,7 @@ class BatchBenchmark(Node):
         try:
             self.latest_pivot_diagnostics = json.loads(message.data)
         except json.JSONDecodeError:
-            self.get_logger().warning('Ignoring malformed Pivot-G2 diagnostics JSON')
+            self.get_logger().warning('Ignoring malformed PSTMO diagnostics JSON')
 
     def _hybrid_diagnostics_callback(self, message: String) -> None:
         try:
@@ -383,7 +383,7 @@ class BatchBenchmark(Node):
         # DDS delivery can arrive one executor cycle later for very short
         # straight paths. Give the selected research plugin a bounded wall-time
         # window so its decision is attached to the correct CSV row.
-        pivot_method = method == 'pivot_g2'
+        pivot_method = method == 'pstmo'
         hybrid_method = method == 'adaptive_hybrid'
         research_method = pivot_method or hybrid_method
         deadline = time.monotonic() + 0.20
@@ -435,12 +435,12 @@ class BatchBenchmark(Node):
             **calculate_footprint_clearance(output_path, self.occupancy_grid),
             **calculate_path_deviation(common_points, raw_points),
         }
-        if method == 'pivot_g2' and (
+        if method == 'pstmo' and (
             self.latest_pivot_diagnostics
         ):
             for key, value in self.latest_pivot_diagnostics.items():
                 if key not in {'method'}:
-                    row[f'pivot_{key}'] = value
+                    row[f'pstmo_{key}'] = value
         if method == 'adaptive_hybrid' and (
             self.latest_hybrid_diagnostics
         ):

@@ -28,7 +28,7 @@ luồng nghiên cứu chính chạy hoàn toàn trong ROS 2.
 - `matlab/pivot_g2`: bản lưu source thử ý tưởng cũ, không nằm trong đường chạy.
 
 Pipeline hiện tại cố ý chỉ giữ RAW và năm smoother: Simple, Savitzky–Golay,
-Constrained, Pivot–G2 adaptive và Adaptive Hybrid. Hai ablation fixed cùng
+Constrained, PSTMO và Adaptive Hybrid. Hai ablation fixed cùng
 controller/tốc độ thích nghi đã được bỏ khỏi đường chạy. Mọi phương pháp dùng
 chung `RegulatedPurePursuitController`, `PoseProgressChecker`,
 `StoppedGoalChecker` chuẩn và `nav2_velocity_smoother`. Controller dùng vận tốc
@@ -123,7 +123,7 @@ publish cùng input và các màu:
 - vàng: Nav2 Simple;
 - cyan: Nav2 Savitzky–Golay;
 - xanh lá: Nav2 Constrained;
-- magenta: Pivot–G2 adaptive;
+- magenta: PSTMO;
 - xanh lam đậm: Adaptive Hybrid;
 - trắng: quỹ đạo xe thực thi.
 
@@ -135,7 +135,7 @@ publish cùng input và các màu:
 3. nhấn **Áp dụng và lập lại đường**.
 
 Đường đỏ `RAW planner` được tạo lại bằng đúng planner đã chọn. Năm nút riêng
-cho Simple, Savitzky–Golay, Constrained, Pivot–G2 adaptive và Adaptive Hybrid
+cho Simple, Savitzky–Golay, Constrained, PSTMO và Adaptive Hybrid
 cho phép ẩn/hiện từng đường; **Hiện tất cả** và **Chỉ RAW** là hai thao tác
 nhanh. Tất cả phương pháp của một generation nhận đúng cùng raw path, và bảng
 metric hiển thị kết quả riêng từng phương pháp.
@@ -183,7 +183,7 @@ ros2 run adaptive_pivot_g2_benchmark execution_matrix -- \
   --scenario-file "$PWD/src/adaptive_pivot_g2_benchmark/config/open_arena_scenarios.yaml" \
   --scenario short_open_diagonal \
   --planners NavFnAStar NavFnDijkstra ThetaStar Smac2D SmacHybrid \
-  --methods raw simple savitzky_golay constrained pivot_g2 adaptive_hybrid \
+  --methods raw simple savitzky_golay constrained pstmo adaptive_hybrid \
   --repetitions 3 --output-dir "$PWD/results/execution_matrix"
 ```
 

@@ -63,8 +63,8 @@ class TestPathMetrics(unittest.TestCase):
 
     def test_parse_selection_trims_and_removes_duplicates(self):
         self.assertEqual(
-            _parse_selection(' pivot_g2, simple,pivot_g2, '),
-            ['pivot_g2', 'simple'],
+            _parse_selection(' pstmo, simple,pstmo, '),
+            ['pstmo', 'simple'],
         )
 
     @staticmethod
@@ -233,11 +233,11 @@ class TestPathMetrics(unittest.TestCase):
     def test_smoother_visibility_accepts_only_exact_ordered_ids(self):
         payload = (
             '{"methods":["adaptive_hybrid","simple","simple",'
-            '"pivot_g2"]}'
+            '"pstmo"]}'
         )
         self.assertEqual(
             normalize_smoother_visibility(payload),
-            ('simple', 'pivot_g2', 'adaptive_hybrid'),
+            ('simple', 'pstmo', 'adaptive_hybrid'),
         )
         self.assertEqual(
             normalize_smoother_visibility('{"methods":[]}'), ()
@@ -407,7 +407,7 @@ class TestPathMetrics(unittest.TestCase):
         cached_path.poses = [self._pose(0.0, 0.0, 0.0)]
         comparison._method_path_cache = {
             'simple': cached_path,
-            'pivot_g2': cached_path,
+            'pstmo': cached_path,
         }
 
         def spin_until(predicate, timeout=3.0):
@@ -443,13 +443,13 @@ class TestPathMetrics(unittest.TestCase):
                 )
             )
 
-            selection.data = '{"methods":["pivot_g2"]}'
+            selection.data = '{"methods":["pstmo"]}'
             selector.publish(selection)
             self.assertTrue(
                 spin_until(
                     lambda: visibility_states
-                    and visibility_states[-1] == ('pivot_g2',)
-                    and path_states.get('pivot_g2') is True
+                    and visibility_states[-1] == ('pstmo',)
+                    and path_states.get('pstmo') is True
                     and path_states.get('simple') is False
                 )
             )
@@ -630,7 +630,7 @@ class TestPathMetrics(unittest.TestCase):
             result_path.write_text(json.dumps({
                 'scenario': 'west_east_center',
                 'planner': 'ThetaStar',
-                'method': 'pivot_g2',
+                'method': 'pstmo',
                 'success': True,
                 'repetition': 2,
                 'configuration_sha256': 'config-a',
@@ -640,7 +640,7 @@ class TestPathMetrics(unittest.TestCase):
                 result_path,
                 'west_east_center',
                 'ThetaStar',
-                'pivot_g2',
+                'pstmo',
                 2,
                 'config-a',
             )
@@ -658,21 +658,21 @@ class TestPathMetrics(unittest.TestCase):
                 result_path,
                 'west_east_center',
                 'ThetaStar',
-                'pivot_g2',
+                'pstmo',
                 2,
                 'config-b',
             ))
             result_path.write_text(json.dumps({
                 'scenario': 'west_east_center',
                 'planner': 'ThetaStar',
-                'method': 'pivot_g2',
+                'method': 'pstmo',
                 'success': True,
             }), encoding='utf-8')
             self.assertIsNone(_matching_successful_record(
                 result_path,
                 'west_east_center',
                 'ThetaStar',
-                'pivot_g2',
+                'pstmo',
                 2,
             ))
 
@@ -694,7 +694,7 @@ class TestPathMetrics(unittest.TestCase):
 
     def test_execution_matrix_summary_does_not_duplicate_high_rate_traces(self):
         compact = _compact_summary_record({
-            'method': 'pivot_g2',
+            'method': 'pstmo',
             'success': True,
             'tracking_rmse_m': 0.01,
             'ground_truth_state_trace': [[0.0, 1.0, 2.0]],

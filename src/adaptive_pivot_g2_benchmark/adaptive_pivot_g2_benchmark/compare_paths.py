@@ -40,7 +40,7 @@ SMOOTHER_PLUGINS = {
     'simple': 'simple_smoother',
     'savitzky_golay': 'savitzky_golay',
     'constrained': 'constrained',
-    'pivot_g2': 'pivot_g2',
+    'pstmo': 'pstmo',
     'adaptive_hybrid': 'adaptive_hybrid',
 }
 SMOOTHER_IDS = tuple(SMOOTHER_PLUGINS)

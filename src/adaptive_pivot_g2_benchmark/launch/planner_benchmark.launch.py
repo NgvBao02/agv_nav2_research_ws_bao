@@ -116,7 +116,7 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'smoothers',
             default_value=(
-                'simple,savitzky_golay,constrained,pivot_g2,'
+                'simple,savitzky_golay,constrained,pstmo,'
                 'adaptive_hybrid'
             ),
         ),

@@ -24,7 +24,7 @@ DEFAULT_METHODS = [
     'simple',
     'savitzky_golay',
     'constrained',
-    'pivot_g2',
+    'pstmo',
     'adaptive_hybrid',
 ]
 

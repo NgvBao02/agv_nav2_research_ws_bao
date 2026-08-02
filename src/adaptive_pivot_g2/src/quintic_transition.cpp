@@ -129,10 +129,12 @@ TransitionCandidate generate_quintic_transition_impl(
   const RobotLimits & limits,
   const TransitionOptions & options,
   bool use_explicit_trim,
-  double explicit_trim)
+  double explicit_trim,
+  double control_fraction)
 {
   TransitionCandidate candidate;
   candidate.design_radius = use_explicit_trim ? 0.0 : options.design_radius;
+  candidate.control_fraction = control_fraction;
 
   if (!finite(corner.vertex) || !finite_positive(corner.incoming_length) ||
     !finite_positive(corner.outgoing_length))
@@ -142,7 +144,7 @@ TransitionCandidate generate_quintic_transition_impl(
   }
   if ((!use_explicit_trim && !finite_positive(options.design_radius)) ||
     (use_explicit_trim && !finite_positive(explicit_trim)) ||
-    !finite_positive(options.control_fraction) || options.control_fraction >= 0.5 ||
+    !finite_positive(control_fraction) || control_fraction >= 0.5 ||
     !finite_positive(options.sample_spacing) ||
     (!use_explicit_trim &&
     (!finite_positive(options.max_trim_fraction) || options.max_trim_fraction >= 0.5)))
@@ -198,7 +200,8 @@ TransitionCandidate generate_quintic_transition_impl(
     return candidate;
   }
 
-  const double tangent_offset = options.control_fraction * trim_distance;
+  const double tangent_offset = control_fraction * trim_distance;
+  candidate.control_distance = tangent_offset;
   const Vec2 entry = corner.vertex - incoming * trim_distance;
   const Vec2 exit = corner.vertex + outgoing * trim_distance;
   const std::array<Vec2, 6> control_points{{
@@ -274,7 +277,8 @@ TransitionCandidate generate_quintic_transition(
   const RobotLimits & limits,
   const TransitionOptions & options)
 {
-  return generate_quintic_transition_impl(corner, limits, options, false, 0.0);
+  return generate_quintic_transition_impl(
+    corner, limits, options, false, 0.0, options.control_fraction);
 }
 
 TransitionCandidate generate_quintic_transition_for_trim(
@@ -284,7 +288,78 @@ TransitionCandidate generate_quintic_transition_for_trim(
   double trim_distance)
 {
   return generate_quintic_transition_impl(
-    corner, limits, options, true, trim_distance);
+    corner, limits, options, true, trim_distance, options.control_fraction);
+}
+
+double recommended_control_fraction(double absolute_turn_angle)
+{
+  if (!std::isfinite(absolute_turn_angle) || absolute_turn_angle <= 0.0 ||
+    absolute_turn_angle >= 3.14159265358979323846)
+  {
+    return std::numeric_limits<double>::quiet_NaN();
+  }
+
+  // Least-squares approximation of the curvature-energy optimum of the
+  // normalized (d=1) symmetric quintic family over 5..170 degrees. Unlike a
+  // fixed q/d, it contracts the tangent handles at sharp corners, where a
+  // long handle causes a large mid-curve curvature spike.
+  const double normalized_angle =
+    absolute_turn_angle / 3.14159265358979323846;
+  const double squared = normalized_angle * normalized_angle;
+  return std::clamp(
+    0.33 - 0.12798011 * squared - 0.16050401 * squared * squared,
+    0.05, 0.49);
+}
+
+std::vector<double> generate_control_fraction_candidates(
+  double absolute_turn_angle,
+  double minimum_fraction,
+  double maximum_fraction,
+  std::size_t sample_count)
+{
+  std::vector<double> candidates;
+  if (!std::isfinite(minimum_fraction) || minimum_fraction <= 0.0 ||
+    !std::isfinite(maximum_fraction) || maximum_fraction >= 0.5 ||
+    minimum_fraction > maximum_fraction || sample_count == 0U ||
+    sample_count % 2U == 0U)
+  {
+    return candidates;
+  }
+  const double preferred = recommended_control_fraction(absolute_turn_angle);
+  if (!std::isfinite(preferred)) {
+    return candidates;
+  }
+  const double centre = std::clamp(preferred, minimum_fraction, maximum_fraction);
+  if (sample_count == 1U || maximum_fraction - minimum_fraction <= kEpsilon) {
+    candidates.push_back(centre);
+    return candidates;
+  }
+
+  const std::size_t side_count = (sample_count - 1U) / 2U;
+  candidates.reserve(sample_count);
+  for (std::size_t reverse = side_count; reverse > 0U; --reverse) {
+    const double fraction = static_cast<double>(reverse) /
+      static_cast<double>(side_count);
+    candidates.push_back(centre - fraction * (centre - minimum_fraction));
+  }
+  candidates.push_back(centre);
+  for (std::size_t index = 1U; index <= side_count; ++index) {
+    const double fraction = static_cast<double>(index) /
+      static_cast<double>(side_count);
+    candidates.push_back(centre + fraction * (maximum_fraction - centre));
+  }
+  return candidates;
+}
+
+TransitionCandidate generate_quintic_transition_for_shape(
+  const CornerInput & corner,
+  const RobotLimits & limits,
+  const TransitionOptions & options,
+  double trim_distance,
+  double control_fraction)
+{
+  return generate_quintic_transition_impl(
+    corner, limits, options, true, trim_distance, control_fraction);
 }
 
 }  // namespace adaptive_pivot_g2

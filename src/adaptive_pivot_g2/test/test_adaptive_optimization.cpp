@@ -30,6 +30,7 @@ namespace
 {
 
 constexpr double kHalfPi = 1.57079632679489661923;
+constexpr double kPi = 3.14159265358979323846;
 
 TEST(AdaptiveSearch, FindsRadiusOutsideLegacyBank)
 {
@@ -78,6 +79,49 @@ TEST(AdaptiveSearch, HandlesSmallLargeAndTooShortDomains)
   EXPECT_TRUE(large.valid_domain);
   EXPECT_FALSE(too_short.valid_domain);
   EXPECT_LE(large.maximum_trim, 0.80);
+}
+
+TEST(AdaptiveSearch, DirectTrimDomainDoesNotShrinkAtShallowAngles)
+{
+  AdaptiveSearchOptions options;
+  options.initial_samples = 5U;
+  options.maximum_evaluations = 5U;
+  options.radius_tolerance = 0.01;
+  const auto result = search_direct_trim_distance(
+    5.0 * kPi / 180.0, 0.02, 1.20, 0.005, options,
+    [](double trim) {
+      return SearchEvaluation{SearchSampleStatus::kFeasible, trim, 0U, ""};
+    });
+
+  ASSERT_TRUE(result.valid_domain);
+  EXPECT_DOUBLE_EQ(result.minimum_trim, 0.02);
+  EXPECT_DOUBLE_EQ(result.maximum_trim, 1.20);
+  ASSERT_EQ(result.samples.size(), 5U);
+  EXPECT_DOUBLE_EQ(result.samples.front().trim_distance, 0.02);
+  EXPECT_DOUBLE_EQ(result.samples.back().trim_distance, 1.20);
+}
+
+TEST(AdaptiveSearch, DirectTrimSearchRefinesPhysicalFeasibilityBoundary)
+{
+  AdaptiveSearchOptions options;
+  options.initial_samples = 4U;
+  options.maximum_evaluations = 14U;
+  options.radius_tolerance = 0.005;
+  const auto result = search_direct_trim_distance(
+    150.0 * kPi / 180.0, 0.02, 1.50, 0.002, options,
+    [](double trim) {
+      return trim < 0.60 ?
+             SearchEvaluation{SearchSampleStatus::kInfeasible,
+             std::numeric_limits<double>::infinity(), 0U, "wheel_reversal"} :
+             SearchEvaluation{SearchSampleStatus::kFeasible, trim, 0U, ""};
+    });
+
+  ASSERT_TRUE(result.valid_domain);
+  ASSERT_GT(result.feasible_count, 0U);
+  const double first_feasible = result.samples[
+    result.ranked_feasible_samples.front()].trim_distance;
+  EXPECT_GE(first_feasible, 0.60);
+  EXPECT_LT(first_feasible, 0.65);
 }
 
 TEST(AdaptiveSearch, RefinesSafetyBoundaryAndIsDeterministic)
