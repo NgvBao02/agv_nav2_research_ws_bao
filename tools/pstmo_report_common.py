@@ -453,7 +453,7 @@ def make_algorithm_figures(items):
     ax.scatter(fine, np.ones_like(fine), marker="|", s=220, color="#16a34a", label="Ví dụ tinh [0,2; 0,4] thành 10 khoảng")
     for x in coarse: ax.text(x,3.15,f"{x:.1f}",ha="center",fontsize=9)
     ax.set_xlim(.07,.53); ax.set_ylim(.5,3.7); ax.set_yticks([1,2,3], ["Tinh", "Phục hồi", "Thô"]); ax.set_xlabel("α=q/d")
-    ax.grid(axis="x", alpha=.2); ax.legend(loc="lower center", ncol=3); ax.set_title("Tìm α thô–tinh: chỉ ứng viên qua toàn bộ cổng cứng mới được so Eκ", fontweight="bold")
+    ax.grid(axis="x", alpha=.2); ax.legend(loc="lower center", ncol=3); ax.set_title("Tìm α thô–tinh: chỉ phương án đạt điều kiện bắt buộc mới được so Eκ", fontweight="bold")
     fig.tight_layout(); fig.savefig(FIG_DIR / "figure_05_alpha_search.png", dpi=170, bbox_inches="tight"); plt.close(fig)
 
     fig, axes = plt.subplots(1,2,figsize=(14,5.2))
@@ -497,26 +497,26 @@ def plot_case_composite(item, rows_for_case):
     for method in METHODS:
         row=lookup[method]
         if not row["success"]:
-            cell.append([METHOD_LABEL[method],"FAIL","–","–","–","–","–"]);continue
-        cell.append([METHOD_LABEL[method],"OK",fnum(row["path_length_m"],3),fnum(row["max_abs_curvature_1pm"],3),fnum(row["curvature_energy_1pm"],3),fnum(1000*row["algorithm_time_s"],1),fnum(row["footprint_clearance_min_m"],3)])
-    table=ax_table.table(cellText=cell,colLabels=["Phương pháp","TT","L (m)","Kmax","Eκ","T (ms)","Clr min"],cellLoc="center",loc="upper center",bbox=[0,.37,1,.58]);table.auto_set_font_size(False);table.set_fontsize(8)
+            cell.append([METHOD_LABEL[method],"LỖI","–","–","–","–","–"]);continue
+        cell.append([METHOD_LABEL[method],"ĐẠT",fnum(row["path_length_m"],3),fnum(row["max_abs_curvature_1pm"],3),fnum(row["curvature_energy_1pm"],3),fnum(1000*row["algorithm_time_s"],1),fnum(row["footprint_clearance_min_m"],3)])
+    table=ax_table.table(cellText=cell,colLabels=["Phương án","Trạng thái","L (m)","κmax","Eκ","Xử lý (ms)","Khoảng hở (m)"],cellLoc="center",loc="upper center",bbox=[0,.37,1,.58]);table.auto_set_font_size(False);table.set_fontsize(7.4)
     for (r,c),entry in table.get_celld().items():
         if r==0: entry.set_facecolor("#e2e8f0");entry.set_text_props(fontweight="bold")
         elif r>0 and c==0: entry.set_facecolor(METHOD_COLOR[METHODS[r-1]]);entry.set_text_props(color="white",fontweight="bold")
-        elif r>0 and cell[r-1][1]=="FAIL": entry.set_facecolor("#fee2e2")
+        elif r>0 and cell[r-1][1]=="LỖI": entry.set_facecolor("#fee2e2")
     diag=item["pstmo_diagnostics"]
     preprocessing_line = (
-        f"Đầu vào bộ transition: {diag['conditioning_output_points']} điểm neo\n"
+        f"Đầu vào bước tạo chuyển tiếp: {diag['conditioning_output_points']} điểm neo\n"
     )
-    runtime_line = f"PSTMO internal={1000*diag['runtime_s']:.2f} ms\n"
-    info=(f"Start = ({item['start'][0]:.2f}, {item['start'][1]:.2f}, ψ={item['start'][2]:.3f} rad)\n"
-          f"Goal  = ({item['goal'][0]:.2f}, {item['goal'][1]:.2f}, ψ={item['goal'][2]:.3f} rad)\n"
-          f"Raw hash = {item['paths']['raw']['sha256'][:16]}…\n"
-          f"Conditioning: {diag['raw_input_points']} → {diag['conditioning_output_points']} điểm\n"
+    runtime_line = f"Thời gian xử lý nội bộ PSTMO={1000*diag['runtime_s']:.2f} ms\n"
+    info=(f"Điểm đầu = ({item['start'][0]:.2f}, {item['start'][1]:.2f}, ψ={item['start'][2]:.3f} rad)\n"
+          f"Điểm đích = ({item['goal'][0]:.2f}, {item['goal'][1]:.2f}, ψ={item['goal'][2]:.3f} rad)\n"
+          f"Mã băm đường gốc = {item['paths']['raw']['sha256'][:16]}…\n"
+          f"Điều kiện hóa: {diag['raw_input_points']} → {diag['conditioning_output_points']} điểm\n"
           f"{preprocessing_line}"
-          f"G²={diag['g2_transitions']}; quay tại chỗ={diag['pivots']}; DP states={diag['dp_states']}\n"
+          f"G²={diag['g2_transitions']}; quay tại chỗ={diag['pivots']}; trạng thái quy hoạch động={diag['dp_states']}\n"
           f"{runtime_line}"
-          "Nguồn: Gazebo/RViz2 live + /research/path/* + /research/metrics + diagnostics.")
+          "Nguồn: Gazebo/RViz2 + /research/path/* + /research/metrics + dữ liệu chẩn đoán.")
     ax_table.text(0,.32,info,ha="left",va="top",fontsize=9.2,linespacing=1.45,bbox=dict(boxstyle="round,pad=.55",facecolor="#f8fafc",edgecolor="#94a3b8"))
     fig.savefig(output,dpi=135,bbox_inches="tight",facecolor="white");plt.close(fig)
     return output

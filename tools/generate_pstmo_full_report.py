@@ -512,15 +512,15 @@ def algorithm_figures(items):
     """Draw explanatory figures; live evidence is kept visually distinct."""
     base.flow_figure(
         FIG_DIR / "figure_01_pipeline.png",
-        "PSTMO hiện tại — một pipeline xử lý duy nhất",
+        "PSTMO hiện tại — một quy trình xử lý duy nhất",
         [
-            "Planner path",
-            "Condition\npolyline",
+            "Đường từ bộ\nlập kế hoạch",
+            "Điều kiện hóa\nđường gấp khúc",
             "Hai d\nhình học",
             "Tìm α=q/d\nthô–tinh",
-            "Footprint +\nđộng học",
-            "Time gate\n+ DP",
-            "Ghép + invariant\ncuối",
+            "Hình bao +\nđộng học",
+            "Ưu thế thời gian\n+ quy hoạch động",
+            "Ghép + kiểm tra\nbất biến cuối",
         ],
         colors=[
             "#334155", "#2563eb", "#0f766e", "#16a34a",
@@ -533,23 +533,23 @@ def algorithm_figures(items):
     )
     base.flow_figure(
         FIG_DIR / "figure_02_hard_gates.png",
-        "Chuỗi điều kiện loại cứng của một transition",
+        "Chuỗi điều kiện bắt buộc của một đoạn chuyển tiếp",
         [
             "Bézier hữu hạn\n0<α≤0,5",
             "Không đảo dấu κ\nngoài ý muốn",
             "Bánh trong\nkhông quay lùi",
-            "Swept-footprint\nkhông va chạm",
+            "Vùng quét hình bao\nkhông va chạm",
             "v, ω, a, aω, ay\nhợp lệ",
-            "Không chồng lấn\ntrong DP",
-            "Output cuối\nquét lại",
+            "Không chồng lấn\ntrong quy hoạch động",
+            "Đường cuối\nđược quét lại",
         ],
         colors=[
             "#0284c7", "#0e7490", "#0f766e", "#15803d",
             "#ca8a04", "#c2410c", "#b91c1c",
         ],
         subtitle=(
-            "Clearance là số đo hậu kiểm; vật cản lethal/unknown/outside và "
-            "giao cắt footprint là điều kiện loại cứng."
+            "Khoảng hở là số đo hậu kiểm; ô gây va chạm, ô chưa biết, ngoài bản đồ và "
+            "giao cắt hình bao là điều kiện loại bắt buộc."
         ),
     )
 
@@ -570,25 +570,25 @@ def algorithm_figures(items):
         axis.set_xlabel("x (m)")
         axis.set_ylabel("y (m)")
     axes[0].plot(raw_xy[:, 0], raw_xy[:, 1], color="#111827", linewidth=1.6)
-    axes[0].set_title(f"Raw planner: {len(raw_xy)} pose", fontweight="bold")
+    axes[0].set_title(f"Đường gốc: {len(raw_xy)} tư thế", fontweight="bold")
     axes[1].plot(
         conditioned[:, 0], conditioned[:, 1], "o-", color="#2563eb", linewidth=2
     )
     axes[1].set_title(
-        f"Conditioning: {len(raw_xy)} → {len(conditioned)} neo", fontweight="bold"
+        f"Điều kiện hóa: {len(raw_xy)} → {len(conditioned)} điểm neo", fontweight="bold"
     )
     axes[2].plot(
         conditioned[:, 0], conditioned[:, 1], "o--", color="#94a3b8",
-        label="conditioned",
+        label="đã điều kiện hóa",
     )
     axes[2].plot(
         preprocessed[:, 0], preprocessed[:, 1], "x-", color="#16a34a",
-        linewidth=2.2, label="đầu vào transition",
+        linewidth=2.2, label="đầu vào đoạn chuyển tiếp",
     )
-    axes[2].set_title("Chuỗi neo đi thẳng vào bộ transition", fontweight="bold")
+    axes[2].set_title("Chuỗi neo đi thẳng vào bước tạo đoạn chuyển tiếp", fontweight="bold")
     axes[2].legend(fontsize=8)
     fig.suptitle(
-        "Dữ liệu thật C01: đầu ra điều kiện hóa là đầu vào của bộ transition",
+        "Dữ liệu C01: đầu ra điều kiện hóa là đầu vào của bước tạo đoạn chuyển tiếp",
         fontsize=14, fontweight="bold",
     )
     fig.tight_layout()
@@ -625,7 +625,7 @@ def algorithm_figures(items):
         curve += bernstein[:, None] * cps[index]
     fig, axes = base.plt.subplots(1, 2, figsize=(13, 5.2))
     axes[0].plot([-1.35, 0.0, 0.0], [0.0, 0.0, 1.35], color="#64748b")
-    axes[0].plot(cps[:, 0], cps[:, 1], "o--", color="#f59e0b", label="control polygon")
+    axes[0].plot(cps[:, 0], cps[:, 1], "o--", color="#f59e0b", label="đa giác điều khiển")
     axes[0].plot(curve[:, 0], curve[:, 1], color="#16a34a", linewidth=3, label="Bézier bậc 5")
     for index, point in enumerate(cps):
         axes[0].text(point[0] + 0.025, point[1] + 0.025, f"P{index}", fontsize=9)
@@ -661,9 +661,9 @@ def algorithm_figures(items):
     coarse = base.np.asarray([0.1, 0.2, 0.3, 0.4, 0.5])
     recovery = base.np.asarray([0.15, 0.25, 0.35, 0.45])
     fine = base.np.linspace(0.2, 0.4, 11)
-    axis.scatter(coarse, base.np.full_like(coarse, 3.0), s=110, color="#2563eb", label="coarse")
-    axis.scatter(recovery, base.np.full_like(recovery, 2.0), s=90, color="#dc2626", label="recovery nếu coarse thất bại hết")
-    axis.scatter(fine, base.np.full_like(fine, 1.0), s=70, color="#16a34a", label="ví dụ refine winner 0,3")
+    axis.scatter(coarse, base.np.full_like(coarse, 3.0), s=110, color="#2563eb", label="lưới thô")
+    axis.scatter(recovery, base.np.full_like(recovery, 2.0), s=90, color="#dc2626", label="phục hồi nếu toàn bộ lưới thô thất bại")
+    axis.scatter(fine, base.np.full_like(fine, 1.0), s=70, color="#16a34a", label="ví dụ tinh chỉnh quanh α=0,3")
     for value in coarse:
         axis.text(value, 3.12, f"{value:.1f}", ha="center", fontsize=9)
     axis.annotate(
@@ -673,7 +673,7 @@ def algorithm_figures(items):
     )
     axis.set_xlim(0.06, 0.54)
     axis.set_ylim(0.55, 3.55)
-    axis.set_yticks([1, 2, 3], ["Fine", "Recovery", "Coarse"])
+    axis.set_yticks([1, 2, 3], ["Tinh", "Phục hồi", "Thô"])
     axis.set_xlabel("α=q/d")
     axis.set_title("Tìm hình dạng α theo lưới thô–phục hồi–tinh", fontweight="bold")
     axis.grid(axis="x", alpha=0.2)
@@ -739,7 +739,7 @@ def algorithm_figures(items):
     axes[1].set_ylabel("v (m/s)")
     axes[1].set_ylim(0.0, 0.33)
     axes[1].grid(alpha=0.2)
-    axes[1].set_title("Trần v từ v, ω, a_y và tốc độ bánh", fontweight="bold")
+    axes[1].set_title("Giới hạn v từ v, ω, a_y và vận tốc bánh", fontweight="bold")
     fig.tight_layout()
     fig.savefig(
         FIG_DIR / "figure_07_kinematic_time_gate.png", dpi=170,
@@ -750,15 +750,15 @@ def algorithm_figures(items):
     fig, axis = base.plt.subplots(figsize=(14, 5.4))
     boxes = [
         (0.2, 2.55, 3.8, 1.45, "Rút gọn xa", "Bỏ nhiều neo trung gian\n→ giảm số đoạn\n→ có thể thay đổi mạnh cấu trúc bám"),
-        (5.0, 2.55, 3.8, 1.45, "Cấu hình hiện tại", "Giữ chuỗi neo sau điều kiện hóa\n→ chỉ thay lân cận góc bằng transition\n→ duy trì cấu trúc bám cục bộ"),
+        (5.0, 2.55, 3.8, 1.45, "Cấu hình hiện tại", "Giữ chuỗi neo sau điều kiện hóa\n→ chỉ thay lân cận góc bằng đoạn chuyển tiếp\n→ duy trì cấu trúc bám cục bộ"),
     ]
     for x_value, y_value, width, height, title, body in boxes:
         axis.add_patch(base.Rectangle((x_value, y_value), width, height, facecolor="#e0f2fe" if x_value < 1 else "#dcfce7", edgecolor="#334155", linewidth=1.5))
         axis.text(x_value + width/2, y_value + 1.08, title, ha="center", fontweight="bold", fontsize=13)
         axis.text(x_value + width/2, y_value + 0.52, body, ha="center", va="center", fontsize=10)
     axis.annotate("quyết định kiến trúc", xy=(5.0, 3.28), xytext=(4.05, 3.28), arrowprops={"arrowstyle": "->", "linewidth": 2})
-    axis.text(4.5, 1.55, "Điều không được suy ra chỉ từ benchmark path", ha="center", fontweight="bold", color="#b91c1c")
-    axis.text(4.5, 0.92, "35 ảnh chứng minh output hình học; muốn khẳng định tỷ lệ chạy tới goal phải có benchmark execute=true riêng.", ha="center", fontsize=10)
+    axis.text(4.5, 1.55, "Điều không được suy ra chỉ từ phép thử đường hình học", ha="center", fontweight="bold", color="#b91c1c")
+    axis.text(4.5, 0.92, "35 ảnh xác nhận đường hình học; tỷ lệ tới đích phải được đo bằng phép thử thực thi riêng.", ha="center", fontsize=10)
     axis.set_xlim(0, 9)
     axis.set_ylim(0.45, 4.45)
     axis.axis("off")
@@ -1182,7 +1182,7 @@ def build_report(
     content.append(
         '<p>Thuật toán không còn dùng q/d=0,35 như hằng thiết kế. Miền cho phép '
         '0&lt;α≤0,5; α&gt;0,5 bị loại. α=0,5 vẫn phải qua kiểm tra suy biến, '
-        'đổi dấu curvature, bánh trong, timing và footprint như mọi ứng viên khác.</p>'
+        'đổi dấu độ cong, bánh trong, thời gian và hình bao robot như mọi phương án khác.</p>'
     )
 
     content.append('<h2>9. Hai d có cơ sở hình học</h2>')
@@ -1205,7 +1205,7 @@ def build_report(
     content.append('<h2>10. Tìm α thô–phục hồi–tinh</h2>')
     content.append(
         '<ol><li>Đánh giá coarse {0,1;0,2;0,3;0,4;0,5}.</li>'
-        '<li>Chỉ ứng viên qua tất cả cổng cứng mới có Eκ hợp lệ.</li>'
+        '<li>Chỉ phương án đạt tất cả điều kiện bắt buộc mới có Eκ hợp lệ.</li>'
         '<li>Chọn Eκ nhỏ nhất; hòa trong 10⁻¹² chọn α nhỏ hơn.</li>'
         '<li>Winner coarse nội được tinh từ hàng xóm trái tới hàng xóm phải; '
         'winner biên tinh ô biên. Khoảng được chia thành 10 phần, tức 11 nút kể '
