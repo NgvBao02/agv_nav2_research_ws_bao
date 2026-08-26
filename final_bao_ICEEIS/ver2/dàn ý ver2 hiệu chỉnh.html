@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <title>Dàn ý ver2 hiệu chỉnh</title>
+  <style>
+    @page { size: A4; margin: 2cm 1.8cm 2cm 2.2cm; }
+    body { font-family: "Times New Roman", serif; font-size: 12pt; line-height: 1.38; color: #111; }
+    h1 { text-align: center; font-size: 17pt; margin: 0 0 8pt; }
+    h2 { font-size: 14pt; margin: 18pt 0 6pt; color: #17365d; }
+    h3 { font-size: 12.5pt; margin: 12pt 0 4pt; color: #1f4e78; }
+    h4 { font-size: 12pt; margin: 9pt 0 3pt; font-style: italic; }
+    p { margin: 4pt 0; text-align: justify; }
+    li { margin: 3pt 0; }
+    table { border-collapse: collapse; width: 100%; margin: 8pt 0 12pt; }
+    th, td { border: 1px solid #777; padding: 5pt; vertical-align: top; }
+    th { background: #d9eaf7; text-align: center; }
+    .note { border-left: 4px solid #2f75b5; background: #eef5fb; padding: 7pt 9pt; margin: 8pt 0; }
+    .warn { border-left: 4px solid #c65911; background: #fff2e8; padding: 7pt 9pt; margin: 8pt 0; }
+    .flow { text-align: center; font-weight: bold; margin: 9pt 0; }
+    .eq { text-align: center; font-style: italic; margin: 7pt 0; }
+    .keep { color: #2e6b2e; }
+    .avoid { color: #9c2c16; }
+  </style>
+</head>
+<body>
+  <h1>DÀN Ý VER2 HIỆU CHỈNH</h1>
+  <p style="text-align:center"><b>Sửa cách viết và logic toàn bài theo nhận xét của cô Lý; giữ thuật ngữ chuyên ngành và nội dung phương pháp của ver1 làm chuẩn</b></p>
+
+  <div class="note">
+    <b>Nguyên tắc xuyên suốt.</b> Ver2 không thay đổi bản chất PSTMO, ký hiệu, công thức hay kết quả của ver1. Ver2 chỉ tổ chức lại mạch lập luận, lồng nghiên cứu liên quan vào Introduction, thu gọn mô hình toán vào phần phương pháp, sắp xếp lại thử nghiệm và diễn đạt phạm vi–hạn chế rõ hơn. Phần Thảo làm rõ được kế thừa ở cấp cấu trúc, nhưng các câu làm lệch nội dung chuẩn của ver1 được loại bỏ.
+  </div>
+
+  <h2>A. CẤU TRÚC TỔNG THỂ ĐỀ XUẤT</h2>
+
+  <table>
+    <tr><th>Phần ver2</th><th>Nguồn lấy từ ver1</th><th>Mục đích logic</th></tr>
+    <tr>
+      <td><b>I. Introduction</b></td>
+      <td>Gộp Phần I và Phần II của ver1</td>
+      <td>Dẫn liền mạch từ bối cảnh, planner, vấn đề góc gãy, ba hướng nghiên cứu, khoảng trống, mục tiêu, đóng góp và phạm vi bài.</td>
+    </tr>
+    <tr>
+      <td><b>II. Proposed PSTMO Method</b></td>
+      <td>Gộp Phần III và Phần IV của ver1; mô hình toán là tiểu mục đầu</td>
+      <td>Chỉ đưa toán học cần thiết để hiểu và kiểm chứng phương pháp; giải thích chức năng ký hiệu ngay sau mỗi phương trình.</td>
+    </tr>
+    <tr>
+      <td><b>III. Experimental Evaluation</b></td>
+      <td>Sắp xếp lại Phần V của ver1</td>
+      <td>Điều kiện thử nghiệm xuất hiện trước; phương án so sánh và giao thức ghép cặp được làm rõ; từng môi trường được mô tả–minh họa–phân tích riêng.</td>
+    </tr>
+    <tr>
+      <td><b>IV. Conclusion</b></td>
+      <td>Rút gọn Phần VI của ver1</td>
+      <td>Trả lời đúng mục tiêu, nêu một kết quả đại diện, đánh đổi thời gian, giới hạn bằng chứng và hướng tiếp theo.</td>
+    </tr>
+  </table>
+
+  <p class="flow">Bối cảnh → đầu ra planner → nhu cầu làm mượt → các hướng đã có → khoảng trống → PSTMO → phương pháp → kiểm chứng → kết luận trong đúng phạm vi</p>
+
+  <h2>I. INTRODUCTION</h2>
+
+  <div class="warn">
+    <b>Yêu cầu hình thức của cô Lý.</b> Phần này phải được viết thành các đoạn văn liên tục. Các mục “Đoạn 1, Đoạn 2…” dưới đây chỉ là hướng dẫn triển khai, không phải tiêu đề con xuất hiện trong bản bài báo.
+  </div>
+
+  <h3>Đoạn 1 — Bối cảnh ứng dụng và kiến trúc điều hướng</h3>
+  <ul>
+    <li>Mở bằng vai trò của AGV/AMR trong kho vận, sản xuất và vận chuyển nội bộ.</li>
+    <li>Nêu yêu cầu di chuyển tự chủ, an toàn và ổn định; từ đó đặt chất lượng đường đi vào đúng bối cảnh vận hành.</li>
+    <li>Giới thiệu đúng chuỗi xử lý trong ROS 2 Navigation2: bộ lập kế hoạch toàn cục tạo đường; bộ làm mượt cải thiện hình học của đường; bộ điều khiển tạo lệnh để bám đường.</li>
+    <li>Định vị PSTMO là bộ hậu xử lý nằm giữa global planner và controller, không gọi Nav2 là bộ điều khiển cục bộ.</li>
+  </ul>
+  <p><b>Câu chuyển:</b> Chất lượng đường đầu vào của controller phụ thuộc không chỉ vào khả năng tránh vật cản của planner mà còn vào hình học của chuỗi điểm được trả về.</p>
+
+  <h3>Đoạn 2 — Các hướng lập kế hoạch và nhiệm vụ mà chúng giải quyết</h3>
+  <ul>
+    <li>Trình bày ngắn ba ý, không biến Introduction thành tổng quan planner:</li>
+    <li>Dijkstra và A* tìm đường trên đồ thị/lưới theo hàm chi phí; A* dùng heuristic để hướng tìm kiếm.</li>
+    <li>Theta* giảm sự phụ thuộc vào các hướng lưới bằng nối any-angle có kiểm tra đường nhìn.</li>
+    <li>Smac2D và SmacHybrid đại diện cho các planner khác nhau đang dùng trong Nav2; SmacHybrid đưa hướng và mô hình chuyển động vào trạng thái tìm kiếm.</li>
+    <li>Nếu đề cập RRT/RRT*, chỉ dùng một câu để đại diện nhóm lấy mẫu và phải có tài liệu gốc; có thể bỏ vì không tham gia thiết kế thí nghiệm ver1.</li>
+  </ul>
+  <p><b>Câu chuyển:</b> Các planner trên giải quyết chủ yếu nhiệm vụ tìm một tuyến hợp lệ hoặc có chi phí thấp, nhưng chất lượng hình học của đường rời rạc đầu ra vẫn có thể chưa phù hợp để robot vi sai chuyển hướng liên tục.</p>
+
+  <h3>Đoạn 3 — Vấn đề cụ thể của đường gấp khúc</h3>
+  <ul>
+    <li>Dùng đúng logic của ver1: đường đa tuyến có các đỉnh gãy; tại đỉnh, hướng tiếp tuyến thay đổi gián đoạn.</li>
+    <li>Nêu hệ quả vừa đủ: controller có thể phải giảm tốc, lệch khỏi đường hoặc dừng để quay tại chỗ.</li>
+    <li>Dẫn tới nhu cầu có một bước làm mượt sau lập kế hoạch, nhưng vẫn giữ tuyến toàn cục và không tạo va chạm mới.</li>
+  </ul>
+  <p class="avoid"><b>Không viết:</b> mọi planner đều không xét động học; robot chắc chắn trượt bánh; chắc chắn tăng năng lượng; gây rung cơ khí nghiêm trọng. Ver1 không kiểm chứng các đại lượng này.</p>
+
+  <h3>Đoạn 4 — Hướng nghiên cứu 1: phần tử hình học và đường cong tham số</h3>
+  <ul>
+    <li>Nêu nguyên lý gốc: thay vùng quanh góc bằng phần tử hình học có quy luật tiếp tuyến/độ cong được thiết kế trước.</li>
+    <li>Dẫn các nghiên cứu Clothoid của Fleury và Brezak; nêu ưu điểm độ cong biến thiên có quy luật và khả năng tạo chuyển hướng liên tục.</li>
+    <li>Dẫn các nghiên cứu Bézier của Yang–Sukkarieh, Bu, Xu và Parque–Miyashita; nêu ưu điểm biểu thức đóng, đạo hàm dễ tính và điểm điều khiển trực quan.</li>
+    <li>Nêu đánh đổi đúng theo ver1: Clothoid thường cần tích phân Fresnel/xấp xỉ/giải số; Bézier cần thiết kế điều kiện biên và điểm điều khiển có chủ ý để bảo đảm độ cong tại mối nối.</li>
+    <li>Nêu hạn chế chung: làm mượt đường tâm không tự động bảo đảm an toàn của vùng quét hình bao robot.</li>
+  </ul>
+  <p class="avoid"><b>Không viết:</b> Bézier bậc ba không thể liên tục độ cong hoặc bắt buộc phải tăng bậc mới đạt (C^2); nhận định đó mâu thuẫn với chính các nghiên cứu cubic Bézier đã trích trong ver1.</p>
+
+  <h3>Đoạn 5 — Hướng nghiên cứu 2: lọc, biến dạng và tối ưu đường trong không gian</h3>
+  <ul>
+    <li>Đưa Elastic Bands, CHOMP, GRIPS và phương pháp miền ràng buộc của Andreasson vào cùng một mạch: dịch chuyển hoặc tối ưu các điểm của đường dựa trên độ trơn và thông tin vật cản.</li>
+    <li>Giới thiệu ba đối chứng Nav2 tại đúng vị trí này:</li>
+    <li><b>Simple:</b> cập nhật lặp điểm theo độ bám đường gốc và độ trơn lân cận; chi phí thấp.</li>
+    <li><b>Savitzky–Golay:</b> lọc đa thức cục bộ; trong ver1 dùng cửa sổ bảy điểm và hai lần tinh chỉnh.</li>
+    <li><b>Constrained:</b> tối ưu có ràng buộc bằng Ceres, có thể xét độ trơn, chiều dài, costmap và độ cong; cấu hình cụ thể của ver1 phải được nêu ở phần thí nghiệm.</li>
+    <li>Nêu ưu điểm: tích hợp trực tiếp, linh hoạt, có thể xử lý nhiễu hoặc biến dạng nhiều điểm.</li>
+    <li>Nêu hạn chế có điều kiện, không phủ định tuyệt đối: kết quả phụ thuộc hàm mục tiêu, trọng số, khởi tạo, rời rạc hóa và cách kiểm tra va chạm; các bộ lọc nhanh không tự bảo đảm mọi ràng buộc động học hoặc swept footprint.</li>
+  </ul>
+  <p class="keep"><b>Cách gọi đúng:</b> “các plugin làm mượt mã nguồn mở được tích hợp trong Nav2”, không dùng “đã thương mại hóa”.</p>
+
+  <h3>Đoạn 6 — Hướng nghiên cứu 3: tối ưu quỹ đạo không gian–thời gian</h3>
+  <ul>
+    <li>Nêu TEB và các mở rộng tối ưu thời gian/động học–động lực học.</li>
+    <li>Nêu điểm đã giải quyết: tối ưu đồng thời hình học, thời gian, vận tốc, gia tốc và vật cản.</li>
+    <li>Nêu đánh đổi: số biến, trọng số và chi phí tính toán lớn hơn; lời giải có thể phụ thuộc khởi tạo hoặc cực tiểu cục bộ.</li>
+    <li>Phân định với PSTMO: đây là lớp bài toán trajectory rộng hơn; PSTMO vẫn trả về đường hình học và không nhằm thay thế toàn bộ local trajectory optimizer.</li>
+  </ul>
+  <p class="avoid"><b>Không xếp:</b> quy hoạch động của PSTMO thành một “xu hướng trajectory optimization” độc lập. Trong bài này, DP là cơ chế chọn chuỗi ứng viên tương thích giữa các góc.</p>
+
+  <h3>Đoạn 7 — Tổng hợp trade-off và khoảng trống nghiên cứu</h3>
+  <ul>
+    <li>Tóm tắt những gì literature đã làm tốt: tạo đường liên tục độ cong; tối ưu theo vật cản; lọc nhanh; hoặc xét ràng buộc thời gian.</li>
+    <li>Nêu trade-off: phương pháp hình học có cấu trúc và dễ giải thích nhưng cần cổng an toàn; tối ưu toàn đường linh hoạt nhưng nặng hơn; lọc nhanh nhưng ít bảo đảm tường minh; trajectory optimization đầy đủ nhưng giải bài toán rộng hơn.</li>
+    <li>Phát biểu khoảng trống có giới hạn theo tập tài liệu khảo sát, dùng đúng tinh thần ver1:</li>
+  </ul>
+  <p><i>Trong tập tài liệu được khảo sát, chưa thấy một bộ hậu xử lý Nav2 cho robot vi sai phối hợp đồng thời: (i) mối nối thẳng–cong có độ cong đầu cuối bằng không; (ii) giới hạn hai bánh và kiểm tra vùng quét hình bao robot; và (iii) lựa chọn tương thích giữa các góc kề nhau trong khi vẫn giữ tuyến toàn cục.</i></p>
+  <p class="avoid"><b>Không viết:</b> G<sup>2</sup> “triệt tiêu jerk”; PSTMO “đầu tiên trên thế giới”; hoặc thuật toán chắc chắn tối ưu toàn cục trong miền liên tục.</p>
+
+  <h3>Đoạn 8 — Mục tiêu, phạm vi và tên phương pháp</h3>
+  <ul>
+    <li>Dùng đúng tên trong ver1: <b>Path Smoothing via Footprint-Aware Corner-Transition Optimization for Differential-Drive Mobile Robots (PSTMO)</b>.</li>
+    <li>Mục tiêu: tạo các đoạn chuyển tiếp Bézier bậc năm G<sup>2</sup> cục bộ, loại ứng viên không khả thi và chọn tổ hợp không chồng lấn trên toàn đường.</li>
+    <li>Phạm vi phải nêu ngay tại đây: costmap tĩnh, mô phỏng ROS 2 Jazzy/Nav2 và Gazebo Harmonic, ba môi trường quy mô nhỏ, năm nguồn đường toàn cục.</li>
+    <li>Nêu rõ ngoài phạm vi: robot vật lý, vật cản động, sai số bám đường, năng lượng thực, nhiễu/trượt/tải trọng và phần cứng nhúng.</li>
+  </ul>
+
+  <h3>Đoạn 9 — Ba đóng góp chính</h3>
+  <ol>
+    <li>Cấu trúc Bézier bậc năm tạo mối nối thẳng–cong G<sup>2</sup> với độ cong bằng không tại hai đầu đoạn chuyển tiếp.</li>
+    <li>Cổng khả thi kết hợp giới hạn chuyển động robot vi sai, kiểm tra swept footprint và điều kiện tương thích giữa các góc; quy hoạch động chọn chuỗi phương án trên toàn đường.</li>
+    <li>Đánh giá ghép cặp trên 15 tổ hợp bản đồ–planner với Raw và ba smoother Nav2 theo L, E<sub>κ</sub> và thời gian xử lý.</li>
+  </ol>
+
+  <h3>Đoạn 10 — Kết quả khái quát và đánh đổi</h3>
+  <ul>
+    <li>Chỉ nêu 1–2 câu, không chép bảng kết quả vào Introduction.</li>
+    <li>Cách viết đề xuất: PSTMO đạt E<sub>κ</sub> trung bình thấp nhất trong ba môi trường và không làm tăng chiều dài trung bình, đổi lại thời gian xử lý cao hơn các phương án đối chứng.</li>
+    <li>Có thể giữ một con số đại diện nếu cần, nhưng các số chi tiết nên để ở Phần III.</li>
+  </ul>
+
+  <h3>Đoạn 11 — Bố cục phần còn lại</h3>
+  <p>“The remainder of this paper is organized as follows. Section II presents the mathematical basis and the proposed PSTMO method. Section III describes the experimental setup and discusses the results. Section IV concludes the paper and outlines its limitations and future work.”</p>
+
+  <h3>Kế hoạch tài liệu tham khảo cho Introduction</h3>
+  <p>Không cần tuân máy móc đúng mười tài liệu planner. Nên dùng khoảng 20–22 tài liệu toàn bài, phân bố cân đối:</p>
+  <ul>
+    <li>Kiến trúc/planner: Nav2; Dijkstra; A*; Theta*; Dolgov/Hybrid A*.</li>
+    <li>Đường cong/phần tử hình học: Fleury; Brezak; Yang–Sukkarieh; Bu; Xu; Parque–Miyashita.</li>
+    <li>Lọc/biến dạng/tối ưu không gian: Savitzky–Golay gốc; Elastic Bands; CHOMP; GRIPS; Andreasson.</li>
+    <li>Không gian–thời gian: TEB 2012; TEB time-optimal; kinodynamic trajectory optimization.</li>
+    <li>Đối chứng phần mềm: tài liệu/mã nguồn Nav2 cho Simple, Savitzky–Golay và Constrained; có thể dùng chung một tham chiếu phần mềm nếu giới hạn số tài liệu.</li>
+  </ul>
+
+  <h2>II. PROPOSED PSTMO METHOD</h2>
+
+  <h3>A. Problem Setting and Compact Mathematical Model</h3>
+  <p><b>Mục tiêu của tiểu mục:</b> gom phần toán học cần thiết của Phần III ver1 vào đây, nhưng không thay thuật ngữ và công thức chuyên ngành đã dùng trong ver1.</p>
+
+  <h4>A.1. Đầu vào, biểu diễn đường và mô hình robot</h4>
+  <ul>
+    <li>Trạng thái robot z = (x, y, ψ); giải thích (x, y) là vị trí và ψ là góc hướng.</li>
+    <li>Giữ phương trình động học vi sai của ver1:</li>
+  </ul>
+  <p class="eq">ẋ = v cos ψ,&nbsp;&nbsp; ẏ = v sin ψ,&nbsp;&nbsp; ψ̇ = ω.</p>
+  <p>Giải thích ngay: v là vận tốc tịnh tiến và ω là vận tốc góc; phương trình dùng để liên hệ hình học đường với khả năng chuyển động của robot.</p>
+  <ul>
+    <li>Định nghĩa đường đầu vào P = {p<sub>0</sub>,…,p<sub>n</sub>}, chiều dài L(P), góc chuyển hướng θ<sub>i</sub> và ngưỡng phát hiện góc.</li>
+  </ul>
+
+  <h4>A.2. Độ cong và chỉ số đánh giá hình học</h4>
+  <ul>
+    <li>Giữ công thức độ cong, κ<sub>max</sub> và E<sub>κ</sub> = ∫<sub>0</sub><sup>L</sup> κ²(s) ds.</li>
+    <li>Giải thích chức năng: κ<sub>max</sub> phản ánh đỉnh uốn; E<sub>κ</sub> phản ánh mức uốn tích lũy trên toàn đường.</li>
+    <li>Khẳng định đúng như ver1: E<sub>κ</sub> có đơn vị m⁻¹ và là chỉ số hình học, không phải năng lượng tiêu thụ.</li>
+    <li>Giải thích ngắn G<sup>1</sup> và G<sup>2</sup>; vì đoạn thẳng có κ = 0, đoạn cong phải có độ cong đầu cuối bằng không để nối G<sup>2</sup>.</li>
+  </ul>
+
+  <h4>A.3. Ràng buộc khả thi</h4>
+  <ul>
+    <li>Giữ quan hệ vận tốc hai bánh của ver1:</li>
+  </ul>
+  <p class="eq">v<sub>L</sub>=v(1-bκ/2),&nbsp;&nbsp; v<sub>R</sub>=v(1+bκ/2),&nbsp;&nbsp; ω=vκ.</p>
+  <p>Giải thích (b) là khoảng cách hai bánh; công thức dùng để kiểm tra vận tốc từng bánh, vận tốc góc và giới hạn chuyển động từ độ cong ứng viên.</p>
+  <ul>
+    <li>Định nghĩa F<sub>body</sub>, phép biến đổi sang F<sub>map</sub>(z) và vùng quét hình bao; nêu chức năng là kiểm tra thân robot, không chỉ tâm đường.</li>
+    <li>Nêu ràng buộc ngân sách cạnh chung giữa hai góc, nhưng để công thức chi tiết ở mục lựa chọn bằng DP.</li>
+  </ul>
+
+  <h4>A.4. Phát biểu bài toán ngắn gọn</h4>
+  <ul>
+    <li><b>Đầu vào:</b> đường P, costmap M, hình bao F<sub>body</sub>, các giới hạn chuyển động.</li>
+    <li><b>Đầu ra:</b> đường sau làm mượt (P^*) trong cùng hệ quy chiếu.</li>
+    <li><b>Điều kiện bắt buộc:</b> bảo toàn các đầu mút theo ver1; mối nối chuyển tiếp G<sup>2</sup>; khả thi động học; không phát hiện va chạm swept footprint; không chồng lấn giữa các chuyển tiếp kề.</li>
+    <li><b>Tiêu chí:</b> sau khi loại phương án không khả thi, ưu tiên chất lượng hình học và tránh tăng chiều dài không cần thiết, đồng thời báo cáo riêng thời gian xử lý.</li>
+  </ul>
+
+  <h3>B. Method Overview</h3>
+  <ul>
+    <li>Viết một đoạn văn mô tả luồng, không sao chép sơ đồ khối từ slide:</li>
+  </ul>
+  <p class="flow">Raw path → điều kiện hóa an toàn → phát hiện góc → sinh phương án giữ nguyên/quay tại chỗ/chuyển tiếp → cổng khả thi → DP chống chồng lấn → ghép đường → hậu kiểm toàn đường</p>
+  <ul>
+    <li>Nêu rõ PSTMO chỉ sửa cục bộ quanh góc nhưng quyết định chuỗi phương án ở cấp toàn đường.</li>
+    <li>Nêu ba trạng thái xử lý như ver1; không mô tả PSTMO là ép mọi góc thành đường cong.</li>
+    <li>Phân biệt: đầu ra vẫn là đường hình học; thời gian chuyển động chỉ tham gia kiểm tra/lựa chọn, không biến đầu ra thành trajectory theo thời gian.</li>
+  </ul>
+
+  <h3>C. Quintic Bézier Corner Transition and Parameter Roles</h3>
+  <ul>
+    <li>Giữ Hình 4 của ver1 và công thức sáu điểm điều khiển.</li>
+    <li>Định nghĩa ngay tại chỗ:</li>
+    <li>(V): đỉnh góc;</li>
+    <li>(u,v): vectơ đơn vị của cạnh vào và cạnh ra;</li>
+    <li>(A=V-du, B=V+dv): hai điểm tiếp giáp;</li>
+    <li>(d): khoảng cắt, quyết định phạm vi cạnh dành cho chuyển tiếp;</li>
+    <li>(q): khoảng cách bố trí điểm điều khiển dọc tiếp tuyến;</li>
+    <li>α = q/d: tỷ lệ hình dạng không thứ nguyên, điều chỉnh phân bố độ cong khi d cố định.</li>
+    <li>Giữ công thức Bézier bậc năm và giải thích ngắn vì ba điểm đầu/cuối thẳng hàng, cách đều nên đạo hàm bậc hai đầu cuối bằng không, từ đó độ cong đầu cuối bằng không.</li>
+    <li>Chỉ kết luận đoạn chuyển tiếp nối G<sup>2</sup> với các đoạn thẳng; không suy ra jerk thời gian bằng không.</li>
+    <li>Nêu ở mức ý tưởng rằng nhiều cặp (d, α) được tạo và kiểm tra; bỏ chi tiết lưới, số mẫu, tìm thô–tinh và điều kiện dừng nếu cần bảo mật/dung lượng.</li>
+  </ul>
+
+  <h3>D. Feasibility Screening and Globally Compatible Selection</h3>
+  <h4>D.1. Cổng khả thi cục bộ</h4>
+  <ul>
+    <li>Đạo hàm không suy biến và độ cong hữu hạn.</li>
+    <li>Giới hạn vận tốc tịnh tiến, vận tốc góc, vận tốc từng bánh và gia tốc ngang.</li>
+    <li>Loại đảo dấu độ cong ngoài ý muốn hoặc bánh trong phải quay ngược với trạng thái chuyển tiếp tịnh tiến.</li>
+    <li>Kiểm tra swept footprint trên costmap; bất kỳ mẫu giao ô cấm đều loại ứng viên.</li>
+    <li>Nhấn mạnh hard constraints được kiểm tra trước; chỉ ứng viên khả thi mới được so sánh chất lượng.</li>
+  </ul>
+
+  <h4>D.2. Tương tác giữa các góc kề nhau</h4>
+  <p class="eq">d<sub>i</sub> + d<sub>i+1</sub> + m ≤ L<sub>i</sub>.</p>
+  <p>Giải thích ngay: d<sub>i</sub>, d<sub>i+1</sub> là phần cạnh chung bị chiếm bởi hai phương án kề; m là biên không chồng lấn; L<sub>i</sub> là chiều dài cạnh chung. Điều kiện này không phải ràng buộc khoảng hở vật cản.</p>
+
+  <h4>D.3. Quy hoạch động</h4>
+  <ul>
+    <li>Mỗi trạng thái DP là một phương án xử lý cụ thể tại góc: giữ nguyên, quay tại chỗ hoặc một chuyển tiếp khả thi có (d, α).</li>
+    <li>DP chọn chuỗi trạng thái tương thích có chi phí tích lũy nhỏ nhất; không mô tả đơn giản là chỉ chọn các cặp (d<sub>i</sub>, α<sub>i</sub>).</li>
+    <li>Có thể giữ phương trình truy hồi và độ phức tạp (O(NK^2)) nếu còn dung lượng; không cần công bố mọi chi tiết tie-break hoặc miền tìm tham số.</li>
+  </ul>
+
+  <h3>E. Output Assembly and Final Validation</h3>
+  <ul>
+    <li>Ghép các đoạn thẳng còn lại, các đoạn Bézier được chọn và trạng thái quay tại chỗ theo đúng thứ tự.</li>
+    <li>Lấy mẫu lại với khoảng cách đầu ra đã cấu hình.</li>
+    <li>Dùng đúng bất biến ver1: bảo toàn vị trí điểm đầu, vị trí điểm đích và orientation tại điểm đích.</li>
+    <li>Không viết bảo toàn orientation tại start; orientation đầu ra ban đầu được xác định theo đoạn chuyển động đầu.</li>
+    <li>Hậu kiểm trên toàn đường đã ghép: số liệu hữu hạn, các đầu mút, thứ tự tuyến, giới hạn chuyển động, ngân sách cạnh chung và swept footprint.</li>
+    <li>Nếu bất biến cuối không thỏa, thuật toán báo thất bại; không trả một đường cong không an toàn.</li>
+  </ul>
+
+  <h2>III. EXPERIMENTAL EVALUATION</h2>
+
+  <h3>A. Experimental Conditions</h3>
+  <p><b>Đây phải là tiểu mục đầu tiên đúng theo góp ý cô Lý.</b></p>
+  <ul>
+    <li>Mô tả Ubuntu 24.04, ROS 2 Jazzy, Nav2, Gazebo Harmonic và CPU Intel Core i5-12450HX.</li>
+    <li>Mô tả robot: footprint 0,44 × 0,34 m; khoảng cách bánh 0,2548 m trong mô hình và 0,2834 m hiệu dụng ở plugin Gazebo.</li>
+    <li>Nêu costmap 0,05 m/ô; v<sub>max</sub> = 0,30 m/s; |ω|<sub>max</sub> = 0,80 rad/s; |v<sub>bánh</sub>|<sub>max</sub> = 0,36 m/s; gia tốc ngang 0,18 m/s²; khoảng mẫu kiểm tra 0,02 m và đầu ra 0,05 m.</li>
+    <li>Đặt Bảng thông số hệ thống ngay sau đoạn dẫn, trước bảng phương án so sánh.</li>
+  </ul>
+  <p><b>Mẫu câu dẫn bảng:</b> “To ensure that all methods were evaluated under identical geometric and motion constraints, the system and sampling parameters were fixed as summarized in Table I.”</p>
+
+  <h3>B. Compared Methods and Paired Protocol</h3>
+  <ul>
+    <li>Giới thiệu năm phương án: Raw, Simple, Savitzky–Golay, Constrained và PSTMO.</li>
+    <li>Giải thích vai trò trước khi đưa bảng:</li>
+    <li>Raw là đầu vào/mốc, không phải smoother.</li>
+    <li>Simple là đối chứng làm mượt lặp chi phí thấp.</li>
+    <li>Savitzky–Golay là đối chứng lọc cục bộ.</li>
+    <li>Constrained là đối chứng tối ưu có ràng buộc và costmap.</li>
+    <li>PSTMO là phương pháp đề xuất.</li>
+    <li>Nêu đúng cấu hình từng phương pháp; đặc biệt `w_smooth=200000`, `w_cost=0,015`, `w_curve=w_dist=0` cho Constrained.</li>
+    <li>Nêu giới hạn diễn giải: đây là so sánh các cấu hình đã thử, không phải hiệu năng cực đại sau khi hiệu chỉnh riêng từng phương pháp.</li>
+    <li>Nêu thiết kế ghép cặp: trong mỗi nhóm, mọi smoother nhận cùng một đường Raw, cùng costmap và cùng giới hạn.</li>
+    <li>Năm planner: NavFn A*, NavFn Dijkstra, Theta*, Smac2D, SmacHybrid.</li>
+    <li>Ba môi trường × năm planner = 15 nhóm đầu vào ghép cặp; mỗi tổ hợp chạy một lần.</li>
+    <li>Không gọi đây là 15 lần lặp độc lập và không lập khoảng tin cậy.</li>
+  </ul>
+  <p><b>Mẫu câu dẫn bảng:</b> “The five evaluated path-processing options and their roles in the comparison are listed in Table II. All four smoothers receive the same Raw path within each paired group.”</p>
+
+  <h3>C. Evaluation Metrics</h3>
+  <ul>
+    <li>Chỉ dùng ba chỉ số đúng phạm vi cô Lý và ver1: chiều dài L, tích phân bình phương độ cong E<sub>κ</sub> và thời gian xử lý thuật toán T.</li>
+    <li>Nêu quy trình lấy mẫu theo chiều dài cung chung trước khi tính E<sub>κ</sub> để công bằng giữa mật độ điểm khác nhau.</li>
+    <li>Nêu Raw time chỉ là sao chép/chuyển tiếp, không gồm global planning.</li>
+    <li>Nêu lượng tử bộ đo khoảng 3 ms; các giá trị rất nhỏ nghĩa là dưới độ phân giải đáng tin cậy, không phải thời gian bằng không.</li>
+    <li>Không thêm chỉ số clearance, tracking error, năng lượng, jerk hoặc rung nếu không bổ sung thí nghiệm và dữ liệu tương ứng.</li>
+  </ul>
+
+  <h3>D. Scenario 1 — Open Arena</h3>
+  <ol>
+    <li><b>Mô tả trước:</b> bản đồ không gian mở có khối cản trung tâm; cặp start–goal ((-2,20;-0,60)) m đến ((1,20;-0,60)) m.</li>
+    <li><b>Mục đích:</b> minh họa khả năng thay cục bộ các góc khi không gian chuyển tiếp tương đối rộng.</li>
+    <li><b>Hình:</b> đặt riêng hình ca Theta* của môi trường này, kèm chú thích số liệu trong hình là của ca minh họa, không phải trung bình môi trường.</li>
+    <li><b>Dẫn bảng:</b> giải thích bảng tổng hợp năm planner trong Open Arena trước khi hiển thị.</li>
+    <li><b>Phân tích sau bảng:</b> PSTMO có E<sub>κ</sub> = 1,954 m⁻¹, thấp nhất; thời gian 54,0 ms cao hơn đối chứng; tránh từ “vượt trội toàn diện”.</li>
+  </ol>
+
+  <h3>E. Scenario 2 — Narrow Aisles</h3>
+  <ol>
+    <li><b>Mô tả trước:</b> lối đi hẹp theo đường chéo tây nam–đông bắc; start–goal ((-5,00;-3,00)) m đến ((5,00;3,00)) m.</li>
+    <li><b>Mục đích:</b> quan sát ảnh hưởng của các góc liên tiếp phải chia sẻ ngân sách cạnh và bị hạn chế bởi không gian.</li>
+    <li><b>Hình:</b> đặt riêng hình Theta* của lối hẹp và vùng phóng đại swept footprint.</li>
+    <li><b>Dẫn bảng:</b> nói rõ bảng là trung bình năm planner trong môi trường lối hẹp.</li>
+    <li><b>Phân tích sau bảng:</b> PSTMO đạt E<sub>κ</sub> = 4,326 m⁻¹, vẫn thấp nhất nhưng mức cải thiện so với Simple nhỏ hơn hai môi trường còn lại; thời gian 154,2 ms là cao nhất.</li>
+    <li><b>Giới hạn:</b> chỉ được nói không phát hiện va chạm theo footprint/costmap cấu hình; không nói đã đo hoặc duy trì một biên khoảng hở xác định.</li>
+  </ol>
+
+  <h3>F. Scenario 3 — Warehouse with Cross Aisles</h3>
+  <ol>
+    <li><b>Mô tả trước:</b> kho có lối giao cắt; start–goal ((-2,00;-2,80)) m đến ((2,00;2,80)) m.</li>
+    <li><b>Mục đích:</b> minh họa lựa chọn chuỗi chuyển tiếp qua nhiều góc trong cấu trúc kho giao cắt.</li>
+    <li><b>Hình:</b> đặt riêng hình Theta* của môi trường này.</li>
+    <li><b>Dẫn bảng:</b> mô tả các cột và phạm vi trung bình trước bảng.</li>
+    <li><b>Phân tích sau bảng:</b> PSTMO đạt E<sub>κ</sub> = 2,380 m⁻¹ và L = 7,541 m; thời gian 79,8 ms.</li>
+    <li><b>Không viết:</b> kịch bản “kiểm tra độ ổn định G<sup>2</sup>” vì G<sup>2</sup> là tính chất cấu trúc đã chứng minh, không phải biến được đo lặp trong kịch bản.</li>
+  </ol>
+
+  <h3>G. Aggregate Results, Trade-offs, and Limitations</h3>
+  <ul>
+    <li>Đặt đoạn dẫn trước bảng tổng hợp 15 nhóm: bảng dùng trung bình mô tả trên ba môi trường và năm planner.</li>
+    <li>Nêu đúng kết quả chính của ver1:</li>
+    <li>PSTMO: L = 8,645 m, E<sub>κ</sub> = 2,887 m⁻¹, T = 96,0 ms.</li>
+    <li>So với Simple: E<sub>κ</sub> giảm 75,42% và chiều dài giảm khoảng 0,98%.</li>
+    <li>So với Constrained: E<sub>κ</sub> giảm 90,75% và chiều dài giảm khoảng 2,01%.</li>
+    <li>Đánh đổi: PSTMO chậm hơn Simple, Savitzky–Golay và Constrained trong cấu hình thử.</li>
+    <li>Không nói giảm chiều dài đồng nghĩa tìm tuyến toàn cục tốt hơn; PSTMO giữ thứ tự hành lang do planner quyết định.</li>
+    <li>Nêu hạn chế bằng chứng: ba bản đồ tĩnh nhỏ; một start–goal mỗi bản đồ; năm planner; một lần chạy mỗi tổ hợp; timing có lượng tử; kiểm tra va chạm nhị phân; chưa có robot thật; chưa đo tracking, năng lượng, nhiễu, trượt, tải trọng hay vật cản động.</li>
+  </ul>
+  <p><b>Cấu trúc phân tích sau mỗi bảng:</b> (1) phát hiện chính; (2) số liệu chứng minh; (3) đánh đổi; (4) giới hạn diễn giải. Không chỉ mô tả bảng bằng cách đọc lại từng ô.</p>
+
+  <h2>IV. CONCLUSION</h2>
+
+  <p>Viết thành một đoạn ngắn theo đúng năm ý sau:</p>
+  <ol>
+    <li><b>Vấn đề đã giải quyết:</b> bước chuyển từ đường gấp khúc của planner sang đường phù hợp hơn cho robot vi sai trong Nav2.</li>
+    <li><b>Phương pháp đã xây dựng:</b> chuyển tiếp Bézier bậc năm G<sup>2</sup>, cổng động học và swept footprint, quy hoạch động xử lý tương tác góc.</li>
+    <li><b>Bằng chứng chính:</b> trên 15 nhóm ghép cặp, E<sub>κ</sub> giảm 75,42% so với Simple và 90,75% so với Constrained; không cần chép lại toàn bộ bảng.</li>
+    <li><b>Đánh đổi và hạn chế:</b> thời gian xử lý trung bình tăng lên 96,0 ms; thử nghiệm hiện còn giới hạn ở mô phỏng tĩnh quy mô nhỏ và chưa đủ đặc trưng giới hạn làm việc của phương pháp.</li>
+    <li><b>Hướng tiếp theo:</b> thử lặp trên nhiều tuyến, robot vật lý, tracking error, nhiễu/trượt/tải trọng/vật cản động, tham số liên tục, clearance và tham số hóa thời gian.</li>
+  </ol>
+  <p class="avoid"><b>Tránh:</b> “PSTMO vượt trội về mọi mặt”, “đã sẵn sàng cho vi điều khiển”, “đã triệt tiêu jerk”, “đã chứng minh tiết kiệm năng lượng”, hoặc “sẽ được công bố trong bài báo sau”.</p>
+
+  <h2>REFERENCES</h2>
+  <ul>
+    <li>Giữ các tài liệu [1]–[15] của ver1 nếu chúng vẫn được dẫn trong bản mới.</li>
+    <li>Bổ sung tài liệu gốc của Dijkstra, A*, Theta* và Savitzky–Golay nếu các thuật toán này được trình bày trong Introduction.</li>
+    <li>Bổ sung tham chiếu chính thức tới Nav2/plugin cho Simple, Savitzky–Golay và Constrained để đáp ứng trực tiếp yêu cầu của cô Lý về nguồn và tính đại diện của đối chứng.</li>
+    <li>Không đưa tài liệu vào danh mục nếu không được trích trong nội dung; không tăng số lượng bằng các thuật toán không góp phần tạo khoảng trống nghiên cứu.</li>
+  </ul>
+
+  <h2>B. CHECKLIST TRƯỚC KHI VIẾT BẢN THẢO VER2</h2>
+  <table>
+    <tr><th>Kiểm tra</th><th>Yêu cầu đạt</th></tr>
+    <tr><td>Mạch Introduction</td><td>Mỗi nhóm nghiên cứu đều dẫn đến một hạn chế; các hạn chế hội tụ tự nhiên vào khoảng trống PSTMO.</td></tr>
+    <tr><td>Dạng viết Related Work</td><td>Văn xuôi lồng trong Introduction, không để danh sách “xu hướng 1/2/3” trong bản nộp.</td></tr>
+    <tr><td>Thuật ngữ</td><td>Giữ nguyên thuật ngữ chuẩn của ver1; path khác trajectory; E<sub>κ</sub> không phải năng lượng; G<sup>2</sup> không đồng nghĩa jerk bằng không.</td></tr>
+    <tr><td>Tên PSTMO</td><td>Dùng đúng tên đầy đủ trong ver1, không dùng tên do Thảo suy diễn.</td></tr>
+    <tr><td>Đối chứng</td><td>Có Raw, Simple, Savitzky–Golay và Constrained; nêu nguyên lý, nguồn, vai trò và cấu hình.</td></tr>
+    <tr><td>Toán học</td><td>Mỗi công thức có giải thích ký hiệu và chức năng ngay sau đó; chỉ giữ công thức cần chứng minh phương pháp.</td></tr>
+    <tr><td>Đầu ra</td><td>Bảo toàn start position, goal position và goal orientation; không tự thêm start orientation.</td></tr>
+    <tr><td>Thử nghiệm</td><td>Điều kiện trước; từng kịch bản mô tả rồi mới hình/bảng; mọi bảng có câu dẫn và đoạn phân tích sau bảng.</td></tr>
+    <tr><td>Thiết kế thống kê</td><td>Ghi “15 nhóm ghép cặp, mỗi tổ hợp một lần”; không gọi là repeated trials.</td></tr>
+    <tr><td>Tuyên bố kết quả</td><td>Nêu đồng thời cải thiện E<sub>κ</sub>/L và đánh đổi thời gian; không tuyên bố chỉ số chưa đo.</td></tr>
+    <tr><td>Phạm vi</td><td>Khoanh vùng mô phỏng ROS 2 Jazzy/Nav2, ba môi trường tĩnh nhỏ; robot thật và môi trường lớn là future work.</td></tr>
+  </table>
+</body>
+</html>

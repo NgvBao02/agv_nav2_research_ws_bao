@@ -1186,7 +1186,7 @@ def make_metric_figure_v2(path: Path, metrics, key: str):
         "simple":"Navigation2 Simple Smoother",
         "savitzky_golay":"Navigation2 Savitzky–Golay Smoother",
         "constrained":"Navigation2 Constrained Smoother",
-        "pstmo":"Path Smoothing and Turning-Maneuver Optimization (PSTMO)",
+        "pstmo":"PSTMO (phương pháp đề xuất)",
     }
     colors={"raw":"#777777","simple":"#009E73","savitzky_golay":"#E69F00","constrained":"#CC79A7","pstmo":"#0072B2"}
     envs=["open_arena","narrow_aisles","warehouse_cross_aisles"]
