@@ -2,8 +2,10 @@
 
 PDF chính: `../PSTMO_KHO_GIAO_CAT_5_QUY_DAO.pdf`.
 
-Báo cáo hoàn thiện ngày 04/10/2026: 96 trang, 92 hình, kèm PNG 220 dpi
-và SVG. Đợt mới ngày 03/10 có 100 lượt, 98 đạt; toàn bộ hồ sơ có 125 lượt,
+Báo cáo biên tập lại ngày 05/10/2026: 106 trang, giữ đủ 92 hình, kèm PNG 220 dpi
+và SVG. Bản trước ngày 04/10 có 96 trang; lần biên tập này bổ sung phần dẫn dắt,
+thuật ngữ, bảng tổng hợp từng tuyến và chỉ dẫn tra cứu. Đợt mới ngày 03/10 có
+100 lượt, 98 đạt; toàn bộ hồ sơ có 125 lượt,
 123 đạt. Hai lượt không đạt vẫn được giữ: R04/ThetaStar/Raw (sai số đích
 0,100234 m) và R03/SmacHybrid/PSTMO (0,102385 m), vượt ngưỡng 0,100000 m.
 
@@ -23,6 +25,7 @@ chéo ngược Tây Bắc–Đông Nam, rẽ từ hành lang ngang vào lối l�
 - `audit_manifest.json`: hash nguồn và kiểm tra cùng đầu vào Raw theo nhóm tuyến–planner.
 - `figures/`: PNG 220 dpi và SVG vector từ dữ liệu đo. Không sử dụng hình sinh AI.
 - `page_index.json`, `figure_index.json`: chỉ mục trang và hình.
+- `figure_page_index.json`: số hình, trang PDF, tên ảnh và chú thích sau khi sắp xếp lại.
 - `quality_checks.json`: kiểm tra bản PDF cuối, số trang/hình và SHA-256.
 
 Các trang hình học R01 giữ nguyên snapshot của PDF gốc. Đường thực thi và
@@ -50,7 +53,20 @@ Các hash Raw phải trùng trong nhóm năm phương án. Một lượt chỉ �
 thành công, vào dung sai đích theo ground truth và dừng ổn định. Phân loại thất
 bại được giữ kể cả khi chỉ vượt ngưỡng một lượng nhỏ.
 
-## Tái lập
+## Cấu trúc đọc của bản biên tập 05/10
+
+Trang 1-3: bìa, tóm tắt và mục lục có liên kết. Trang 4-8: thuật ngữ,
+chuỗi xử lý, thiết kế thí nghiệm, chỉ số và năm tuyến. Trang 9-10: kết quả
+tổng hợp. Trang 11-20: mỗi tuyến hai trang tình huống và diễn giải kết quả.
+Trang 21-22: thảo luận và giới hạn. Trang 23 là bảng tra phụ lục;
+trang 24-103 giữ đủ hồ sơ cơ chế và 25 nhóm phân tích chi tiết.
+Trang 104-106: đối chiếu cách lấy mẫu, nguồn dữ liệu và mã kiểm tra.
+
+Mọi ảnh khoa học và dữ liệu thực nghiệm giữ nguyên so với commit
+`7602317e4d23806730fbb64a9f3f4cace469286e`. Chỉ số được tính từ cùng các JSON;
+không có lượt mô phỏng mới trong lần biên tập này.
+
+## Tái lập báo cáo và thí nghiệm
 
 Từ gốc workspace:
 
@@ -75,6 +91,19 @@ PYTHONNOUSERSITE=1 /tmp/pstmo-cross5-pdf-venv/bin/python tools/build_cross_aisle
 
 Builder chỉ xuất PDF cuối khi đủ 125 kết quả. Cờ `--preview` dùng để kiểm tra
 bố cục của những nhóm đã hoàn tất; preview không phải kết quả giao cuối.
+
+Builder mặc định dùng lại 92 ảnh đã kiểm tra; `--regenerate-figures` dùng khi
+cần dựng lại hình từ dữ liệu. Mục lục và tham chiếu trang được xác định qua
+hai lượt dàn trang. Kiểm tra dữ liệu, số hình, liên kết và render toàn bộ PDF:
+
+```bash
+/tmp/pstmo-cross5-pdf-venv/bin/pip install pymupdf
+PYTHONNOUSERSITE=1 /tmp/pstmo-cross5-pdf-venv/bin/python tools/verify_cross_aisle_report.py
+```
+
+Sau khi xem các ảnh trong `tmp/pdfs/cross5_revision/`, có thể ghi nhận kết quả
+kiểm tra trực quan bằng cờ `--accept-visual-review`. Cờ này từ chối xác nhận
+nếu PDF đã thay đổi kể từ lần render.
 
 ## Giới hạn diễn giải
 
