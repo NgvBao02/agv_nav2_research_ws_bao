@@ -1,0 +1,23 @@
+environment: warehouse_cross_aisles
+description: Five predefined routes for the dedicated cross-aisle study. R01 retains the published route; R02-R05 add distinct geometric tasks.
+scenarios:
+  - name: cross_aisle_transfer
+    label: R01 - Chuyển lối tại giao cắt
+    start: [-2.0, -2.8, 1.520429947]
+    goal: [2.0, 2.8, 0.950546841]
+  - name: wide_diagonal_transfer
+    label: R02 - Chuyển lối chéo dài toàn kho
+    start: [-4.7, -2.8]
+    goal: [4.7, 2.8, 1.570796327]
+  - name: south_u_transfer
+    label: R03 - Vòng chữ U giữa các lối phía Nam
+    start: [-2.0, -2.8, 1.570796327]
+    goal: [2.0, -2.8, -1.570796327]
+  - name: reverse_diagonal_transfer
+    label: R04 - Chuyển lối chéo ngược Bắc Tây - Nam Đông
+    start: [-4.6, 2.8]
+    goal: [2.0, -2.8, -1.570796327]
+  - name: cross_to_picking_turn
+    label: R05 - Rẽ từ hành lang ngang vào lối lấy hàng
+    start: [-5.0, 0.0, 0.0]
+    goal: [0.0, 3.0, 1.570796327]
