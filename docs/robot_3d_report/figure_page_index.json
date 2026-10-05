@@ -1,0 +1,851 @@
+{
+  "pages": [
+    {
+      "page": 1,
+      "title": "MÔ HÌNH 3D ROBOT VI SAI",
+      "section": "TỔNG QUAN"
+    },
+    {
+      "page": 2,
+      "title": "Kết luận chính trước khi đọc chi tiết",
+      "section": "TÓM TẮT"
+    },
+    {
+      "page": 3,
+      "title": "Mục lục và lộ trình đọc",
+      "section": "HƯỚNG DẪN"
+    },
+    {
+      "page": 4,
+      "title": "1. Nguồn dữ liệu và chuỗi mô hình",
+      "section": "01 / NGUỒN"
+    },
+    {
+      "page": 5,
+      "title": "2. Cấu tạo và hình học STEP",
+      "section": "02 / CAD"
+    },
+    {
+      "page": 6,
+      "title": "2.1. Hình chiếu bằng và mặt dưới",
+      "section": "02 / CAD"
+    },
+    {
+      "page": 7,
+      "title": "2.2. Hai mặt đầu của robot",
+      "section": "02 / CAD"
+    },
+    {
+      "page": 8,
+      "title": "2.3. Hai mặt bên và vị trí bánh",
+      "section": "02 / CAD"
+    },
+    {
+      "page": 9,
+      "title": "2.4. Kết cấu khung và bố trí bên trong",
+      "section": "02 / CAD"
+    },
+    {
+      "page": 10,
+      "title": "2.5. Hai cụm động cơ và bánh xe",
+      "section": "02 / CAD"
+    },
+    {
+      "page": 11,
+      "title": "2.6. Điện tử và cụm quét",
+      "section": "02 / CAD"
+    },
+    {
+      "page": 12,
+      "title": "2.7. Tách lớp để hiểu lắp ghép",
+      "section": "02 / CAD"
+    },
+    {
+      "page": 13,
+      "title": "3. STEP và URDF chưa trùng hoàn toàn",
+      "section": "03 / ĐỐI CHIẾU"
+    },
+    {
+      "page": 14,
+      "title": "3.1. Quy trục và đối chiếu bề mặt",
+      "section": "03 / ĐỐI CHIẾU"
+    },
+    {
+      "page": 15,
+      "title": "3.2. Bánh xe: solid, mặt rời và mesh",
+      "section": "03 / ĐỐI CHIẾU"
+    },
+    {
+      "page": 16,
+      "title": "4. URDF, link và hệ tọa độ",
+      "section": "04 / MÔ TẢ ROBOT"
+    },
+    {
+      "page": 17,
+      "title": "4.1. Bao ngoài của mesh mô phỏng",
+      "section": "04 / MÔ TẢ ROBOT"
+    },
+    {
+      "page": 18,
+      "title": "4.2. Mặt bên và đáy của URDF visual",
+      "section": "04 / MÔ TẢ ROBOT"
+    },
+    {
+      "page": 19,
+      "title": "4.3. Mesh và các phép biến đổi",
+      "section": "04 / MÔ TẢ ROBOT"
+    },
+    {
+      "page": 20,
+      "title": "5. Collision, khối lượng và tiếp xúc",
+      "section": "05 / VẬT LÝ"
+    },
+    {
+      "page": 21,
+      "title": "5.1. Khối lượng, COM và tensor quán tính",
+      "section": "05 / VẬT LÝ"
+    },
+    {
+      "page": 22,
+      "title": "5.2. Điểm đỡ, ma sát và tải thêm",
+      "section": "05 / VẬT LÝ"
+    },
+    {
+      "page": 23,
+      "title": "6. Cảm biến và giao tiếp ROS 2",
+      "section": "06 / CẢM BIẾN"
+    },
+    {
+      "page": 24,
+      "title": "6.1. Tần số thực nhận và đồng bộ",
+      "section": "06 / CẢM BIẾN"
+    },
+    {
+      "page": 25,
+      "title": "7. Động học và giới hạn chuyển động",
+      "section": "07 / ĐỘNG HỌC"
+    },
+    {
+      "page": 26,
+      "title": "7.1. Footprint và không gian quay",
+      "section": "07 / ĐỘNG HỌC"
+    },
+    {
+      "page": 27,
+      "title": "7.2. Động cơ, truyền động và nguồn",
+      "section": "07 / ĐỘNG HỌC"
+    },
+    {
+      "page": 28,
+      "title": "7.3. Chuyển sang robot thật: dữ liệu còn thiếu",
+      "section": "07 / ĐỘNG HỌC"
+    },
+    {
+      "page": 29,
+      "title": "8. Ảnh Gazebo và RViz2 thực tế",
+      "section": "08 / MINH CHỨNG"
+    },
+    {
+      "page": 30,
+      "title": "8.1. Gazebo: mặt đầu và mặt bên",
+      "section": "08 / MINH CHỨNG"
+    },
+    {
+      "page": 31,
+      "title": "8.2. Gazebo: mặt trên và bánh xe",
+      "section": "08 / MINH CHỨNG"
+    },
+    {
+      "page": 32,
+      "title": "8.3. RViz2: mô hình hiển thị và góc sau",
+      "section": "08 / MINH CHỨNG"
+    },
+    {
+      "page": 33,
+      "title": "8.4. RViz2: mặt trên và mặt bên",
+      "section": "08 / MINH CHỨNG"
+    },
+    {
+      "page": 34,
+      "title": "8.5. RViz2: TF và điểm quét LiDAR",
+      "section": "08 / MINH CHỨNG"
+    },
+    {
+      "page": 35,
+      "title": "9. Tích hợp trong kho có lối giao cắt",
+      "section": "09 / NAV2"
+    },
+    {
+      "page": 36,
+      "title": "9.1. Bản đồ, costmap và footprint",
+      "section": "09 / NAV2"
+    },
+    {
+      "page": 37,
+      "title": "9.2. Robot chạy và đến đích",
+      "section": "09 / NAV2"
+    },
+    {
+      "page": 38,
+      "title": "9.3. Số liệu lượt minh họa trong kho",
+      "section": "09 / NAV2"
+    },
+    {
+      "page": 39,
+      "title": "10. Phương pháp thử chuyển động",
+      "section": "10 / THỰC NGHIỆM"
+    },
+    {
+      "page": 40,
+      "title": "10.1. Định nghĩa chỉ số và cách đọc đồ thị",
+      "section": "10 / THỰC NGHIỆM"
+    },
+    {
+      "page": 41,
+      "title": "11.1. Tiến thẳng: đáp ứng chuyển động",
+      "section": "11 / HỒ SƠ THỬ"
+    },
+    {
+      "page": 42,
+      "title": "11.1. Tiến thẳng: odom và cảm biến",
+      "section": "11 / HỒ SƠ THỬ"
+    },
+    {
+      "page": 43,
+      "title": "11.2. Lùi thẳng: đáp ứng chuyển động",
+      "section": "11 / HỒ SƠ THỬ"
+    },
+    {
+      "page": 44,
+      "title": "11.2. Lùi thẳng: odom và cảm biến",
+      "section": "11 / HỒ SƠ THỬ"
+    },
+    {
+      "page": 45,
+      "title": "11.3. Quay trái tại chỗ: đáp ứng chuyển động",
+      "section": "11 / HỒ SƠ THỬ"
+    },
+    {
+      "page": 46,
+      "title": "11.3. Quay trái tại chỗ: odom và cảm biến",
+      "section": "11 / HỒ SƠ THỬ"
+    },
+    {
+      "page": 47,
+      "title": "11.4. Quay phải tại chỗ: đáp ứng chuyển động",
+      "section": "11 / HỒ SƠ THỬ"
+    },
+    {
+      "page": 48,
+      "title": "11.4. Quay phải tại chỗ: odom và cảm biến",
+      "section": "11 / HỒ SƠ THỬ"
+    },
+    {
+      "page": 49,
+      "title": "11.5. Chạy cung trái: đáp ứng chuyển động",
+      "section": "11 / HỒ SƠ THỬ"
+    },
+    {
+      "page": 50,
+      "title": "11.5. Chạy cung trái: odom và cảm biến",
+      "section": "11 / HỒ SƠ THỬ"
+    },
+    {
+      "page": 51,
+      "title": "11.6. Chạy cung phải: đáp ứng chuyển động",
+      "section": "11 / HỒ SƠ THỬ"
+    },
+    {
+      "page": 52,
+      "title": "11.6. Chạy cung phải: odom và cảm biến",
+      "section": "11 / HỒ SƠ THỬ"
+    },
+    {
+      "page": 53,
+      "title": "11.7. Dừng từ 0,30 m/s: đáp ứng chuyển động",
+      "section": "11 / HỒ SƠ THỬ"
+    },
+    {
+      "page": 54,
+      "title": "11.7. Dừng từ 0,30 m/s: odom và cảm biến",
+      "section": "11 / HỒ SƠ THỬ"
+    },
+    {
+      "page": 55,
+      "title": "12. Tổng hợp và ý nghĩa thực nghiệm",
+      "section": "12 / THẢO LUẬN"
+    },
+    {
+      "page": 56,
+      "title": "12.1. Dừng và bất đối xứng tiến/lùi",
+      "section": "12 / THẢO LUẬN"
+    },
+    {
+      "page": 57,
+      "title": "12.2. Những khoảng trống cần công bố",
+      "section": "12 / THẢO LUẬN"
+    },
+    {
+      "page": 58,
+      "title": "13. Cách dùng dữ liệu cho bài báo",
+      "section": "13 / SỬ DỤNG"
+    },
+    {
+      "page": 59,
+      "title": "A. Tham số để tái lập",
+      "section": "PHỤ LỤC"
+    },
+    {
+      "page": 60,
+      "title": "A.1. Lệnh và thứ tự tái tạo",
+      "section": "PHỤ LỤC"
+    },
+    {
+      "page": 61,
+      "title": "B. Hồ sơ solid STEP quan trọng",
+      "section": "PHỤ LỤC"
+    },
+    {
+      "page": 62,
+      "title": "B.1. Ma trận và nguồn gốc thông số",
+      "section": "PHỤ LỤC"
+    },
+    {
+      "page": 63,
+      "title": "C.1. Bảng số liệu của 21 lượt",
+      "section": "PHỤ LỤC"
+    },
+    {
+      "page": 64,
+      "title": "C.2. Bảng số liệu của 21 lượt",
+      "section": "PHỤ LỤC"
+    },
+    {
+      "page": 65,
+      "title": "D. Nguồn, tệp bàn giao và kiểm chứng",
+      "section": "PHỤ LỤC"
+    },
+    {
+      "page": 66,
+      "title": "D.1. Dấu vân tay các tệp nguồn chính",
+      "section": "PHỤ LỤC"
+    },
+    {
+      "page": 67,
+      "title": "E.1. Danh mục hình và trang tra cứu",
+      "section": "PHỤ LỤC"
+    },
+    {
+      "page": 68,
+      "title": "E.2. Danh mục hình và trang tra cứu",
+      "section": "PHỤ LỤC"
+    },
+    {
+      "page": 69,
+      "title": "E.3. Danh mục hình và trang tra cứu",
+      "section": "PHỤ LỤC"
+    }
+  ],
+  "figures": [
+    {
+      "figure": 1,
+      "page": 1,
+      "path": "docs/robot_3d_report/figures/cad_iso_front.png",
+      "caption": "Dựng hình trực tiếp từ hình học STEP. Màu phân biệt hình học do báo cáo gán, không phải chứng nhận vật liệu; bao gồm solid và các mặt không thuộc solid."
+    },
+    {
+      "figure": 2,
+      "page": 4,
+      "path": "docs/robot_3d_report/figures/model_pipeline.png",
+      "caption": "Sơ đồ vai trò của các tệp và các thành phần đang dùng. Mũi tên mô tả luồng phụ thuộc; STEP không tự động được chuyển lại sang URDF trong phiên báo cáo này."
+    },
+    {
+      "figure": 3,
+      "page": 5,
+      "path": "docs/robot_3d_report/figures/cad_iso_back.png",
+      "caption": "Phối cảnh phía đối diện của STEP. Vị trí các tấm sàn, hai cụm truyền động, trụ đỡ và cụm quét phía trên được giữ theo tệp CAD."
+    },
+    {
+      "figure": 4,
+      "page": 6,
+      "path": "docs/robot_3d_report/figures/cad_top.png",
+      "caption": "STEP nhìn từ trên, sau khi quy trục dài theo x, ngang theo y, cao theo z. Hình chiếu song song, không có phối cảnh."
+    },
+    {
+      "figure": 5,
+      "page": 6,
+      "path": "docs/robot_3d_report/figures/cad_bottom.png",
+      "caption": "STEP nhìn từ dưới để thấy bánh xe, các vị trí đỡ và mặt đáy. Đây là phép đổi góc nhìn, không đảo cấu trúc lắp ghép."
+    },
+    {
+      "figure": 6,
+      "page": 7,
+      "path": "docs/robot_3d_report/figures/cad_front.png",
+      "caption": "Mặt đầu theo +x của hệ trục quy ước dùng để đối chiếu với URDF. Không coi nhãn “trước” là xác nhận hướng lắp phần cứng."
+    },
+    {
+      "figure": 7,
+      "page": 7,
+      "path": "docs/robot_3d_report/figures/cad_rear.png",
+      "caption": "Mặt đầu đối diện. Hình giúp phân biệt bao ngoài thân với cụm cảm biến nằm phía trên."
+    },
+    {
+      "figure": 8,
+      "page": 8,
+      "path": "docs/robot_3d_report/figures/cad_left.png",
+      "caption": "Mặt bên +y của STEP. Quan sát lốp, cụm truyền động và khe khoét của các tấm sàn."
+    },
+    {
+      "figure": 9,
+      "page": 8,
+      "path": "docs/robot_3d_report/figures/cad_right.png",
+      "caption": "Mặt bên -y. Các mặt hở trang trí/chi tiết lốp vẫn được dựng; màu là màu kỹ thuật do báo cáo gán."
+    },
+    {
+      "figure": 10,
+      "page": 9,
+      "path": "docs/robot_3d_report/figures/cad_structure.png",
+      "caption": "Bốn solid kết cấu lớn #20-23: hai tấm sàn và hai vùng vách. Nhóm được chọn theo hình học, không phải mã linh kiện của BOM."
+    },
+    {
+      "figure": 11,
+      "page": 9,
+      "path": "docs/robot_3d_report/figures/cad_open_view.png",
+      "caption": "Minh họa bóc phần phía trên bằng cách ẩn tam giác có trọng tâm cao hơn mặt phẳng cắt. Không phải mặt cắt BRep kín và không dùng để đo chiều dày tại mép cắt."
+    },
+    {
+      "figure": 12,
+      "page": 10,
+      "path": "docs/robot_3d_report/figures/cad_drive_a.png",
+      "caption": "Cụm bên A: giá đỡ, thân motor, hộp số/trục và phần solid bánh. Danh sách solid được lưu trong cad_audit.json."
+    },
+    {
+      "figure": 13,
+      "page": 10,
+      "path": "docs/robot_3d_report/figures/cad_drive_b.png",
+      "caption": "Cụm bên B, dựng với cùng góc nhìn. Phân nhóm bằng vị trí và hình học; không suy ra tỷ số truyền hay điện áp chỉ từ hình CAD."
+    },
+    {
+      "figure": 14,
+      "page": 11,
+      "path": "docs/robot_3d_report/figures/cad_electronics.png",
+      "caption": "Các solid nhỏ trong vùng điện tử được chọn bằng hộp không gian, giữ nguyên vị trí. Không phải sơ đồ đấu nối điện."
+    },
+    {
+      "figure": 15,
+      "page": 11,
+      "path": "docs/robot_3d_report/figures/cad_lidar.png",
+      "caption": "Nhóm hình học cảm biến phía trên, solid #527-533. Mặt phát tia thực tế trong mô phỏng được định nghĩa bằng pose của sensor SDF, không bằng màu hay bề mặt này."
+    },
+    {
+      "figure": 16,
+      "page": 12,
+      "path": "docs/robot_3d_report/figures/cad_exploded.png",
+      "caption": "Hình tách giãn các khối CAD để giải thích cấu trúc; vị trí đã được dịch khỏi lắp ghép gốc. Không dùng hình này để đo khoảng cách lắp ráp hoặc quy trình tháo lắp."
+    },
+    {
+      "figure": 17,
+      "page": 13,
+      "path": "docs/robot_3d_report/figures/track_difference.png",
+      "caption": "Đối chiếu tâm lốp trong STEP với vị trí joint/collision bánh của URDF/SDF. Bao thân 440 × 340 mm được giữ làm mốc chung."
+    },
+    {
+      "figure": 18,
+      "page": 14,
+      "path": "docs/robot_3d_report/figures/cad_urdf_overlay.png",
+      "caption": "Chồng hình học STEP (cam) và URDF visual (xanh). Quy trục x = Z_STEP, y = -X_STEP, z = -Y_STEP - 20 mm để neo theo trục bánh; không ép đổi kích thước."
+    },
+    {
+      "figure": 19,
+      "page": 15,
+      "path": "docs/robot_3d_report/figures/cad_tread_surface.png",
+      "caption": "Hai solid lốp và các mặt rời quanh bánh trong STEP. Bao gân/chi tiết ngoài không đồng nghĩa bán kính lăn hữu hiệu khi chịu tải."
+    },
+    {
+      "figure": 20,
+      "page": 15,
+      "path": "docs/robot_3d_report/figures/mesh_1.png",
+      "caption": "Mesh bánh trái đang dùng trong URDF, đã áp dụng scale và transform của visual. Bao phần mesh theo trục bánh dài 42,4 mm; tread collision chỉ rộng 30 mm."
+    },
+    {
+      "figure": 21,
+      "page": 16,
+      "path": "docs/robot_3d_report/figures/tf_tree.png",
+      "caption": "Cây 8 link và 7 joint của URDF. Các tọa độ ghi tương đối với base_link; hai wheel joint là continuous, năm joint còn lại fixed."
+    },
+    {
+      "figure": 22,
+      "page": 17,
+      "path": "docs/robot_3d_report/figures/urdf_iso.png",
+      "caption": "Render ba mesh STL với đúng transform URDF. Màu kỹ thuật của báo cáo, không phải ảnh Gazebo/RViz2."
+    },
+    {
+      "figure": 23,
+      "page": 17,
+      "path": "docs/robot_3d_report/figures/urdf_top.png",
+      "caption": "Nhìn từ trên của các mesh mô phỏng. Vị trí bánh thuộc URDF hiện hành, không dùng trực tiếp vị trí bánh trong STEP."
+    },
+    {
+      "figure": 24,
+      "page": 18,
+      "path": "docs/robot_3d_report/figures/urdf_side.png",
+      "caption": "Mặt bên: dễ quan sát tương quan giữa trục bánh, mặt đáy và đỉnh cụm LiDAR."
+    },
+    {
+      "figure": 25,
+      "page": 18,
+      "path": "docs/robot_3d_report/figures/urdf_bottom.png",
+      "caption": "Mặt dưới: visual chỉ là hình học hiển thị. Các tiếp xúc trong vật lý do collision primitives quyết định."
+    },
+    {
+      "figure": 26,
+      "page": 19,
+      "path": "docs/robot_3d_report/figures/urdf_exploded.png",
+      "caption": "Tách giãn ba mesh để phân biệt thân và hai bánh. Đây là hình giải thích; không phải trạng thái thực trong Gazebo."
+    },
+    {
+      "figure": 27,
+      "page": 20,
+      "path": "docs/robot_3d_report/screenshots/rviz_collision.png",
+      "caption": "Ảnh chụp RViz2 thật: tắt Visual, bật Collision. Hình vuông/khối đầy là mô hình va chạm, không phải thiếu chi tiết CAD."
+    },
+    {
+      "figure": 28,
+      "page": 21,
+      "path": "docs/robot_3d_report/figures/mass_inertia.png",
+      "caption": "Khối lượng khai báo trong SDF và các mômen quán tính chính của toàn mô hình, quy về COM bằng định lý trục song song [S3, D]."
+    },
+    {
+      "figure": 29,
+      "page": 22,
+      "path": "docs/robot_3d_report/figures/support_payload.png",
+      "caption": "Bên trái: đa giác nối các điểm tiếp xúc danh định. Bên phải: ví dụ tính COM khi thêm một tải giả định, chỉ minh họa công thức; không phải kết quả thử tải."
+    },
+    {
+      "figure": 30,
+      "page": 23,
+      "path": "docs/robot_3d_report/figures/geometry_layout.png",
+      "caption": "Sơ đồ kích thước, điểm đỡ và cao độ cảm biến danh định từ URDF/SDF. Các khối thân bên phải là sơ đồ đơn giản, không phải mặt cắt CAD."
+    },
+    {
+      "figure": 31,
+      "page": 24,
+      "path": "docs/robot_3d_report/figures/sample_rates.png",
+      "caption": "Thống kê timestamp ghi ở E1. Tần số trung bình khác tần số cấu hình do bước vật lý 3 ms, lịch xuất bản và quá trình reset/ghi nhận."
+    },
+    {
+      "figure": 32,
+      "page": 25,
+      "path": "docs/robot_3d_report/figures/velocity_envelope.png",
+      "caption": "Trái: miền ghép các giới hạn v, ω và tốc độ bánh 0,36 m/s. Phải: bán kính từ các ràng buộc khác nhau, không phải một “bán kính quay robot” duy nhất."
+    },
+    {
+      "figure": 33,
+      "page": 26,
+      "path": "docs/robot_3d_report/figures/swept_footprint.png",
+      "caption": "Minh họa hình học từ footprint 440 × 340 mm: quét khi xoay tại chỗ và khi đi cung R = 0,50 m. Không phải quỹ đạo thử nghiệm mới."
+    },
+    {
+      "figure": 34,
+      "page": 29,
+      "path": "docs/robot_3d_report/screenshots/gz_iso_front.png",
+      "caption": "Ảnh chụp cửa sổ Gazebo Sim 8.15.0: robot ở vùng trống của open_arena. Không phải ảnh dựng CAD hoặc hình tạo sinh."
+    },
+    {
+      "figure": 35,
+      "page": 29,
+      "path": "docs/robot_3d_report/screenshots/gz_iso_rear.png",
+      "caption": "Gazebo: góc đối diện để quan sát bánh còn lại và kết cấu thân. Camera/giờ chụp được lưu trong capture_manifest.jsonl."
+    },
+    {
+      "figure": 36,
+      "page": 30,
+      "path": "docs/robot_3d_report/screenshots/gz_front.png",
+      "caption": "Gazebo: nhìn gần ngang trục dọc. Robot dùng nguyên model.sdf của workspace."
+    },
+    {
+      "figure": 37,
+      "page": 30,
+      "path": "docs/robot_3d_report/screenshots/gz_side.png",
+      "caption": "Gazebo: mặt bên, kiểm tra cao độ bánh và cảm biến. Màu sáng lấy trực tiếp từ visual/material của mô hình."
+    },
+    {
+      "figure": 38,
+      "page": 31,
+      "path": "docs/robot_3d_report/screenshots/gz_top.png",
+      "caption": "Gazebo: nhìn từ trên. Hình dùng để nhận diện bao thân và phân bố bộ phận, không dùng đo pixel thay thế nguồn CAD."
+    },
+    {
+      "figure": 39,
+      "page": 31,
+      "path": "docs/robot_3d_report/screenshots/gz_wheel_detail.png",
+      "caption": "Gazebo: góc cận cảnh bánh và vùng khoét thân. Collision và contact lực vẫn là mô hình đơn giản hóa ở mục 5."
+    },
+    {
+      "figure": 40,
+      "page": 32,
+      "path": "docs/robot_3d_report/screenshots/rviz_iso.png",
+      "caption": "RViz2: RobotModel Status OK, Fixed Frame = base_link, nhận /robot_description. Giao diện được giữ để xác nhận nguồn ảnh."
+    },
+    {
+      "figure": 41,
+      "page": 32,
+      "path": "docs/robot_3d_report/screenshots/rviz_rear.png",
+      "caption": "RViz2: góc nhìn đối diện với cùng mô hình URDF và joint state từ phiên Gazebo."
+    },
+    {
+      "figure": 42,
+      "page": 33,
+      "path": "docs/robot_3d_report/screenshots/rviz_top.png",
+      "caption": "RViz2: hình chiếu gần thẳng đứng để đối chiếu vị trí hai bánh."
+    },
+    {
+      "figure": 43,
+      "page": 33,
+      "path": "docs/robot_3d_report/screenshots/rviz_side.png",
+      "caption": "RViz2: nhìn cạnh, quan sát hệ cao độ của mô hình. Các grid 0,1 m chỉ là lưới tham chiếu hiển thị."
+    },
+    {
+      "figure": 44,
+      "page": 34,
+      "path": "docs/robot_3d_report/screenshots/rviz_tf.png",
+      "caption": "RViz2 hiển thị TF của base_link, laser và hai bánh, làm mờ visual để thấy các gốc trục. Cây đầy đủ gồm cả motor và IMU được trình bày ở mục 4."
+    },
+    {
+      "figure": 45,
+      "page": 34,
+      "path": "docs/robot_3d_report/screenshots/rviz_scan.png",
+      "caption": "RViz2 hiển thị /scan trong open_arena. Điểm quét là dữ liệu sensor đang chạy, không phải chấm vẽ tay."
+    },
+    {
+      "figure": 46,
+      "page": 35,
+      "path": "docs/robot_3d_report/screenshots/gz_warehouse_overview.png",
+      "caption": "Gazebo: toàn cảnh warehouse_cross_aisles từ world SDF hiện có. Cùng mô hình robot được spawn ở đầu hành lang ngang."
+    },
+    {
+      "figure": 47,
+      "page": 35,
+      "path": "docs/robot_3d_report/screenshots/gz_warehouse_top.png",
+      "caption": "Gazebo: nhìn từ trên để thấy các dãy kệ và hành lang giao cắt. Đây là cùng map kho của nghiên cứu trước, không phải map thiết kế mới."
+    },
+    {
+      "figure": 48,
+      "page": 36,
+      "path": "docs/robot_3d_report/screenshots/rviz_warehouse_overview.png",
+      "caption": "RViz2: map và global costmap trong warehouse_cross_aisles. Các lớp được nạp từ Nav2 của phiên thực tế."
+    },
+    {
+      "figure": 49,
+      "page": 36,
+      "path": "docs/robot_3d_report/screenshots/rviz_warehouse_local.png",
+      "caption": "RViz2: góc cận robot và polygon footprint. Bao chữ nhật màu vàng giúp liên hệ hình học cơ khí với costmap 2D."
+    },
+    {
+      "figure": 50,
+      "page": 37,
+      "path": "docs/robot_3d_report/screenshots/rviz_warehouse_navigation.png",
+      "caption": "Ảnh RViz2 chụp trong lúc action NavigateToPose đang thực thi. Planner được chọn rõ là ThetaStar qua /planner_selector."
+    },
+    {
+      "figure": 51,
+      "page": 37,
+      "path": "docs/robot_3d_report/screenshots/rviz_warehouse_arrival.png",
+      "caption": "Ảnh RViz2 sau khi action trả về SUCCEEDED (status = 4). Thành công action không thay thế kiểm tra ground truth."
+    },
+    {
+      "figure": 52,
+      "page": 38,
+      "path": "docs/robot_3d_report/figures/warehouse_trajectory.png",
+      "caption": "Quỹ đạo ground truth mới ghi trong kho; các khối kệ được dựng lại từ collision box của world. Hình không phải một trong 21 lượt thử động học ở open_arena."
+    },
+    {
+      "figure": 53,
+      "page": 40,
+      "path": "docs/robot_3d_report/figures/paths_scan.png",
+      "caption": "Trái: các quỹ đạo mẫu ở hệ tọa độ cục bộ đầu lượt. Phải: một LaserScan thực ghi trong phiên, quy về frame laser; không phải bản đồ toàn cục."
+    },
+    {
+      "figure": 54,
+      "page": 41,
+      "path": "docs/robot_3d_report/figures/motion_forward.png",
+      "caption": "[E1] Tiến thẳng: vận tốc tuyến tính, vận tốc góc, góc quay tích lũy và đường đi trong hệ đầu lượt. Vận tốc suy từ ground truth, không lấy trực tiếp giá trị command."
+    },
+    {
+      "figure": 55,
+      "page": 42,
+      "path": "docs/robot_3d_report/figures/sensors_forward.png",
+      "caption": "[E1] Tiến thẳng: sai lệch odom-GT, vận tốc bánh từ /joint_states và gyro z từ /imu/data. Màu ứng với lần lặp; bánh trái nét liền, bánh phải nét đứt."
+    },
+    {
+      "figure": 56,
+      "page": 43,
+      "path": "docs/robot_3d_report/figures/motion_reverse.png",
+      "caption": "[E1] Lùi thẳng: vận tốc tuyến tính, vận tốc góc, góc quay tích lũy và đường đi trong hệ đầu lượt. Vận tốc suy từ ground truth, không lấy trực tiếp giá trị command."
+    },
+    {
+      "figure": 57,
+      "page": 44,
+      "path": "docs/robot_3d_report/figures/sensors_reverse.png",
+      "caption": "[E1] Lùi thẳng: sai lệch odom-GT, vận tốc bánh từ /joint_states và gyro z từ /imu/data. Màu ứng với lần lặp; bánh trái nét liền, bánh phải nét đứt."
+    },
+    {
+      "figure": 58,
+      "page": 45,
+      "path": "docs/robot_3d_report/figures/motion_pivot_ccw.png",
+      "caption": "[E1] Quay trái tại chỗ: vận tốc tuyến tính, vận tốc góc, góc quay tích lũy và đường đi trong hệ đầu lượt. Vận tốc suy từ ground truth, không lấy trực tiếp giá trị command."
+    },
+    {
+      "figure": 59,
+      "page": 46,
+      "path": "docs/robot_3d_report/figures/sensors_pivot_ccw.png",
+      "caption": "[E1] Quay trái tại chỗ: sai lệch odom-GT, vận tốc bánh từ /joint_states và gyro z từ /imu/data. Màu ứng với lần lặp; bánh trái nét liền, bánh phải nét đứt."
+    },
+    {
+      "figure": 60,
+      "page": 47,
+      "path": "docs/robot_3d_report/figures/motion_pivot_cw.png",
+      "caption": "[E1] Quay phải tại chỗ: vận tốc tuyến tính, vận tốc góc, góc quay tích lũy và đường đi trong hệ đầu lượt. Vận tốc suy từ ground truth, không lấy trực tiếp giá trị command."
+    },
+    {
+      "figure": 61,
+      "page": 48,
+      "path": "docs/robot_3d_report/figures/sensors_pivot_cw.png",
+      "caption": "[E1] Quay phải tại chỗ: sai lệch odom-GT, vận tốc bánh từ /joint_states và gyro z từ /imu/data. Màu ứng với lần lặp; bánh trái nét liền, bánh phải nét đứt."
+    },
+    {
+      "figure": 62,
+      "page": 49,
+      "path": "docs/robot_3d_report/figures/motion_arc_left.png",
+      "caption": "[E1] Chạy cung trái: vận tốc tuyến tính, vận tốc góc, góc quay tích lũy và đường đi trong hệ đầu lượt. Vận tốc suy từ ground truth, không lấy trực tiếp giá trị command."
+    },
+    {
+      "figure": 63,
+      "page": 50,
+      "path": "docs/robot_3d_report/figures/sensors_arc_left.png",
+      "caption": "[E1] Chạy cung trái: sai lệch odom-GT, vận tốc bánh từ /joint_states và gyro z từ /imu/data. Màu ứng với lần lặp; bánh trái nét liền, bánh phải nét đứt."
+    },
+    {
+      "figure": 64,
+      "page": 51,
+      "path": "docs/robot_3d_report/figures/motion_arc_right.png",
+      "caption": "[E1] Chạy cung phải: vận tốc tuyến tính, vận tốc góc, góc quay tích lũy và đường đi trong hệ đầu lượt. Vận tốc suy từ ground truth, không lấy trực tiếp giá trị command."
+    },
+    {
+      "figure": 65,
+      "page": 52,
+      "path": "docs/robot_3d_report/figures/sensors_arc_right.png",
+      "caption": "[E1] Chạy cung phải: sai lệch odom-GT, vận tốc bánh từ /joint_states và gyro z từ /imu/data. Màu ứng với lần lặp; bánh trái nét liền, bánh phải nét đứt."
+    },
+    {
+      "figure": 66,
+      "page": 53,
+      "path": "docs/robot_3d_report/figures/motion_brake.png",
+      "caption": "[E1] Dừng từ 0,30 m/s: vận tốc tuyến tính, vận tốc góc, góc quay tích lũy và đường đi trong hệ đầu lượt. Vận tốc suy từ ground truth, không lấy trực tiếp giá trị command."
+    },
+    {
+      "figure": 67,
+      "page": 54,
+      "path": "docs/robot_3d_report/figures/sensors_brake.png",
+      "caption": "[E1] Dừng từ 0,30 m/s: sai lệch odom-GT, vận tốc bánh từ /joint_states và gyro z từ /imu/data. Màu ứng với lần lặp; bánh trái nét liền, bánh phải nét đứt."
+    },
+    {
+      "figure": 68,
+      "page": 55,
+      "path": "docs/robot_3d_report/figures/odom_summary.png",
+      "caption": "Trung bình sai lệch cuối qua ba lần lặp mỗi ca. Chạy cung tạo sai lệch vị trí odometry lớn hơn các ca tiến/lùi hoặc quay tại chỗ trong đúng cấu hình này."
+    },
+    {
+      "figure": 69,
+      "page": 56,
+      "path": "docs/robot_3d_report/figures/braking_calibration.png",
+      "caption": "Trái: mô hình dừng giải tích và ví dụ thêm độ trễ giả định. Phải: hai giá trị b trong mô tả mô phỏng. Không dùng các đường giải tích như phép đo thực."
+    }
+  ],
+  "sections": [
+    {
+      "title": "MÔ HÌNH 3D ROBOT VI SAI",
+      "page": 1
+    },
+    {
+      "title": "Kết luận chính trước khi đọc chi tiết",
+      "page": 2
+    },
+    {
+      "title": "Mục lục và lộ trình đọc",
+      "page": 3
+    },
+    {
+      "title": "1. Nguồn dữ liệu và chuỗi mô hình",
+      "page": 4
+    },
+    {
+      "title": "2. Cấu tạo và hình học STEP",
+      "page": 5
+    },
+    {
+      "title": "3. STEP và URDF chưa trùng hoàn toàn",
+      "page": 13
+    },
+    {
+      "title": "4. URDF, link và hệ tọa độ",
+      "page": 16
+    },
+    {
+      "title": "5. Collision, khối lượng và tiếp xúc",
+      "page": 20
+    },
+    {
+      "title": "6. Cảm biến và giao tiếp ROS 2",
+      "page": 23
+    },
+    {
+      "title": "7. Động học và giới hạn chuyển động",
+      "page": 25
+    },
+    {
+      "title": "8. Ảnh Gazebo và RViz2 thực tế",
+      "page": 29
+    },
+    {
+      "title": "9. Tích hợp trong kho có lối giao cắt",
+      "page": 35
+    },
+    {
+      "title": "10. Phương pháp thử chuyển động",
+      "page": 39
+    },
+    {
+      "title": "11.1. Tiến thẳng: đáp ứng chuyển động",
+      "page": 41
+    },
+    {
+      "title": "12. Tổng hợp và ý nghĩa thực nghiệm",
+      "page": 55
+    },
+    {
+      "title": "13. Cách dùng dữ liệu cho bài báo",
+      "page": 58
+    },
+    {
+      "title": "A. Tham số để tái lập",
+      "page": 59
+    },
+    {
+      "title": "B. Hồ sơ solid STEP quan trọng",
+      "page": 61
+    },
+    {
+      "title": "C.1. Bảng số liệu của 21 lượt",
+      "page": 63
+    },
+    {
+      "title": "D. Nguồn, tệp bàn giao và kiểm chứng",
+      "page": 65
+    },
+    {
+      "title": "E.1. Danh mục hình và trang tra cứu",
+      "page": 67
+    }
+  ]
+}
