@@ -51,6 +51,22 @@ Bảy môi trường là `research_warehouse`, `open_arena`, `narrow_aisles`,
 `office_maze`, `warehouse_long_aisles`, `warehouse_cross_aisles` và
 `warehouse_dispatch`.
 
+## Làm việc với coding agent
+
+[`AGENTS.md`](AGENTS.md) là hợp đồng chung cho Codex và các coding agent khác.
+Nó yêu cầu đọc context theo phạm vi task, không quét hàng loạt artifact lớn và
+coi đồng bộ README/AGENTS là một phần bắt buộc của mọi thay đổi liên quan.
+
+Bộ định tuyến ngắn trong [`docs/agent/`](docs/agent/) gồm bản đồ repo, lệnh
+chuẩn và chính sách dataset. Nó là điểm bắt đầu để giảm đọc thừa, không giới
+hạn phạm vi điều tra: agent vẫn phải mở rộng sang dependency, call site, test
+và cấu hình liên quan khi task yêu cầu. Sau khi sửa README hoặc AGENTS, chạy:
+
+```bash
+python3 tools/check_repository_docs.py
+git diff --check
+```
+
 ## Yêu cầu và cài đặt
 
 Môi trường mục tiêu là Ubuntu 24.04, ROS 2 Jazzy và Gazebo Harmonic:
