@@ -1,6 +1,6 @@
 # Nghiên cứu PSTMO trên năm tuyến của kho giao cắt
 
-PDF chính: `../PSTMO_KHO_GIAO_CAT_5_QUY_DAO.pdf`.
+PDF chính: [PSTMO_KHO_GIAO_CAT_5_QUY_DAO.pdf](../PSTMO_KHO_GIAO_CAT_5_QUY_DAO.pdf).
 
 Báo cáo biên tập lại ngày 05/10/2026: 106 trang, giữ đủ 92 hình, kèm PNG 220 dpi
 và SVG. Bản trước ngày 04/10 có 96 trang; lần biên tập này bổ sung phần dẫn dắt,

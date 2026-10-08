@@ -1,7 +1,12 @@
 # So sánh PSTMO có bật LOS xét footprint với các smoother Nav2
 
-Bộ dữ liệu này là nguồn số liệu cho abstract tiếng Việt ICEEIS 2026. 
-LOS là tiền xử lý nội tại của PSTMO, dùng footprint Nav2 cộng biên 0,15 m và được bật trong toàn bộ cấu hình thử nghiệm.
+> **Trạng thái:** snapshot thực nghiệm ngày 02/08/2026, không phải cấu hình
+> mặc định hiện tại. PSTMO trong source hiện dùng `condition_only` và không bật
+> LOS; bộ dữ liệu này chỉ dùng để truy vết abstract/ablation tương ứng.
+
+Bộ dữ liệu này là nguồn số liệu cho abstract tiếng Việt ICEEIS 2026 ở phiên
+bản dùng LOS. LOS là tiền xử lý nội tại của PSTMO, dùng footprint Nav2 cộng biên
+0,15 m và được bật trong toàn bộ cấu hình thử nghiệm.
 
 ## Thiết kế và tính hợp lệ
 

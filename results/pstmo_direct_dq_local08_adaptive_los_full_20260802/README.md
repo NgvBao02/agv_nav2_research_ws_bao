@@ -1,4 +1,8 @@
-# Kết quả cuối PSTMO với LOS thích nghi xét footprint
+# Snapshot PSTMO với LOS thích nghi xét footprint
+
+> **Trạng thái:** phương án thử nghiệm ngày 02/08/2026, không phải pipeline
+> PSTMO mặc định hiện tại. Source hiện dùng `condition_only` với tìm kiếm phân
+> cấp hai trim và không chạy selector LOS/không-LOS này.
 
 LOS là tiền xử lý nội tại của PSTMO. Thuật toán đánh giá cả nhánh không LOS và nhánh LOS trên cùng đường Raw, sau đó chỉ chọn LOS khi điểm chất lượng toàn đường tốt hơn ít nhất 0,005.
 

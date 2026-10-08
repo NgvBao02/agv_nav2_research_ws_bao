@@ -6,9 +6,10 @@
 > `../current_pstmo_reduced_20260802_fixed/`. Phần hình học 70 bản ghi trong
 > thư mục này không bị ảnh hưởng.
 
-Dataset này đánh giá phiên bản code hiện tại của `pivot_g2` (PSTMO) và không
-chạy `adaptive_hybrid`. Phần hình học có 70 bản ghi đường; phần vòng kín tách
-riêng chỉ có 6 lượt robot chạy trong Gazebo.
+Dataset này đánh giá snapshot `pivot_g2` (PSTMO) tại commit nền ghi dưới đây và
+không chạy `adaptive_hybrid`. Nó không đại diện cho source hiện tại, nơi method
+ID là `pstmo` và bộ tìm kiếm mặc định đã đổi. Phần hình học có 70 bản ghi đường;
+phần vòng kín tách riêng chỉ có 6 lượt robot chạy trong Gazebo.
 
 ## Thiết kế
 
@@ -31,8 +32,10 @@ riêng chỉ có 6 lượt robot chạy trong Gazebo.
 | warehouse_dispatch | full_replenishment |
 | warehouse_long_aisles | diagonal_replenishment |
 
-Mỗi file được chạy bằng mẫu lệnh sau, thay `scenario_file`, `scenario_names`
-và tên file đầu ra theo môi trường:
+Mỗi file đã được chạy bằng mẫu lệnh sau, thay `scenario_file`, `scenario_names`
+và tên file đầu ra theo môi trường. Muốn tái lập đúng dataset phải checkout
+commit nền; ở HEAD hiện tại, thay `smoothers:=pivot_g2` bằng `smoothers:=pstmo`
+chỉ để chạy cấu hình mới và kết quả sẽ không còn là cùng cohort:
 
 ```bash
 source /opt/ros/jazzy/setup.bash

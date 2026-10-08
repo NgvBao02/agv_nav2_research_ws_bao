@@ -1,5 +1,9 @@
 # Audit selector Hybrid trung lập — 27/07/2026
 
+> **Trạng thái:** snapshot audit của Adaptive Hybrid, không phải benchmark
+> PSTMO độc lập. Logic selector đối xứng vẫn có trong source hiện tại, nhưng
+> các số liệu dưới đây chỉ thuộc đúng commit/config của đợt audit này.
+
 Thư mục này là bằng chứng trước–sau cho thay đổi từ gate một chiều ưu tiên
 Simple sang selector đối xứng. Các số dưới đây được tính từ file CSV/JSON trong
 chính thư mục này; RViz chỉ trực quan hóa path ROS, không được dùng để đo metric.

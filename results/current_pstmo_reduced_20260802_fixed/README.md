@@ -1,5 +1,9 @@
 # Kiểm chứng vòng kín PSTMO sau sửa goal termination
 
+> **Trạng thái:** snapshot sáu lượt ngày 02/08/2026. Nó sửa phần vòng kín của
+> dataset rút gọn, nhưng đã được thay thế cho báo cáo toàn hệ thống bởi ma trận
+> 175 lượt trong `../pstmo_execution_full_20260803/`.
+
 Dataset này thay thế **chỉ phần vòng kín** của
 `current_pstmo_reduced_20260802`. Phần benchmark hình học 70 bản ghi không bị
 ảnh hưởng bởi goal checker và vẫn được giữ nguyên ở thư mục cũ.

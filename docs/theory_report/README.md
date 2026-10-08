@@ -1,8 +1,10 @@
 # Hồ sơ biên soạn báo cáo lý thuyết
 
-Bản Word chính: `../CO_SO_LY_THUYET_TOAN_DIEN_DU_AN_AGV_PSTMO.docx`.
+Bản Word chính:
+[CO_SO_LY_THUYET_TOAN_DIEN_DU_AN_AGV_PSTMO.docx](../CO_SO_LY_THUYET_TOAN_DIEN_DU_AN_AGV_PSTMO.docx).
 
-Báo cáo gồm 15 chương, 4 phụ lục, 45 hình, 60 công thức Word và 10 bảng.
+Báo cáo đã kiểm tra gồm 62 trang, 15 chương, 4 phụ lục, 45 hình, 60 công thức
+Word và 10 bảng.
 Không có trang bìa riêng. Mục lục có liên kết tới các chương. Kiểu trang A4,
 font và các kiểu tiêu đề được kế thừa từ `../PSTMO.docx`; bản gốc không bị sửa.
 Các chương chính được nối theo dòng nội dung để hạn chế trang chỉ còn vài dòng.

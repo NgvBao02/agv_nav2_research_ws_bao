@@ -1,4 +1,8 @@
-# PSTMO với LOS tham lam swept-footprint — benchmark cuối
+# Snapshot PSTMO với LOS tham lam swept-footprint
+
+> **Trạng thái:** benchmark một phương án ứng viên ngày 02/08/2026. Greedy LOS
+> bắt buộc trong dataset này đã bị tắt ở cấu hình PSTMO mặc định hiện tại vì có
+> thể bỏ mất hình học trung gian cần cho controller trong hành lang khó.
 
 PSTMO độc lập chạy đúng một pipeline `condition_polyline → greedy LOS → joint (d,q) → stitch/final invariant`. Adaptive Hybrid không nằm trong benchmark hoặc báo cáo này.
 

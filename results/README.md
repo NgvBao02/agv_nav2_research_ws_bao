@@ -1,111 +1,119 @@
-# Phân loại kết quả nghiên cứu
+# Chỉ mục kết quả nghiên cứu
 
-## So sánh PSTMO với smoother chuẩn Nav2 ngày 02/08/2026
+Thư mục này chứa cả dữ liệu báo cáo hiện hành lẫn các snapshot thử nghiệm theo
+tiến trình phát triển. Tên có chữ `current` hoặc `final` phản ánh thời điểm tạo
+dataset, không có nghĩa dataset đó luôn khớp với source mới nhất.
 
-- `current_pstmo_nav2_smoother_comparison_20260802/` là benchmark hình học
-  hiện tại dùng Raw, Simple, Savitzky–Golay, Constrained và PSTMO trên 35 nhóm
-  ghép cặp/175 bản ghi; không chạy Adaptive Hybrid.
-- Dùng dataset này cho phần so sánh smoother trong Abstract và báo cáo. Phần
-  vòng kín Raw–PSTMO sau sửa goal termination vẫn lấy từ
-  `current_pstmo_reduced_20260802_fixed/`.
+Cấu hình source hiện tại của plugin `pstmo` là `condition_only` +
+`hierarchical_alpha_two_trim`; plugin `adaptive_hybrid` vẫn dùng Pivot–G2
+`legacy_joint_d_q`. Khi trích số liệu, phải đối chiếu README/aggregate/config
+hash của đúng thư mục, không gộp các cohort khác cấu hình.
 
-## Benchmark PSTMO hiện tại, rút gọn ngày 02/08/2026
+## Bộ dữ liệu khớp cấu hình PSTMO hiện tại
 
-- `current_pstmo_reduced_20260802/` là dataset mới dùng phiên bản code hiện
-  tại và chỉ so sánh Raw với `pivot_g2`; Adaptive Hybrid không được chạy. Phần
-  vòng kín ban đầu trong thư mục này có lỗi goal termination và chỉ được giữ để
-  chẩn đoán, không dùng số liệu thời gian.
-- `current_pstmo_reduced_20260802_fixed/` chứa 6 lượt vòng kín đã chạy lại sau
-  khi sửa goal termination; đây là nguồn hợp lệ cho số liệu vòng kín hiện tại.
-- Phần hình học gồm 7 tình huống trên 7 map, 5 planner, 1 lần đánh giá và 2
-  phương pháp: 35 cặp/70 dòng. Phần vòng kín gồm 3 cặp Raw–PSTMO, tổng 6 lượt.
-- Dùng phần hình học của dataset gốc và phần vòng kín của dataset `_fixed` thay
-  cho ma trận 7.200 dòng cùng các lượt chạy kín cũ khi mô tả Abstract hiện tại.
+### So sánh hình học 35 ca × 5 phương án
 
-## Audit selector Hybrid trung lập ngày 27/07/2026
+Dữ liệu đã chuẩn hóa nằm tại
+[`docs/pstmo_bao_cao_toan_dien_assets/`](../docs/pstmo_bao_cao_toan_dien_assets/):
 
-- `neutral_hybrid_20260727/` chứa ma trận trước–sau 320 + 320 hàng trên
-  narrow_aisles, closed-loop Gazebo ghép cùng raw path và ảnh RViz2 của selector
-  mới. Cả hai ma trận hình học đạt 320/320; Adaptive Hybrid đổi từ
-  Simple/Pivot = 38/2 sang 29/11 bằng luật cost/effort hai chiều.
-- Đây là audit riêng cho selector hiện tại. Không trộn 40 hàng Adaptive Hybrid
-  này vào ma trận hội nghị 7.200 hàng ngày 25/07 vì hai dataset dùng hai phiên
-  bản gate khác nhau.
-- Xem công thức, lệnh chạy, phân bố lý do chọn và cả metric xấu đi tại
-  `neutral_hybrid_20260727/README.md`.
+- `benchmark_hinh_hoc_175_luot.csv`: 35 cặp môi trường–planner × Raw, Simple,
+  Savitzky–Golay, Constrained và PSTMO;
+- `benchmark_hinh_hoc_tong_hop.json`: kiểm định ma trận và số liệu tổng hợp;
+- `rviz_cases/`: 35 JSON chẩn đoán xác nhận `condition_only`,
+  `hierarchical_alpha_two_trim`, một pipeline và invariant cuối;
+- 34/35 ca có đủ năm phương án thành công.
 
-## Dataset hội nghị ngày 25/07/2026
+Đây là nguồn hình học của [báo cáo PSTMO thống nhất](../docs/PSTMO.pdf) và
+[báo cáo thuật toán toàn diện](../docs/BAO_CAO_TOAN_DIEN_PSTMO.html).
 
-- `conference_geometry_20260725/`: ma trận hình học đầy đủ gồm 7 môi trường,
-  60 scenario, 5 planner, 8 phương pháp và 3 repetition (7.200 dòng). Mọi nhóm
-  planner/scenario/repetition phải có đúng một `raw_path_sha256`.
-- `conference_execution_20260725/conference_execution_compact.csv`: bảng vô
-  hướng scalar của ma trận vòng kín phân tầng; high-rate ground-truth, odom,
-  estimated pose, command và telemetry được giữ trong JSON gốc tại máy chạy
-  thí nghiệm nhưng không lặp lại trong summary.
-- `closed_loop_audit_20260725/`: các trace chẩn đoán dùng để tái hiện và sửa
-  lỗi hướng terminal, projection nhảy nhánh và lệch sau đường cong.
-- `tools/generate_full_algorithm_tutorial_report.py` tự tổng hợp trực tiếp bảy
-  CSV trên; repo không giữ thêm snapshot JSON trùng lặp chỉ để sinh báo cáo.
+### Ma trận thực thi Gazebo 175 lượt
 
-Phần chạy kín là thiết kế phân tầng, không phải toàn bộ tích Descartes 7 map ×
-5 planner × 8 smoother × 3 tốc độ. Báo cáo phải giữ rõ giới hạn này.
+[`pstmo_execution_full_20260803/`](pstmo_execution_full_20260803/) chứa 7 môi
+trường × 5 planner × 5 phương án, một lượt cho mỗi tổ hợp:
 
-## Audit controller và động học ngày 26/07/2026
+- `execution_175_cases.csv`: bảng scalar của 175 lượt;
+- `execution_aggregate_5planners_7env.json`: protocol, audit, lỗi và so sánh
+  ghép cặp;
+- 170/175 lượt đạt, 174/175 dừng vật lý, không có can thiệp Collision Monitor
+  và không có mẫu va chạm footprint trên đường đã lập;
+- 34/35 nhóm có đủ năm phương án thành công và cùng Raw hash để so sánh ghép
+  cặp.
 
-`current_full_audit_20260726/` là dữ liệu Gazebo ground truth của phiên bản
-hiện tại sau khi neo start/goal liên tục, căn hướng theo path sau planning,
-hiệu chuẩn wheel separation hiệu dụng, thêm bao phanh góc và sửa phân loại
-jerk tại biên vận tốc bằng 0.
+Các JSON/log theo từng môi trường là dữ liệu gốc; không suy diễn thống kê lặp
+từ ma trận chỉ có một lượt cho mỗi tổ hợp.
 
-- Bảy file `*_final.json.gz` tương ứng bảy môi trường đều có
-  `success=true`, `physically_settled=true`; jerk danh nghĩa cực đại không vượt
-  0,90 m/s³.
-- `right_rack_detour_pivot_g2_baseline.json.gz` và
-  `lower_left_diagonal_pivot_g2_baseline.json.gz` là hai mốc trước sửa dùng cho
-  bảng before/after.
-- `narrow_aisles_pivot_g2_optimized.json.gz` là mốc ngay trước khi thêm bao phanh
-  góc; nó được giữ để tái lập thời gian căn hướng 209→93 mẫu.
-- Các file được nén gzip lossless; bộ tạo báo cáo đọc trực tiếp, không cần giải
-  nén ra repo.
-- Các trace tối ưu trung gian không được báo cáo sử dụng đã bị xóa, tránh trộn
-  chúng với kết quả cuối.
+### Nghiên cứu năm tuyến kho giao cắt
 
-Ma trận 42 trial ở ngày 25/07 dùng để so sánh tương đối các smoother trên cùng
-phiên bản khi đó. Bảy trial ngày 26/07 xác nhận controller hiện tại trên từng
-map; không được ghép hai tầng thành một ma trận đầy đủ sau hiệu chuẩn.
+Hồ sơ mới hơn theo phạm vi chuyên đề nằm ở
+[`docs/warehouse_cross_aisles_5_routes/`](../docs/warehouse_cross_aisles_5_routes/README.md):
+125 lượt trên 5 tuyến × 5 planner × 5 phương án, trong đó 123 lượt đạt. R01 dùng
+dữ liệu tháng 8 trong `pstmo_execution_full_20260803/` và
+`pstmo_execution_theta_star_20260802/`; R02–R05 được chạy tháng 10/2026 và lưu
+cùng hồ sơ tài liệu.
 
-## Pilot ngày 23/07/2026
+## Snapshot PSTMO ngày 02/08/2026
 
-Thư mục này chứa pilot và các lượt chẩn đoán trong quá trình sửa pipeline. Chưa
-file nào là dataset cuối để đưa nguyên trạng vào manuscript.
+Các thư mục dưới đây là những cấu hình khác nhau trong quá trình chọn pipeline;
+giữ nguyên để tái lập ablation, không gọi chung là “PSTMO hiện tại”:
 
-## Kết quả pilot có thể dùng để định hướng
+| Thư mục | Cấu hình/phạm vi |
+| --- | --- |
+| [`current_pstmo_reduced_20260802/`](current_pstmo_reduced_20260802/README.md) | Raw–Pivot-G2, 35 cặp hình học; phần vòng kín ban đầu có lỗi termination |
+| [`current_pstmo_reduced_20260802_fixed/`](current_pstmo_reduced_20260802_fixed/README.md) | Sáu lượt Raw–Pivot-G2 chạy lại sau khi đổi goal checker |
+| [`current_pstmo_nav2_smoother_comparison_20260802/`](current_pstmo_nav2_smoother_comparison_20260802/README.md) | Snapshot joint \((d,q)\), 175 bản ghi so với smoother Nav2 |
+| [`current_pstmo_footprint_padding15_nav2_comparison_20260802/`](current_pstmo_footprint_padding15_nav2_comparison_20260802/README.md) | LOS với footprint padding 0,15 m |
+| [`pstmo_greedy_los_single_pipeline_full_20260802/`](pstmo_greedy_los_single_pipeline_full_20260802/README.md) | Greedy LOS bắt buộc, padding 0 |
+| [`pstmo_direct_dq_local08_adaptive_los_full_20260802/`](pstmo_direct_dq_local08_adaptive_los_full_20260802/README.md) | Chọn thích nghi giữa nhánh LOS và không LOS |
+| [`pstmo_joint_dq_condition_only_ablation_20260802/`](pstmo_joint_dq_condition_only_ablation_20260802/README.md) | Ablation `condition_only` với joint \((d,q)\) |
+| [`pstmo_hierarchical_alpha_two_trim_full_20260802/`](pstmo_hierarchical_alpha_two_trim_full_20260802/README.md) | Thử nghiệm tìm kiếm phân cấp hai trim; cơ chế này về sau trở thành mặc định của PSTMO độc lập |
 
-- `fair_batch_v4b_hybrid_20260723.csv` và `_summary.json`: batch offline cuối,
-  12 scenario × 6 phương pháp, cùng raw path trong từng scenario.
-- `execution_matrix_v7_clean_repeated_20260723/lower_left_diagonal_summary.json`:
-  ma trận closed-loop sạch, sáu phương pháp × ba lượt, cùng raw-path hash, success
-  theo ground truth và không để lại Gazebo orphan.
-- `pivot_sweep_energy_20260723.*`: sweep dùng để chọn cấu hình Pivot–G2 hiện tại;
-  phải coi đây là tuning data, không phải independent test set.
+Các thư mục `current_pstmo_los_*`, `current_pstmo_footprint_los_*`,
+`pstmo_adaptive_los_*`, `pstmo_direct_dq_*`, `pstmo_joint_dq_*` và
+`pstmo_*_smoke_*` không có README riêng là sweep/smoke trung gian của cùng chuỗi
+thử nghiệm. Đọc JSON summary và config hash trước khi dùng.
 
-## Chỉ dùng để chẩn đoán, không trích làm kết quả
+## Adaptive Hybrid
 
-- `execution_hybrid_live_lower_left_20260723.json`: action báo thành công nhưng
-  robot được tái sử dụng với physical spawn sai; ground-truth final error lớn.
-- `execution_spawn_guard_expected_failure_20260723.json`: expected failure dùng
-  để xác nhận spawn guard bắt đúng lỗi trên.
-- `execution_matrix_timeout_guard_expected_failure_20260723/`: expected failure
-  ép timeout ở 10 s; runner trả code 124, ghi trial thất bại và dọn sạch process
-  group Gazebo.
-- `execution_matrix_v5_repeated_20260723/`: 18 lượt đều success và cùng raw hash,
-  nhưng một Gazebo server ở lượt 11 không thoát; không dùng thời gian của batch
-  này. Lỗi cleanup được sửa và kiểm tra lại ở `execution_matrix_v6_cleanup_smoke_20260723/`.
-- `execution_trial_pivot_g2_20260723.json` và các matrix/batch phiên bản cũ:
-  regression trung gian trước khi hoàn thiện ground-truth gate, cleanup Gazebo,
-  full-footprint clearance hoặc Hybrid.
+[`neutral_hybrid_20260727/`](neutral_hybrid_20260727/README.md) là audit trước–
+sau của selector đối xứng peak-cost/maneuver-effort. Nó gồm hai ma trận hình
+học 320 hàng, kiểm chứng vòng kín và ảnh RViz2. Đây là bằng chứng riêng cho
+logic Hybrid; không trộn với các benchmark PSTMO-only ở trên.
 
-Khi benchmark chính thức bắt đầu, tạo thư mục theo commit/experiment ID mới, lưu
-config hash, raw-path dataset, seed và environment metadata; không ghi đè các file
-pilot này và không trộn các phiên bản vào cùng phép kiểm định.
+## Dataset hội nghị và audit controller tháng 7/2026
+
+- `conference_geometry_20260725/`: 7 môi trường, 60 scenario, 5 planner,
+  8 phương pháp, 3 repetition (7.200 dòng) của cấu hình tại thời điểm đó.
+- `conference_execution_20260725/`: ma trận vòng kín phân tầng; không phải toàn
+  bộ tích Descartes của map × planner × smoother × tốc độ.
+- `closed_loop_audit_20260725/`: trace dùng để chẩn đoán hướng terminal,
+  projection và sai lệch sau đường cong.
+- `current_full_audit_20260726/`: bảy lượt kiểm tra controller sau hiệu chuẩn,
+  cộng các mốc before/after; không ghép chúng thành một ma trận đầy đủ với dữ
+  liệu ngày 25/07.
+- `final_*_20260724/` và `terminal_*_20260724/`: các bước kiểm chứng controller,
+  pivot và điều kiện kết thúc trong quá trình phát triển.
+
+## Pilot và expected failure ngày 23/07/2026
+
+Các file `fair_batch_*`, `planner_smoke_*`, `execution_matrix_*`,
+`execution_trial_*` và `pivot_sweep_*` là pilot/tuning data. Một số mốc hữu ích:
+
+- `fair_batch_v4b_hybrid_20260723.*`: batch offline 12 scenario × 6 phương án;
+- `execution_matrix_v7_clean_repeated_20260723/`: ma trận vòng kín sạch sau khi
+  sửa cleanup;
+- `pivot_sweep_energy_20260723.*`: tuning data, không phải independent test set;
+- `execution_spawn_guard_expected_failure_20260723.json` và
+  `execution_matrix_timeout_guard_expected_failure_20260723/`: lỗi được tạo có
+  chủ đích để kiểm tra guard/timeout;
+- `execution_matrix_v5_repeated_20260723/`: không dùng thời gian vì còn một
+  Gazebo server không thoát ở lượt 11.
+
+## Quy tắc tạo kết quả mới
+
+- Tạo thư mục mới theo ngày/experiment ID; không ghi đè snapshot cũ.
+- Lưu commit hoặc hash source/config, scenario YAML, raw-path hash, seed,
+  planner, method và repetition.
+- Chỉ so sánh ghép cặp khi các phương án dùng cùng Raw path và cùng protocol.
+- Tách lỗi hạ tầng khỏi thất bại thuật toán; giữ cả trial không đạt.
+- Ghi rõ số lần lặp. Một lượt cho mỗi cấu hình chỉ hỗ trợ so sánh mô tả, không
+  đủ để tuyên bố ý nghĩa thống kê.

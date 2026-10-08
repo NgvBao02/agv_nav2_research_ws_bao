@@ -1,48 +1,59 @@
-# Adaptive Pivot–G2 research workspace
+# PSTMO — ROS 2/Nav2 research workspace
 
-Workspace ROS 2 Jazzy + Gazebo Harmonic để phát triển và đánh giá bộ hậu xử lý
-đường đi chọn thích nghi giữa quay tại chỗ (pivot) và transition Bézier bậc năm
-liên tục G2 cho robot vi sai hai bánh. MATLAB chỉ còn là tài liệu tham chiếu;
-luồng nghiên cứu chính chạy hoàn toàn trong ROS 2.
+Workspace ROS 2 Jazzy + Gazebo Harmonic để phát triển, mô phỏng và đánh giá
+PSTMO (Path Smoothing and Turning-Maneuver Optimization) cho robot vi sai hai
+bánh. PSTMO hậu xử lý đường của global planner bằng các transition Bézier bậc
+năm liên tục hình học G² hoặc thao tác quay tại chỗ, đồng thời kiểm tra hình
+bao robot, giới hạn động học và khả năng ghép các góc liên tiếp.
 
-## Trạng thái hiện tại
+Repo chứa mã nguồn ROS 2, mô hình CAD/URDF/SDF, bảy môi trường Gazebo–Nav2,
+công cụ benchmark, dữ liệu thực nghiệm và các báo cáo nghiên cứu. Luồng chạy
+chính hoàn toàn nằm trong ROS 2; không có thư mục MATLAB trong phiên bản hiện
+tại.
 
-- `adaptive_pivot_g2`: thư viện C++ lõi cho hình học G2 và time-parameterization.
-- `adaptive_pivot_g2_nav2`: plugin `nav2_core::Smoother` đã load và chạy trong
-  Nav2 Smoother Server; gồm Pivot–G2 và phương pháp lai có safety gate. Nhánh
-  lai so sánh Simple/Pivot bằng cùng luật hai chiều: peak cost ngoài deadband,
-  rồi maneuver effort có tính cả quay tại chỗ; mỗi nhánh nhận nửa time budget.
-  Nếu cả hai nhánh làm mượt không an toàn nhưng raw path an toàn, nó fallback
-  về raw.
-- `adaptive_pivot_g2_benchmark`: lập kế hoạch một lần, tuần tự đưa đúng cùng
-  `nav_msgs/Path` vào Nav2 Simple, Savitzky–Golay, Constrained, Pivot–G2 và
-  adaptive hybrid; xuất CSV/JSON, metric full-footprint, và chạy ma trận vòng
-  kín bằng cùng controller Nav2 chuẩn.
-- `adaptive_pivot_g2_rviz`: panel RViz2 để đổi trực tiếp bảy môi trường, chọn
-  một trong năm global planner, bật/tắt riêng từng baseline/Pivot/Hybrid và
-  theo dõi metric hình học.
-- `vacuum_robot_gazebo`: robot vi sai hai bánh dùng mesh CAD 440 × 340 mm,
-  bảy cặp world/map Gazebo–Nav2 đồng nhất, trong đó có ba layout chuyên cho nhà
-  kho, bridge Gazebo–ROS, Nav2 và RViz2. Cấu hình cảm biến mô phỏng đã bám theo
-  RPLIDAR A1M8 và BNO055 của xe dự kiến.
-- `matlab/pivot_g2`: bản lưu source thử ý tưởng cũ, không nằm trong đường chạy.
+## Cấu hình thuật toán hiện tại
 
-Pipeline hiện tại cố ý chỉ giữ RAW và năm smoother: Simple, Savitzky–Golay,
-Constrained, PSTMO và Adaptive Hybrid. Hai ablation fixed cùng
-controller/tốc độ thích nghi đã được bỏ khỏi đường chạy. Mọi phương pháp dùng
-chung `RegulatedPurePursuitController`, `PoseProgressChecker`,
-`StoppedGoalChecker` chuẩn và `nav2_velocity_smoother`. Controller dùng vận tốc
-hành trình cố định 0,30 m/s, lookahead cố định 0,50 m và không scale vận tốc theo
-độ cong/cost; chỉ ramp dừng ngắn sát đích được giữ lại. Các giới hạn cố định của xe
-(0,30 m/s, 0,80 rad/s, gia tốc/phanh và kích thước xe) vẫn được giữ nguyên.
-Việc tham số hóa thời gian nội bộ của smoother vẫn dùng các giới hạn
-vật lý này để loại quỹ đạo bất khả thi; nó không publish `SpeedLimit` và
-không thay đổi tốc độ controller khi xe chạy.
+- Plugin `pstmo` dùng tiền xử lý `condition_only`, tìm kiếm
+  `hierarchical_alpha_two_trim` và tối ưu chuỗi trạng thái góc bằng quy hoạch
+  động. Greedy line-of-sight (LOS) không được bật trong cấu hình mặc định.
+- Plugin `adaptive_hybrid` là một nhánh nghiên cứu riêng: nó so sánh Nav2
+  Simple với Pivot–G2 dùng `legacy_joint_d_q`, rồi chọn đối xứng theo peak cost
+  và maneuver effort. Nếu cả hai đường làm mượt không an toàn nhưng Raw an
+  toàn, plugin trả về Raw.
+- Nav2 Smoother Server nạp năm plugin: Simple, Savitzky–Golay, Constrained,
+  PSTMO và Adaptive Hybrid. `raw` là baseline thực thi, không phải smoother.
+- Năm global planner có sẵn: `NavFnAStar`, `NavFnDijkstra`, `ThetaStar`,
+  `Smac2D` và `SmacHybrid`.
+- Controller hiện tại là `RegulatedPurePursuitController` với vận tốc hành
+  trình 0,30 m/s và lookahead cố định 0,50 m. Curvature/cost speed scaling bị
+  tắt; giới hạn gia tốc, bộ làm mượt vận tốc và Collision Monitor vẫn hoạt động.
+- Goal checker là `SimpleGoalChecker` ở chế độ stateful, với dung sai vị trí
+  0,06 m và dung sai hướng 0,10 rad. Runner vòng kín còn kiểm tra độc lập trạng
+  thái dừng và sai số đích theo Gazebo ground truth.
 
-## Chuẩn bị lần đầu sau khi clone
+Các dataset cũ trong `results/` ghi lại nhiều cấu hình thử nghiệm khác nhau,
+bao gồm joint \((d,q)\), LOS và padding footprint. Chúng là snapshot lịch sử,
+không tự động đại diện cho cấu hình đang nằm trong
+`src/vacuum_robot_gazebo/config/nav2_params.yaml`; xem
+[`results/README.md`](results/README.md) trước khi trích số liệu.
 
-Repo hỗ trợ **Ubuntu 24.04, ROS 2 Jazzy và Gazebo Harmonic**. Nếu máy chưa có
-stack cần thiết, cài các gói nền trước:
+## Các package
+
+| Package | Vai trò |
+| --- | --- |
+| `adaptive_pivot_g2` | Thư viện C++ lõi: conditioning, tìm ứng viên, transition G², tối ưu chuỗi góc và tham số hóa thời gian |
+| `adaptive_pivot_g2_nav2` | Hai plugin `nav2_core::Smoother`: PSTMO độc lập và Adaptive Hybrid |
+| `adaptive_pivot_g2_benchmark` | So sánh hình học, chạy thử vòng kín, metric clearance/localization/velocity và xuất CSV/JSON |
+| `adaptive_pivot_g2_rviz` | Panel RViz2 để đổi môi trường, planner, phương pháp thực thi và lớp đường hiển thị |
+| `vacuum_robot_gazebo` | Robot 440 × 340 mm, URDF/SDF, bridge, Nav2, RViz2 và bảy cặp world/map |
+
+Bảy môi trường là `research_warehouse`, `open_arena`, `narrow_aisles`,
+`office_maze`, `warehouse_long_aisles`, `warehouse_cross_aisles` và
+`warehouse_dispatch`.
+
+## Yêu cầu và cài đặt
+
+Môi trường mục tiêu là Ubuntu 24.04, ROS 2 Jazzy và Gazebo Harmonic:
 
 ```bash
 sudo apt update
@@ -50,133 +61,92 @@ sudo apt install ros-jazzy-desktop ros-jazzy-navigation2 \
   ros-jazzy-nav2-bringup ros-jazzy-ros-gz ros-dev-tools
 ```
 
-Nếu `rosdep` chưa từng được khởi tạo trên máy, chạy một lần:
+Nếu `rosdep` chưa được khởi tạo trên máy:
 
 ```bash
 sudo rosdep init
 rosdep update
 ```
 
-Sau đó mở terminal tại thư mục gốc của repo vừa clone rồi chạy bootstrap.
-Script tự tìm workspace theo vị trí của chính nó, nên không phụ thuộc tên repo
-hoặc đường dẫn home của người đã fork:
+Từ thư mục gốc repo, script sau cài dependency ROS còn thiếu rồi build toàn bộ
+workspace bằng `colcon --symlink-install`:
 
 ```bash
 ./tools/bootstrap_workspace.bash
 source install/setup.bash
 ```
 
-## Chạy nhanh
+Mỗi terminal mới cần source ROS và overlay của workspace:
 
 ```bash
 source /opt/ros/jazzy/setup.bash
 source install/setup.bash
-ros2 launch vacuum_robot_gazebo switchable_simulation.launch.py gui:=true
 ```
 
-Sau khi RViz2 mở, đổi map bằng ô **MÔI TRƯỜNG GAZEBO / NAV2** ở panel bên
-phải. Environment manager sẽ tắt stack cũ, khởi động đúng cặp world/map rồi
-chỉ báo hoàn tất khi Nav2 mới đã active.
+## Chạy mô phỏng và RViz2
 
-Trong cùng panel, ô **CHỌN SMOOTHER ĐỂ XE ĐI THEO** quyết định đường mà xe
-thực sự thực thi (`RAW`, Simple, Savitzky–Golay, Constrained, Pivot–G2 hoặc
-Adaptive Hybrid). Nhấn **Áp dụng smoother và chạy lại đường** để áp dụng cho
-goal hiện tại; các nút ở phần so sánh phía dưới chỉ điều khiển đường hiển thị.
+Chế độ thuận tiện nhất giữ RViz2 mở trong khi đổi đồng bộ Gazebo world và Nav2
+map:
 
-Để chạy trực tiếp một map cố định, ba map sát bài toán kho nhất là
-`warehouse_long_aisles`, `warehouse_cross_aisles` và `warehouse_dispatch`:
+```bash
+ros2 launch vacuum_robot_gazebo switchable_simulation.launch.py \
+  gui:=true execute_method:=pstmo
+```
+
+Trong panel **Selector** bên phải RViz2:
+
+1. chọn môi trường và nhấn **Đổi map và khởi động lại mô phỏng**;
+2. đặt goal bằng công cụ **2D Goal Pose**;
+3. chọn global planner rồi nhấn **Áp dụng và lập lại đường**;
+4. chọn `RAW`, Simple, Savitzky–Golay, Constrained, PSTMO hoặc Adaptive Hybrid
+   trong **CHỌN SMOOTHER ĐỂ XE ĐI THEO**;
+5. dùng các nút phía dưới để ẩn/hiện từng đường so sánh.
+
+Màu mặc định: Raw đỏ, Simple vàng, Savitzky–Golay cyan, Constrained xanh lá,
+PSTMO magenta, Adaptive Hybrid xanh lam và đường xe thực thi màu trắng.
+
+Chạy trực tiếp một môi trường cố định:
 
 ```bash
 ros2 launch vacuum_robot_gazebo simulation.launch.py \
   environment:=warehouse_long_aisles planner_id:=ThetaStar \
-  execute:=true execute_method:=adaptive_hybrid \
+  execute:=true execute_method:=pstmo \
   x_pose:=-2.0 y_pose:=-2.4 yaw:=1.5708
 ```
 
-## Kiểm tra URDF riêng
+Các giá trị hợp lệ của `execute_method` là `none`, `raw`, `simple`,
+`savitzky_golay`, `constrained`, `pstmo` và `adaptive_hybrid`. Mặc định launch
+là `simple`; đặt `execute:=false` nếu chỉ muốn so sánh đường.
 
-Kiểm tra cú pháp và cây link/joint mà không chạy Gazebo:
-
-```bash
-check_urdf src/vacuum_robot_gazebo/urdf/vacuum_robot.urdf
-```
-
-Mở robot, TF và GUI xoay hai bánh trong RViz2:
-
-```bash
-colcon build --symlink-install --packages-select vacuum_robot_gazebo
-source install/setup.bash
-ros2 launch vacuum_robot_gazebo check_urdf.launch.py
-```
-
-Trong `RobotModel`, bật `Collision Enabled` và tắt `Visual Enabled` để kiểm tra
-riêng collision. Grid nằm tại mặt đất, còn `base_link` nằm ở cao độ tâm bánh.
-Frame lidar và IMU dùng đúng vị trí dự trữ từ xacro CAD gốc; housing lidar đã
-nằm sẵn trong mesh thân nên không vẽ thêm cylinder.
-
-## Chọn planner và xem đường trong RViz2
-
-Trong RViz2, chọn tool **2D Goal Pose** rồi click/drag trên map. Mỗi goal sẽ
-publish cùng input và các màu:
-
-- đỏ: RAW planner;
-- vàng: Nav2 Simple;
-- cyan: Nav2 Savitzky–Golay;
-- xanh lá: Nav2 Constrained;
-- magenta: PSTMO;
-- xanh lam đậm: Adaptive Hybrid;
-- trắng: quỹ đạo xe thực thi.
-
-Để chỉ xem và so sánh đường, đặt một goal sau khi map mới đã active. Ở panel
-**Selector** bên phải RViz2:
-
-1. đặt một goal bằng **2D Goal Pose**;
-2. chọn `NavFn A*`, `NavFn Dijkstra`, `Theta*`, `Smac 2D` hoặc `Smac Hybrid`;
-3. nhấn **Áp dụng và lập lại đường**.
-
-Đường đỏ `RAW planner` được tạo lại bằng đúng planner đã chọn. Năm nút riêng
-cho Simple, Savitzky–Golay, Constrained, PSTMO và Adaptive Hybrid
-cho phép ẩn/hiện từng đường; **Hiện tất cả** và **Chỉ RAW** là hai thao tác
-nhanh. Tất cả phương pháp của một generation nhận đúng cùng raw path, và bảng
-metric hiển thị kết quả riêng từng phương pháp.
-
-Để xe bám đường đề xuất ngay từ lúc launch:
-
-```bash
-ros2 launch vacuum_robot_gazebo simulation.launch.py \
-  execute:=true execute_method:=adaptive_hybrid
-```
-
-Có thể đổi phương pháp cho goal kế tiếp khi hệ thống đang chạy:
+Đổi phương pháp cho goal kế tiếp khi phiên đang chạy:
 
 ```bash
 ros2 topic pub --once --qos-durability transient_local \
   /research/execute_method std_msgs/msg/String "{data: constrained}"
 ```
 
-Headless cho test/CI:
+Chạy headless:
 
 ```bash
 ros2 launch vacuum_robot_gazebo simulation.launch.py \
   gui:=false rviz:=false execute:=false
 ```
 
-Batch hình học công bằng; planner comparison dùng raw và mọi smoother nhận cùng
-đường thô trong từng planner/kịch bản:
+## Benchmark
+
+Benchmark hình học tạo một Raw path cho mỗi cặp planner–scenario rồi đưa đúng
+đường đó vào mọi smoother đã chọn:
 
 ```bash
 ros2 launch adaptive_pivot_g2_benchmark planner_benchmark.launch.py \
   scenario_file:=$PWD/src/adaptive_pivot_g2_benchmark/config/narrow_aisles_scenarios.yaml \
+  scenario_names:=southwest_northeast_weave \
+  smoothers:=simple,savitzky_golay,constrained,pstmo,adaptive_hybrid \
   output_csv:=$PWD/results/narrow_aisles.csv \
   output_json:=$PWD/results/narrow_aisles_summary.json
 ```
 
-Launch tự đọc đúng environment từ scenario YAML, chạy xong rồi tắt stack. Danh
-sách planner mặc định là `NavFnAStar`, `NavFnDijkstra`, `ThetaStar`, `Smac2D`
-và `SmacHybrid`.
-
-Ma trận Gazebo vòng kín, mỗi trial dùng domain/partition sạch và kiểm tra đích
-bằng ground truth:
+Ma trận vòng kín khởi động một stack Gazebo/Nav2 cô lập cho từng trial:
 
 ```bash
 ros2 run adaptive_pivot_g2_benchmark execution_matrix -- \
@@ -184,20 +154,21 @@ ros2 run adaptive_pivot_g2_benchmark execution_matrix -- \
   --scenario short_open_diagonal \
   --planners NavFnAStar NavFnDijkstra ThetaStar Smac2D SmacHybrid \
   --methods raw simple savitzky_golay constrained pstmo adaptive_hybrid \
-  --repetitions 3 --output-dir "$PWD/results/execution_matrix"
+  --repetitions 3 \
+  --output-dir "$PWD/results/execution_matrix"
 ```
 
-`--resume` chỉ dùng lại JSON thành công có đúng planner, smoother, repetition
-và fingerprint cấu hình; lỗi khởi tạo Gazebo/Nav2 được retry riêng, còn
-timeout/va chạm của thuật toán không bị che bằng retry.
+`--resume` chỉ tái sử dụng trial thành công có đúng planner, method, repetition
+và fingerprint cấu hình. Lỗi khởi tạo hạ tầng được retry riêng; timeout hoặc
+va chạm của thuật toán không bị che bằng retry.
 
-## Build và test có chọn lọc
+## Build, test và kiểm tra URDF
 
 ```bash
-source /opt/ros/jazzy/setup.bash
 colcon build --symlink-install --packages-select \
   adaptive_pivot_g2 adaptive_pivot_g2_nav2 \
   adaptive_pivot_g2_benchmark adaptive_pivot_g2_rviz vacuum_robot_gazebo
+
 colcon test --packages-select \
   adaptive_pivot_g2 adaptive_pivot_g2_nav2 \
   adaptive_pivot_g2_benchmark adaptive_pivot_g2_rviz vacuum_robot_gazebo \
@@ -205,17 +176,33 @@ colcon test --packages-select \
 colcon test-result --verbose
 ```
 
-## Tài liệu
+Kiểm tra cú pháp/cây link-joint và mở robot riêng trong RViz2:
 
-Các báo cáo dựng trước đợt đơn giản hóa này được giữ làm snapshot lịch sử và
-có thể còn mô tả hai ablation fixed hoặc controller tốc độ thích nghi. Không
-dùng các số liệu cũ đó như kết quả của pipeline hiện tại; hãy tạo ma trận mới
-với lệnh ở trên.
+```bash
+check_urdf src/vacuum_robot_gazebo/urdf/vacuum_robot.urdf
+ros2 launch vacuum_robot_gazebo check_urdf.launch.py
+```
 
-- Báo cáo toàn diện 66 trang cho người mới, dựng trực tiếp từ bản gốc của
-  Phạm Hải Linh: [HTML](docs/BAO_CAO_TOAN_DIEN_ADAPTIVE_HYBRID_PIVOT_G2.html),
-  [DOCX](docs/BAO_CAO_TOAN_DIEN_ADAPTIVE_HYBRID_PIVOT_G2.docx),
-  [PDF](docs/BAO_CAO_TOAN_DIEN_ADAPTIVE_HYBRID_PIVOT_G2.pdf)
-- [Bài báo REV-ECIT 2026](docs/REV_ECIT_2026_ADAPTIVE_HYBRID_PIVOT_G2_PAPER.html)
-- [Phụ lục kết quả đầy đủ](docs/REV_ECIT_2026_ADAPTIVE_HYBRID_PIVOT_G2_SUPPLEMENT.html)
-- [Audit selector Hybrid trung lập: Gazebo, closed-loop và RViz2](results/neutral_hybrid_20260727/README.md)
+## Tài liệu và dữ liệu
+
+- Báo cáo PSTMO thống nhất: [HTML](docs/PSTMO_unified.html),
+  [DOCX](docs/PSTMO.docx), [PDF](docs/PSTMO.pdf).
+- Báo cáo thuật toán toàn diện và dữ liệu nguồn 35 ca hình học × 5 phương án:
+  [HTML](docs/BAO_CAO_TOAN_DIEN_PSTMO.html) và
+  [`docs/pstmo_bao_cao_toan_dien_assets/`](docs/pstmo_bao_cao_toan_dien_assets/).
+- Hồ sơ lý thuyết 62 trang:
+  [DOCX](docs/CO_SO_LY_THUYET_TOAN_DIEN_DU_AN_AGV_PSTMO.docx) và
+  [ghi chú tái dựng](docs/theory_report/README.md).
+- Nghiên cứu 125 lượt trên năm tuyến kho giao cắt:
+  [PDF](docs/PSTMO_KHO_GIAO_CAT_5_QUY_DAO.pdf) và
+  [hồ sơ dữ liệu](docs/warehouse_cross_aisles_5_routes/README.md).
+- Hồ sơ mô hình 3D và mô phỏng robot:
+  [PDF](docs/BAO_CAO_MO_HINH_3D_STEP_URDF_GAZEBO_RVIZ2.pdf) và
+  [hồ sơ kiểm chứng](docs/robot_3d_report/README.md).
+- [Thuật ngữ Anh–Việt (PDF)](docs/PSTMO_thuat_ngu_Anh_Viet.pdf),
+  [slide PSTMO](<docs/slide PSTMO.pptx>),
+  [bài báo REV-ECIT 2026](<bao_Rev_ecit_2026/ver2/REV ECIT2026 PSTMO.pdf>) và
+  [bài báo ICEEIS 2026](final_bao_ICEEIS/final/ieee/ICEEIS2026_PSTMO_final.pdf).
+- [`results/README.md`](results/README.md) phân loại dataset hiện hành, snapshot
+  lịch sử, ablation và pilot; [`REFERENCES/`](REFERENCES/) chứa tài liệu tham
+  khảo được lưu cùng repo.

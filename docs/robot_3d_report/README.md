@@ -1,7 +1,10 @@
 # Hồ sơ mô hình 3D robot
 
-Báo cáo chính: `../BAO_CAO_MO_HINH_3D_STEP_URDF_GAZEBO_RVIZ2.pdf`.
+Báo cáo chính: [BAO_CAO_MO_HINH_3D_STEP_URDF_GAZEBO_RVIZ2.pdf](../BAO_CAO_MO_HINH_3D_STEP_URDF_GAZEBO_RVIZ2.pdf).
 69 trang, 69 hình; dữ liệu ghi ngày 05/10/2026.
+
+Đây là hồ sơ cố định theo commit ghi trong `provenance.json`; các thay đổi
+source sau thời điểm đó không tự động cập nhật số liệu hoặc hình trong PDF.
 
 ## Phạm vi
 

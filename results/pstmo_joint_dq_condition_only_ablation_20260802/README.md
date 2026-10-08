@@ -2,8 +2,14 @@
 
 Tập dữ liệu này chỉ dùng để cô lập ảnh hưởng của LOS. Constructor mặc định của
 PSTMO được build tạm ở chế độ nội bộ `condition_only`; sau khi benchmark xong,
-source và bản cài đặt đã được khôi phục về `condition_then_los`. Không có tham
-số ROS hoặc plugin công khai nào được thêm cho ablation này.
+source và bản cài đặt của **đợt thử nghiệm đó** đã được khôi phục về
+`condition_then_los`. Không có tham số ROS hoặc plugin công khai nào được thêm
+cho ablation này.
+
+> **Cập nhật trạng thái repo:** source hiện tại lại dùng `condition_only`, nhưng
+> với `hierarchical_alpha_two_trim` thay cho joint \((d,q)\) của dataset này.
+> Vì vậy đây vẫn là ablation lịch sử, không phải benchmark trực tiếp của cấu
+> hình hiện tại.
 
 ## Thiết kế
 

@@ -1,12 +1,16 @@
-# So sánh PSTMO với các smoother chuẩn của ROS 2/Nav2
+# Snapshot so sánh PSTMO với các smoother chuẩn ROS 2/Nav2
 
-Benchmark này dùng phiên bản hiện tại của workspace và so sánh:
+> **Trạng thái:** dataset ngày 02/08/2026. Trường `pivot_g2` là ID cũ của
+> phương pháp PSTMO trong snapshot; source hiện dùng ID `pstmo` và cấu hình
+> `condition_only + hierarchical_alpha_two_trim`.
+
+Benchmark này dùng phiên bản workspace tại thời điểm thu dữ liệu và so sánh:
 
 - Raw;
 - Nav2 `SimpleSmoother` (`simple`);
 - Nav2 `SavitzkyGolaySmoother` (`savitzky_golay`);
 - Nav2 `ConstrainedSmoother` (`constrained`);
-- PSTMO (`pivot_g2`).
+- PSTMO (lưu dưới ID lịch sử `pivot_g2`).
 
 `adaptive_hybrid` không được chạy.
 

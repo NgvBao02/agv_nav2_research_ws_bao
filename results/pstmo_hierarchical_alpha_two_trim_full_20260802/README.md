@@ -5,6 +5,13 @@
 chốt trước benchmark, phương án này **không được chọn làm mặc định** và abstract không
 được cập nhật vì tổng góc pivot tăng.
 
+> **Cập nhật trạng thái repo:** đoạn trên ghi lại quyết định tại thời điểm
+> benchmark. Trong các đợt phát triển sau, `hierarchical_alpha_two_trim` kết hợp
+> `condition_only` đã trở thành cấu hình mặc định của plugin PSTMO độc lập.
+> Adaptive Hybrid vẫn giữ `legacy_joint_d_q`. Không dùng riêng dataset này để
+> suy ra toàn bộ hiệu năng của cấu hình hiện tại; dùng ma trận
+> `../pstmo_execution_full_20260803/` và báo cáo trong `docs/`.
+
 ## Tập ghép cặp chính
 
 - 7 môi trường × 1 tình huống đại diện × 5 planner = 35 đường Raw;
@@ -46,9 +53,9 @@ thay vì chỉ 35 ca đại diện. Có 297 ca thành công và đều qua invar
 chạm; một ca thất bại từ global planner và hai ca thất bại tại dịch vụ smoothing.
 Các ca bổ sung này không được trộn vào so sánh ghép cặp 35 đường ở trên.
 
-## Quyết định
+## Quyết định tại thời điểm benchmark
 
-- Giữ `legacy_joint_d_q` làm mặc định của PSTMO và Pivot nội bộ Hybrid.
-- Giữ code và unit test của `hierarchical_alpha_two_trim` như một phương án thực
-  nghiệm có thể tiếp tục nghiên cứu.
-- Không thay số liệu hoặc nội dung abstract hiện tại.
+- Khi đó giữ `legacy_joint_d_q` làm mặc định của PSTMO và Pivot nội bộ Hybrid.
+- Khi đó giữ code và unit test của `hierarchical_alpha_two_trim` như một phương
+  án thực nghiệm; về sau nó được chọn cho PSTMO độc lập.
+- Không thay số liệu hoặc nội dung abstract tại thời điểm đó.
