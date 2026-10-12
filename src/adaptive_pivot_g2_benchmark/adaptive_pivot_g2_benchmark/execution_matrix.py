@@ -30,6 +30,7 @@ DEFAULT_METHODS = [
 
 INFRASTRUCTURE_ERROR_FRAGMENTS = (
     'nav2 did not reach the fully active state',
+    'navigation lifecycle status service is unavailable',
     'trial did not produce a result file',
     'gazebo ground-truth pose did not become available',
 )
@@ -242,12 +243,22 @@ def _arguments(args: Optional[List[str]] = None):
     parser.add_argument('--base-domain-id', type=int, default=120)
     parser.add_argument('--trial-timeout-s', type=float, default=240.0)
     parser.add_argument('--repetitions', type=int, default=1)
-    parser.add_argument(
+    resume_group = parser.add_mutually_exclusive_group()
+    resume_group.add_argument(
         '--resume',
         action='store_true',
         help=(
             'Reuse matching successful per-trial JSON files. Failed, corrupt, '
             'or configuration-mismatched trials are rerun.'
+        ),
+    )
+    resume_group.add_argument(
+        '--resume-preserve-failures',
+        action='store_true',
+        help=(
+            'Reuse every matching finalized per-trial JSON, including '
+            'algorithm failures. Use this after separately archiving a '
+            'known infrastructure failure that must be rerun.'
         ),
     )
     parser.add_argument(
@@ -287,13 +298,14 @@ def _configuration_sha256(scenario_file):
     return digest.hexdigest()
 
 
-def _matching_successful_record(
+def _matching_record(
     result_path,
     scenario,
     planner,
     method,
     repetition,
     configuration_sha256=None,
+    require_success=True,
 ):
     if not result_path.exists():
         return None
@@ -307,7 +319,7 @@ def _matching_successful_record(
     except (TypeError, ValueError):
         return None
     if not (
-        record.get('success', False)
+        (record.get('success', False) or not require_success)
         and record.get('scenario') == scenario
         and record.get('planner') == planner
         and record.get('method') == method
@@ -321,6 +333,44 @@ def _matching_successful_record(
     record['repetition'] = repetition
     record['resumed'] = True
     return record
+
+
+def _matching_successful_record(
+    result_path,
+    scenario,
+    planner,
+    method,
+    repetition,
+    configuration_sha256=None,
+):
+    return _matching_record(
+        result_path,
+        scenario,
+        planner,
+        method,
+        repetition,
+        configuration_sha256,
+        require_success=True,
+    )
+
+
+def _matching_finalized_record(
+    result_path,
+    scenario,
+    planner,
+    method,
+    repetition,
+    configuration_sha256=None,
+):
+    return _matching_record(
+        result_path,
+        scenario,
+        planner,
+        method,
+        repetition,
+        configuration_sha256,
+        require_success=False,
+    )
 
 
 def _write_json(path, document):
@@ -430,8 +480,13 @@ def main(args: Optional[List[str]] = None) -> None:
                     f'{options.scenario}_{planner_prefix}'
                     f'{method}{suffix}.json'
                 )
+                resume_reader = None
+                if options.resume:
+                    resume_reader = _matching_successful_record
+                elif options.resume_preserve_failures:
+                    resume_reader = _matching_finalized_record
                 resumed_record = (
-                    _matching_successful_record(
+                    resume_reader(
                         result_path,
                         options.scenario,
                         planner,
@@ -439,7 +494,7 @@ def main(args: Optional[List[str]] = None) -> None:
                         repetition,
                         configuration_sha256,
                     )
-                    if options.resume else None
+                    if resume_reader is not None else None
                 )
                 if resumed_record is not None:
                     records.append(resumed_record)

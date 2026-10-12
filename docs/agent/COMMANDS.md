@@ -71,6 +71,59 @@ ros2 launch adaptive_pivot_g2_benchmark planner_benchmark.launch.py \
 Không ghi vào thư mục dataset đã tồn tại. Xem `DATA_POLICY.md` trước khi tạo
 ma trận mới.
 
+## Cohort lặp cho bài journal
+
+Chạy 5 lần lặp PSTMO–Constrained trên 5 tuyến × 5 planner bằng bốn dải ROS
+domain tách biệt:
+
+```bash
+source /opt/ros/jazzy/setup.bash
+source install/setup.bash
+python3 tools/run_journal_repeatability_study.py \
+  --output-root results/pstmo_journal_repeatability_<YYYYMMDD> \
+  --repetitions 5 --workers 4
+```
+
+Tiếp tục đúng cohort sau khi tiến trình điều phối bị ngắt:
+
+```bash
+python3 tools/run_journal_repeatability_study.py \
+  --output-root results/pstmo_journal_repeatability_<YYYYMMDD> \
+  --repetitions 5 --workers 4 --resume
+```
+
+Chế độ `--resume` kiểm tra manifest/fingerprint, giữ trial đã hoàn tất và lưu
+attempt chưa có metadata hoàn chỉnh vào `interrupted_attempts/`. Nếu gặp một
+trial thất bại đã được runner chốt trong khối còn dở, script dừng để tránh tự
+động chạy lại kết quả thuật toán không thuận lợi.
+
+Nếu audit xác nhận một trial đã chốt là lỗi khởi tạo hạ tầng, retry riêng job
+đó bằng wrapper an toàn (đối số output là thư mục planner, wrapper tự thêm tên
+scenario):
+
+```bash
+python3 tools/run_cross_aisle_study.py <scenario> <base-domain-id> \
+  results/pstmo_journal_repeatability_<YYYYMMDD>/<planner-slug> \
+  --planners <PlannerID> --methods constrained pstmo --repetitions 5 \
+  --retry-infrastructure-only
+```
+
+Wrapper chuyển JSON/log/diagnostics của attempt hạ tầng sang
+`infrastructure_attempts/`, giữ SHA-256, tái sử dụng mọi trial thành công và
+thất bại thuật toán đã chốt, rồi chỉ chạy trial hạ tầng bị thiếu.
+
+Phân tích chỉ được chạy khi `study_manifest.json` có trạng thái `complete`:
+
+```bash
+PYTHONNOUSERSITE=1 python3 tools/analyze_journal_repeatability.py \
+  --cohort results/pstmo_journal_repeatability_<YYYYMMDD>
+```
+
+Phân tích dùng 25 khối tuyến–planner làm đơn vị thống kê và lấy trung bình các
+lần lặp trong khối. Giao thức hiện không phát lộ seed ngẫu nhiên; không gọi
+cohort này là multi-seed hoặc kiểm tra độ bền trước nhiễu. Chạy song song có
+thể ảnh hưởng thời gian xử lý CPU, nên `smoothing_time_s` là chỉ số phụ.
+
 ## Kiểm tra tài liệu
 
 Sau khi sửa README hoặc AGENTS:

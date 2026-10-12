@@ -1,0 +1,699 @@
+=== infrastructure attempt 1 ===
+[INFO] [launch]: All log files can be found below /home/linh-pham/.ros/log/2026-10-12-11-41-39-579023-linh-pham-LOQ-15IAX9-56894
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [gazebo-1]: process started with pid [56907]
+[INFO] [create-2]: process started with pid [56908]
+[INFO] [parameter_bridge-3]: process started with pid [56909]
+[INFO] [robot_state_publisher-4]: process started with pid [56911]
+[INFO] [execution_trial-5]: process started with pid [56912]
+[robot_state_publisher-4] [INFO] [1791780100.080057926] [robot_state_publisher]: Robot initialized
+[gazebo-1] [1;32m[Msg] [0m[1;32mGazebo Sim Server v[0m[1;32m8.15.0[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mLoading SDF world file[[0m[1;32m/home/linh-pham/agv_nav2_research_ws_bao/install/vacuum_robot_gazebo/share/vacuum_robot_gazebo/worlds/warehouse_cross_aisles.sdf[0m[1;32m].[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mServing entity system service on [[0m[1;32m/[0m[1;32mentity/system/add[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mCreate[0m[1;32m service on [[0m[1;32m/world/warehouse_cross_aisles/create_multiple[0m[1;32m] (async)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mCreate[0m[1;32m service on [[0m[1;32m/world/warehouse_cross_aisles/create_multiple/blocking[0m[1;32m] (blocking)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mRemove[0m[1;32m service on [[0m[1;32m/world/warehouse_cross_aisles/remove[0m[1;32m] (async)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mRemove[0m[1;32m service on [[0m[1;32m/world/warehouse_cross_aisles/remove/blocking[0m[1;32m] (blocking)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mPose[0m[1;32m service on [[0m[1;32m/world/warehouse_cross_aisles/set_pose[0m[1;32m] (async)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mPose[0m[1;32m service on [[0m[1;32m/world/warehouse_cross_aisles/set_pose/blocking[0m[1;32m] (blocking)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mPose[0m[1;32m service on [[0m[1;32m/world/warehouse_cross_aisles/set_pose_vector[0m[1;32m] (async)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mPose[0m[1;32m service on [[0m[1;32m/world/warehouse_cross_aisles/set_pose_vector/blocking[0m[1;32m] (blocking)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mLight configuration[0m[1;32m service on [[0m[1;32m/world/warehouse_cross_aisles/light_config[0m[1;32m] (async)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mLight configuration[0m[1;32m service on [[0m[1;32m/world/warehouse_cross_aisles/light_config/blocking[0m[1;32m] (blocking)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mPhysics[0m[1;32m service on [[0m[1;32m/world/warehouse_cross_aisles/set_physics[0m[1;32m] (async)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mPhysics[0m[1;32m service on [[0m[1;32m/world/warehouse_cross_aisles/set_physics/blocking[0m[1;32m] (blocking)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mSphericalCoordinates[0m[1;32m service on [[0m[1;32m/world/warehouse_cross_aisles/set_spherical_coordinates[0m[1;32m] (async)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mSphericalCoordinates[0m[1;32m service on [[0m[1;32m/world/warehouse_cross_aisles/set_spherical_coordinates/blocking[0m[1;32m] (blocking)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mEnable collision[0m[1;32m service on [[0m[1;32m/world/warehouse_cross_aisles/enable_collision[0m[1;32m] (async)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mEnable collision[0m[1;32m service on [[0m[1;32m/world/warehouse_cross_aisles/enable_collision/blocking[0m[1;32m] (blocking)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mDisable collision[0m[1;32m service on [[0m[1;32m/world/warehouse_cross_aisles/disable_collision[0m[1;32m] (async)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mDisable collision[0m[1;32m service on [[0m[1;32m/world/warehouse_cross_aisles/disable_collision/blocking[0m[1;32m] (blocking)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mMaterial[0m[1;32m service on [[0m[1;32m/world/warehouse_cross_aisles/visual_config[0m[1;32m] (async)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mMaterial[0m[1;32m service on [[0m[1;32m/world/warehouse_cross_aisles/visual_config/blocking[0m[1;32m] (blocking)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mMaterial[0m[1;32m service on [[0m[1;32m/world/warehouse_cross_aisles/wheel_slip[0m[1;32m] (async)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mMaterial[0m[1;32m service on [[0m[1;32m/world/warehouse_cross_aisles/wheel_slip/blocking[0m[1;32m] (blocking)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mLoaded level [[0m[1;32mdefault[0m[1;32m][0m[1;32m[0m
+[create-2] [INFO] [1791780100.549489026] [spawn_vacuum_robot]: Entity creation successful.
+[INFO] [create-2]: process has finished cleanly [pid 56908]
+[parameter_bridge-3] [INFO] [1791780101.114610289] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/clock (gz.msgs.Clock) -> /clock (rosgraph_msgs/msg/Clock)] (Lazy 0)
+[parameter_bridge-3] [INFO] [1791780101.115426613] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/joint_states (gz.msgs.Model) -> /joint_states (sensor_msgs/msg/JointState)] (Lazy 0)
+[parameter_bridge-3] [INFO] [1791780101.119691605] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/odom (gz.msgs.Odometry) -> /odom (nav_msgs/msg/Odometry)] (Lazy 0)
+[parameter_bridge-3] [INFO] [1791780101.122505679] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/tf (gz.msgs.Pose_V) -> /tf (tf2_msgs/msg/TFMessage)] (Lazy 0)
+[parameter_bridge-3] [INFO] [1791780101.124369064] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/scan (gz.msgs.LaserScan) -> /scan (sensor_msgs/msg/LaserScan)] (Lazy 0)
+[parameter_bridge-3] [INFO] [1791780101.124731816] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/imu/data (gz.msgs.IMU) -> /imu/data (sensor_msgs/msg/Imu)] (Lazy 0)
+[parameter_bridge-3] [INFO] [1791780101.125184866] [ros_gz_bridge]: Creating ROS->GZ Bridge: [/cmd_vel (geometry_msgs/msg/Twist) -> /cmd_vel (gz.msgs.Twist)] (Lazy 0)
+[parameter_bridge-3] [INFO] [1791780101.126478807] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/ground_truth/odom (gz.msgs.Odometry) -> /ground_truth/odom (nav_msgs/msg/Odometry)] (Lazy 0)
+[gazebo-1] [1;32m[Msg] [0m[1;32mServing world controls on [[0m[1;32m/world/warehouse_cross_aisles[0m[1;32m/control], [[0m[1;32m/world/warehouse_cross_aisles[0m[1;32m/control/state] and [[0m[1;32m/world/warehouse_cross_aisles[0m[1;32m/playback/control][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mServing GUI information on [[0m[1;32m/world/warehouse_cross_aisles[0m[1;32m/[0m[1;32mgui/info[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mWorld [[0m[1;32mwarehouse_cross_aisles[0m[1;32m] initialized with [[0m[1;32mresearch_physics[0m[1;32m] physics profile.[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mServing world SDF generation service on [[0m[1;32m/world/warehouse_cross_aisles[0m[1;32m/[0m[1;32mgenerate_world_sdf[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mServing world names on [[0m[1;32m/gazebo/worlds[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mResource path add service on [[0m[1;32m/gazebo/resource_paths/add[0m[1;32m].[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mResource path get service on [[0m[1;32m/gazebo/resource_paths/get[0m[1;32m].[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mResource path resolve service on [[0m[1;32m/gazebo/resource_paths/resolve[0m[1;32m].[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mResource paths published on [[0m[1;32m/gazebo/resource_paths[0m[1;32m].[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mServer control service on [[0m[1;32m/server_control[0m[1;32m].[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mFound no publishers on /stats, adding root stats topic[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mFound no publishers on /clock, adding root clock topic[0m[1;32m[0m
+[gazebo-1] [1;33mWarning [Utils.cc:132][0m [/sdf/model[@name="vacuum_robot"]/link[@name="base_link"]/sensor[@name="rplidar_a1m8"]/gz_frame_id:/home/linh-pham/agv_nav2_research_ws_bao/install/vacuum_robot_gazebo/share/vacuum_robot_gazebo/models/vacuum_robot/model.sdf:L107]: XML Element[gz_frame_id], child of element[sensor], not defined in SDF. Copying[gz_frame_id] as children of [sensor].
+[gazebo-1] [1;33mWarning [Utils.cc:132][0m [/sdf/model[@name="vacuum_robot"]/link[@name="base_link"]/sensor[@name="bno055_imu"]/gz_frame_id:/home/linh-pham/agv_nav2_research_ws_bao/install/vacuum_robot_gazebo/share/vacuum_robot_gazebo/models/vacuum_robot/model.sdf:L128]: XML Element[gz_frame_id], child of element[sensor], not defined in SDF. Copying[gz_frame_id] as children of [sensor].
+[gazebo-1] libEGL warning: pci id for fd 61: 10de:25ec, driver (null)
+[gazebo-1] 
+[gazebo-1] pci id for fd 62: 10de:25ec, driver (null)
+[gazebo-1] pci id for fd 63: 10de:25ec, driver (null)
+[gazebo-1] libEGL warning: egl: failed to create dri2 screen
+[gazebo-1] libEGL warning: pci id for fd 61: 10de:25ec, driver (null)
+[gazebo-1] 
+[gazebo-1] pci id for fd 62: 10de:25ec, driver (null)
+[gazebo-1] pci id for fd 63: 10de:25ec, driver (null)
+[gazebo-1] libEGL warning: egl: failed to create dri2 screen
+[gazebo-1] libEGL warning: pci id for fd 61: 10de:25ec, driver (null)
+[gazebo-1] 
+[INFO] [map_server-6]: process started with pid [57064]
+[INFO] [amcl-7]: process started with pid [57065]
+[INFO] [lifecycle_manager-8]: process started with pid [57066]
+[INFO] [controller_server-9]: process started with pid [57067]
+[INFO] [smoother_server-10]: process started with pid [57068]
+[INFO] [planner_server-11]: process started with pid [57069]
+[INFO] [route_server-12]: process started with pid [57070]
+[INFO] [behavior_server-13]: process started with pid [57073]
+[INFO] [bt_navigator-14]: process started with pid [57074]
+[INFO] [waypoint_follower-15]: process started with pid [57075]
+[INFO] [velocity_smoother-16]: process started with pid [57078]
+[INFO] [collision_monitor-17]: process started with pid [57082]
+[INFO] [opennav_docking-18]: process started with pid [57084]
+[INFO] [lifecycle_manager-19]: process started with pid [57085]
+[amcl-7] [INFO] [1791780103.097966591] [amcl]: 
+[amcl-7] 	amcl lifecycle node launched. 
+[amcl-7] 	Waiting on external lifecycle transitions to activate
+[amcl-7] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[amcl-7] [INFO] [1791780103.098807512] [amcl]: Creating
+[controller_server-9] [INFO] [1791780103.116714875] [controller_server]: 
+[controller_server-9] 	controller_server lifecycle node launched. 
+[controller_server-9] 	Waiting on external lifecycle transitions to activate
+[controller_server-9] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[lifecycle_manager-8] [INFO] [1791780103.118027508] [lifecycle_manager_localization]: Creating
+[controller_server-9] [INFO] [1791780103.121841917] [controller_server]: Creating controller server
+[lifecycle_manager-8] [INFO] [1791780103.125080114] [lifecycle_manager_localization]: [34m[1mCreating and initializing lifecycle service clients[0m[0m
+[controller_server-9] [INFO] [1791780103.131076085] [local_costmap.local_costmap]: 
+[controller_server-9] 	local_costmap lifecycle node launched. 
+[controller_server-9] 	Waiting on external lifecycle transitions to activate
+[controller_server-9] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[controller_server-9] [INFO] [1791780103.131926837] [local_costmap.local_costmap]: Creating Costmap
+[velocity_smoother-16] [INFO] [1791780103.133643151] [velocity_smoother]: 
+[velocity_smoother-16] 	velocity_smoother lifecycle node launched. 
+[velocity_smoother-16] 	Waiting on external lifecycle transitions to activate
+[velocity_smoother-16] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[map_server-6] [INFO] [1791780103.136836639] [map_server]: 
+[map_server-6] 	map_server lifecycle node launched. 
+[map_server-6] 	Waiting on external lifecycle transitions to activate
+[map_server-6] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[map_server-6] [INFO] [1791780103.137587178] [map_server]: Creating
+[smoother_server-10] [INFO] [1791780103.141878078] [smoother_server]: 
+[smoother_server-10] 	smoother_server lifecycle node launched. 
+[smoother_server-10] 	Waiting on external lifecycle transitions to activate
+[smoother_server-10] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[smoother_server-10] [INFO] [1791780103.144915364] [smoother_server]: Creating smoother server
+[planner_server-11] [INFO] [1791780103.147391461] [planner_server]: 
+[planner_server-11] 	planner_server lifecycle node launched. 
+[planner_server-11] 	Waiting on external lifecycle transitions to activate
+[planner_server-11] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[planner_server-11] [INFO] [1791780103.148581560] [planner_server]: Creating
+[opennav_docking-18] [INFO] [1791780103.151253153] [docking_server]: 
+[opennav_docking-18] 	docking_server lifecycle node launched. 
+[opennav_docking-18] 	Waiting on external lifecycle transitions to activate
+[opennav_docking-18] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[opennav_docking-18] [INFO] [1791780103.151347052] [docking_server]: Creating docking_server
+[planner_server-11] [INFO] [1791780103.153844061] [global_costmap.global_costmap]: 
+[planner_server-11] 	global_costmap lifecycle node launched. 
+[planner_server-11] 	Waiting on external lifecycle transitions to activate
+[planner_server-11] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[planner_server-11] [INFO] [1791780103.154201618] [global_costmap.global_costmap]: Creating Costmap
+[waypoint_follower-15] [INFO] [1791780103.169935148] [waypoint_follower]: 
+[waypoint_follower-15] 	waypoint_follower lifecycle node launched. 
+[waypoint_follower-15] 	Waiting on external lifecycle transitions to activate
+[waypoint_follower-15] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[waypoint_follower-15] [INFO] [1791780103.170943560] [waypoint_follower]: Creating
+[bt_navigator-14] [INFO] [1791780103.172110027] [bt_navigator]: 
+[bt_navigator-14] 	bt_navigator lifecycle node launched. 
+[bt_navigator-14] 	Waiting on external lifecycle transitions to activate
+[bt_navigator-14] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[bt_navigator-14] [INFO] [1791780103.173184812] [bt_navigator]: Creating
+[lifecycle_manager-19] [INFO] [1791780103.174546071] [lifecycle_manager_navigation]: Creating
+[lifecycle_manager-19] [INFO] [1791780103.178157179] [lifecycle_manager_navigation]: [34m[1mCreating and initializing lifecycle service clients[0m[0m
+[behavior_server-13] [INFO] [1791780103.182807170] [behavior_server]: 
+[behavior_server-13] 	behavior_server lifecycle node launched. 
+[behavior_server-13] 	Waiting on external lifecycle transitions to activate
+[behavior_server-13] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[collision_monitor-17] [INFO] [1791780103.185749252] [collision_monitor]: 
+[collision_monitor-17] 	collision_monitor lifecycle node launched. 
+[collision_monitor-17] 	Waiting on external lifecycle transitions to activate
+[collision_monitor-17] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[route_server-12] [INFO] [1791780103.188367996] [route_server]: 
+[route_server-12] 	route_server lifecycle node launched. 
+[route_server-12] 	Waiting on external lifecycle transitions to activate
+[route_server-12] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[lifecycle_manager-8] [INFO] [1791780105.127875618] [lifecycle_manager_localization]: Waiting for service map_server/get_state...
+[lifecycle_manager-19] [INFO] [1791780105.179103788] [lifecycle_manager_navigation]: Waiting for service controller_server/get_state...
+[lifecycle_manager-8] [INFO] [1791780107.128042928] [lifecycle_manager_localization]: Waiting for service map_server/get_state...
+[lifecycle_manager-19] [INFO] [1791780107.179317283] [lifecycle_manager_navigation]: Waiting for service controller_server/get_state...
+[parameter_bridge-3] Exception sending a multicast message:Network is unreachable
+[parameter_bridge-3] Exception sending a multicast message:Network is unreachable
+[parameter_bridge-3] Exception sending a multicast message:Network is unreachable
+[gazebo-1] [1;32m[Msg] [0m[1;32mDiffDrive subscribing to twist messages on [[0m[1;32m/cmd_vel[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mOdometryPublisher publishing odometry on [[0m[1;32m/ground_truth/odom[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mOdometryPublisher publishing odometry with covariance on [[0m[1;32m/model/vacuum_robot/odometry_with_covariance[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mOdometryPublisher publishing Pose_V (TF) on [[0m[1;32m/ground_truth/tf_gz[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mLoading plugin [[0m[1;32mgz-rendering-ogre2[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mServing scene information on [[0m[1;32m/world/warehouse_cross_aisles[0m[1;32m/[0m[1;32mscene/info[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mServing graph information on [[0m[1;32m/world/warehouse_cross_aisles[0m[1;32m/[0m[1;32mscene/graph[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mServing full state on [[0m[1;32m/world/warehouse_cross_aisles[0m[1;32m/[0m[1;32mstate[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mServing full state (async) on [[0m[1;32m/world/warehouse_cross_aisles[0m[1;32m/[0m[1;32mstate_async[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mPublishing scene information on [[0m[1;32m/world/warehouse_cross_aisles/scene/info[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mPublishing entity deletions on [[0m[1;32m/world/warehouse_cross_aisles/scene/deletion[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mPublishing state changes on [[0m[1;32m/world/warehouse_cross_aisles/state[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mPublishing pose messages on [[0m[1;32m/world/warehouse_cross_aisles[0m[1;32m/[0m[1;32mpose/info[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mPublishing dynamic pose messages on [[0m[1;32m/world/warehouse_cross_aisles[0m[1;32m/[0m[1;32mdynamic_pose/info[0m[1;32m][0m[1;32m[0m
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[parameter_bridge-3] Exception sending a multicast message:Network is unreachable
+[parameter_bridge-3] Exception sending a multicast message:Network is unreachable
+[parameter_bridge-3] Exception sending a multicast message:Network is unreachable
+[lifecycle_manager-8] [INFO] [1791780109.128206802] [lifecycle_manager_localization]: Waiting for service map_server/get_state...
+[lifecycle_manager-19] [INFO] [1791780109.179500926] [lifecycle_manager_navigation]: Waiting for service controller_server/get_state...
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[parameter_bridge-3] Exception sending a multicast message:Network is unreachable
+[parameter_bridge-3] Exception sending a multicast message:Network is unreachable
+[parameter_bridge-3] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[parameter_bridge-3] Exception sending a multicast message:Network is unreachable
+[parameter_bridge-3] Exception sending a multicast message:Network is unreachable
+[parameter_bridge-3] Exception sending a multicast message:Network is unreachable
+[lifecycle_manager-8] [INFO] [1791780111.128374785] [lifecycle_manager_localization]: Waiting for service map_server/get_state...
+[lifecycle_manager-19] [INFO] [1791780111.179790914] [lifecycle_manager_navigation]: Waiting for service controller_server/get_state...
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[parameter_bridge-3] Exception sending a multicast message:Network is unreachable
+[parameter_bridge-3] Exception sending a multicast message:Network is unreachable
+[parameter_bridge-3] Exception sending a multicast message:Network is unreachable
+[lifecycle_manager-8] [INFO] [1791780113.128568119] [lifecycle_manager_localization]: Waiting for service map_server/get_state...
+[lifecycle_manager-19] [INFO] [1791780113.180109569] [lifecycle_manager_navigation]: Waiting for service controller_server/get_state...
+[lifecycle_manager-8] [INFO] [1791780115.128730027] [lifecycle_manager_localization]: Waiting for service map_server/get_state...
+[lifecycle_manager-19] [INFO] [1791780115.180256244] [lifecycle_manager_navigation]: Waiting for service controller_server/get_state...
+[lifecycle_manager-8] [INFO] [1791780117.128926763] [lifecycle_manager_localization]: Waiting for service map_server/get_state...
+[lifecycle_manager-19] [INFO] [1791780117.180413966] [lifecycle_manager_navigation]: Waiting for service controller_server/get_state...
+[lifecycle_manager-8] [INFO] [1791780119.129080254] [lifecycle_manager_localization]: Waiting for service map_server/get_state...
+[lifecycle_manager-19] [INFO] [1791780119.180579517] [lifecycle_manager_navigation]: Waiting for service controller_server/get_state...
+[lifecycle_manager-8] [INFO] [1791780121.129197217] [lifecycle_manager_localization]: Waiting for service map_server/get_state...
+[lifecycle_manager-19] [INFO] [1791780121.180722242] [lifecycle_manager_navigation]: Waiting for service controller_server/get_state...
+[lifecycle_manager-8] [INFO] [1791780123.129317947] [lifecycle_manager_localization]: Waiting for service map_server/get_state...
+[lifecycle_manager-19] [INFO] [1791780123.180897858] [lifecycle_manager_navigation]: Waiting for service controller_server/get_state...
+[lifecycle_manager-8] [INFO] [1791780125.129440141] [lifecycle_manager_localization]: Waiting for service map_server/get_state...
+[lifecycle_manager-19] [INFO] [1791780125.181059162] [lifecycle_manager_navigation]: Waiting for service controller_server/get_state...
+[lifecycle_manager-8] [INFO] [1791780127.129708853] [lifecycle_manager_localization]: Waiting for service map_server/get_state...
+[lifecycle_manager-19] [INFO] [1791780127.181371234] [lifecycle_manager_navigation]: Waiting for service controller_server/get_state...
+[lifecycle_manager-8] [INFO] [1791780129.129850853] [lifecycle_manager_localization]: Waiting for service map_server/get_state...
+[lifecycle_manager-19] [INFO] [1791780129.181492969] [lifecycle_manager_navigation]: Waiting for service controller_server/get_state...
+[lifecycle_manager-8] [INFO] [1791780131.129967105] [lifecycle_manager_localization]: Waiting for service map_server/get_state...
+[lifecycle_manager-19] [INFO] [1791780131.181655366] [lifecycle_manager_navigation]: Waiting for service controller_server/get_state...
+[lifecycle_manager-8] [INFO] [1791780133.130083268] [lifecycle_manager_localization]: Waiting for service map_server/get_state...
+[lifecycle_manager-19] [INFO] [1791780133.181830713] [lifecycle_manager_navigation]: Waiting for service controller_server/get_state...
+[lifecycle_manager-8] [INFO] [1791780135.130212648] [lifecycle_manager_localization]: Waiting for service map_server/get_state...
+[lifecycle_manager-19] [INFO] [1791780135.182873022] [lifecycle_manager_navigation]: Waiting for service controller_server/get_state...
+[lifecycle_manager-8] [INFO] [1791780137.130366741] [lifecycle_manager_localization]: Waiting for service map_server/get_state...
+[lifecycle_manager-19] [INFO] [1791780137.183745192] [lifecycle_manager_navigation]: Waiting for service controller_server/get_state...
+[lifecycle_manager-8] [INFO] [1791780139.130811389] [lifecycle_manager_localization]: Waiting for service map_server/get_state...
+[lifecycle_manager-19] [INFO] [1791780139.183867519] [lifecycle_manager_navigation]: Waiting for service controller_server/get_state...
+[lifecycle_manager-8] [INFO] [1791780141.130946749] [lifecycle_manager_localization]: Waiting for service map_server/get_state...
+[lifecycle_manager-19] [INFO] [1791780141.184003132] [lifecycle_manager_navigation]: Waiting for service controller_server/get_state...
+[lifecycle_manager-8] [INFO] [1791780143.131068088] [lifecycle_manager_localization]: Waiting for service map_server/get_state...
+[lifecycle_manager-19] [INFO] [1791780143.184147131] [lifecycle_manager_navigation]: Waiting for service controller_server/get_state...
+[lifecycle_manager-8] [INFO] [1791780145.131187771] [lifecycle_manager_localization]: Waiting for service map_server/get_state...
+[lifecycle_manager-19] [INFO] [1791780145.184397860] [lifecycle_manager_navigation]: Waiting for service controller_server/get_state...
+[lifecycle_manager-8] [INFO] [1791780147.131324864] [lifecycle_manager_localization]: Waiting for service map_server/get_state...
+[lifecycle_manager-19] [INFO] [1791780147.184591764] [lifecycle_manager_navigation]: Waiting for service controller_server/get_state...
+[lifecycle_manager-8] [INFO] [1791780149.131453052] [lifecycle_manager_localization]: Waiting for service map_server/get_state...
+[lifecycle_manager-19] [INFO] [1791780149.185224879] [lifecycle_manager_navigation]: Waiting for service controller_server/get_state...
+[lifecycle_manager-8] [INFO] [1791780151.131608884] [lifecycle_manager_localization]: Waiting for service map_server/get_state...
+[lifecycle_manager-19] [INFO] [1791780151.185386874] [lifecycle_manager_navigation]: Waiting for service controller_server/get_state...
+[lifecycle_manager-8] [INFO] [1791780153.131797078] [lifecycle_manager_localization]: Waiting for service map_server/get_state...
+[lifecycle_manager-19] [INFO] [1791780153.185704334] [lifecycle_manager_navigation]: Waiting for service controller_server/get_state...
+[lifecycle_manager-8] [INFO] [1791780155.131949613] [lifecycle_manager_localization]: Waiting for service map_server/get_state...
+[lifecycle_manager-19] [INFO] [1791780155.185847401] [lifecycle_manager_navigation]: Waiting for service controller_server/get_state...
+[lifecycle_manager-8] [INFO] [1791780157.132080492] [lifecycle_manager_localization]: Waiting for service map_server/get_state...
+[lifecycle_manager-19] [INFO] [1791780157.186016947] [lifecycle_manager_navigation]: Waiting for service controller_server/get_state...
+[lifecycle_manager-8] [INFO] [1791780159.132227513] [lifecycle_manager_localization]: Waiting for service map_server/get_state...
+[lifecycle_manager-19] [INFO] [1791780159.186156965] [lifecycle_manager_navigation]: Waiting for service controller_server/get_state...
+[execution_trial-5] [ERROR] [1791780161.040344970] [execution_trial]: Execution trial failed: navigation lifecycle status service is unavailable
+[execution_trial-5] Traceback (most recent call last):
+[execution_trial-5]   File "/home/linh-pham/agv_nav2_research_ws_bao/install/adaptive_pivot_g2_benchmark/lib/adaptive_pivot_g2_benchmark/execution_trial", line 33, in <module>
+[execution_trial-5]     sys.exit(load_entry_point('adaptive-pivot-g2-benchmark', 'console_scripts', 'execution_trial')())
+[execution_trial-5]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[execution_trial-5]   File "/home/linh-pham/agv_nav2_research_ws_bao/build/adaptive_pivot_g2_benchmark/adaptive_pivot_g2_benchmark/execution_trial.py", line 1166, in main
+[execution_trial-5]     node.run()
+[execution_trial-5]   File "/home/linh-pham/agv_nav2_research_ws_bao/build/adaptive_pivot_g2_benchmark/adaptive_pivot_g2_benchmark/execution_trial.py", line 680, in run
+[execution_trial-5]     self._wait_for_system()
+[execution_trial-5]   File "/home/linh-pham/agv_nav2_research_ws_bao/build/adaptive_pivot_g2_benchmark/adaptive_pivot_g2_benchmark/execution_trial.py", line 410, in _wait_for_system
+[execution_trial-5]     raise RuntimeError('navigation lifecycle status service is unavailable')
+[execution_trial-5] RuntimeError: navigation lifecycle status service is unavailable
+[lifecycle_manager-8] [INFO] [1791780161.132388742] [lifecycle_manager_localization]: Waiting for service map_server/get_state...
+[lifecycle_manager-19] [INFO] [1791780161.186286635] [lifecycle_manager_navigation]: Waiting for service controller_server/get_state...
+[ERROR] [execution_trial-5]: process has died [pid 56912, exit code 1, cmd '/home/linh-pham/agv_nav2_research_ws_bao/install/adaptive_pivot_g2_benchmark/lib/adaptive_pivot_g2_benchmark/execution_trial --ros-args -r __node:=execution_trial --params-file /tmp/launch_params_oux8yrqs'].
+[INFO] [lifecycle_manager-19]: sending signal 'SIGINT' to process[lifecycle_manager-19]
+[INFO] [opennav_docking-18]: sending signal 'SIGINT' to process[opennav_docking-18]
+[INFO] [collision_monitor-17]: sending signal 'SIGINT' to process[collision_monitor-17]
+[INFO] [velocity_smoother-16]: sending signal 'SIGINT' to process[velocity_smoother-16]
+[INFO] [waypoint_follower-15]: sending signal 'SIGINT' to process[waypoint_follower-15]
+[INFO] [bt_navigator-14]: sending signal 'SIGINT' to process[bt_navigator-14]
+[INFO] [behavior_server-13]: sending signal 'SIGINT' to process[behavior_server-13]
+[INFO] [route_server-12]: sending signal 'SIGINT' to process[route_server-12]
+[INFO] [planner_server-11]: sending signal 'SIGINT' to process[planner_server-11]
+[INFO] [smoother_server-10]: sending signal 'SIGINT' to process[smoother_server-10]
+[INFO] [controller_server-9]: sending signal 'SIGINT' to process[controller_server-9]
+[INFO] [lifecycle_manager-8]: sending signal 'SIGINT' to process[lifecycle_manager-8]
+[INFO] [amcl-7]: sending signal 'SIGINT' to process[amcl-7]
+[INFO] [map_server-6]: sending signal 'SIGINT' to process[map_server-6]
+[INFO] [robot_state_publisher-4]: sending signal 'SIGINT' to process[robot_state_publisher-4]
+[INFO] [parameter_bridge-3]: sending signal 'SIGINT' to process[parameter_bridge-3]
+[INFO] [gazebo-1]: sending signal 'SIGINT' to process[gazebo-1]
+[lifecycle_manager-19] [INFO] [1791780161.304496566] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[lifecycle_manager-19] [INFO] [1791780161.304590299] [lifecycle_manager_navigation]: Running Nav2 LifecycleManager rcl preshutdown (lifecycle_manager_navigation)
+[lifecycle_manager-19] [INFO] [1791780161.304656916] [lifecycle_manager_navigation]: Waiting for service controller_server/get_state...
+[lifecycle_manager-19] 
+[lifecycle_manager-19] >>> [rcutils|error_handling.c:108] rcutils_set_error_state()
+[lifecycle_manager-19] This error state is being overwritten:
+[lifecycle_manager-19] 
+[lifecycle_manager-19]   'rcl node's context is invalid, at ./src/rcl/node.c:404'
+[lifecycle_manager-19] 
+[lifecycle_manager-19] with this new error message:
+[lifecycle_manager-19] 
+[lifecycle_manager-19]   'publisher's context is invalid, at ./src/rcl/publisher.c:423'
+[lifecycle_manager-19] 
+[lifecycle_manager-19] rcutils_reset_error() should be called after error handling to avoid this.
+[lifecycle_manager-19] <<<
+[lifecycle_manager-19] Failed to publish log message to rosout: publisher's context is invalid, at ./src/rcl/publisher.c:423
+[lifecycle_manager-19] [INFO] [1791780161.304690390] [lifecycle_manager_navigation]: Waiting for service controller_server/get_state...
+[lifecycle_manager-19] 
+[lifecycle_manager-19] >>> [rcutils|error_handling.c:108] rcutils_set_error_state()
+[lifecycle_manager-19] This error state is being overwritten:
+[lifecycle_manager-19] 
+[lifecycle_manager-19]   'rcl node's context is invalid, at ./src/rcl/node.c:404'
+[lifecycle_manager-19] 
+[lifecycle_manager-19] with this new error message:
+[lifecycle_manager-19] 
+[lifecycle_manager-19]   'publisher's context is invalid, at ./src/rcl/publisher.c:423'
+[lifecycle_manager-19] 
+[lifecycle_manager-19] rcutils_reset_error() should be called after error handling to avoid this.
+[lifecycle_manager-19] <<<
+[lifecycle_manager-19] Failed to publish log message to rosout: publisher's context is invalid, at ./src/rcl/publisher.c:423
+[lifecycle_manager-19] terminate called after throwing an instance of 'std::runtime_error'
+[lifecycle_manager-19]   what():  context cannot be slept with because it's invalid
+[opennav_docking-18] [INFO] [1791780161.307210452] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[opennav_docking-18] [INFO] [1791780161.307348234] [docking_server]: Running Nav2 LifecycleNode rcl preshutdown (docking_server)
+[opennav_docking-18] [INFO] [1791780161.307390816] [docking_server]: Destroying bond (docking_server) to lifecycle manager.
+[opennav_docking-18] [INFO] [1791780161.307911903] [docking_server]: Destroying
+[collision_monitor-17] [INFO] [1791780161.309185139] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[collision_monitor-17] [INFO] [1791780161.309305826] [collision_monitor]: Running Nav2 LifecycleNode rcl preshutdown (collision_monitor)
+[collision_monitor-17] [INFO] [1791780161.309345345] [collision_monitor]: Destroying bond (collision_monitor) to lifecycle manager.
+[collision_monitor-17] [INFO] [1791780161.310218677] [collision_monitor]: Destroying
+[velocity_smoother-16] [INFO] [1791780161.311644828] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[velocity_smoother-16] [INFO] [1791780161.311745421] [velocity_smoother]: Running Nav2 LifecycleNode rcl preshutdown (velocity_smoother)
+[velocity_smoother-16] [INFO] [1791780161.312286899] [velocity_smoother]: Destroying bond (velocity_smoother) to lifecycle manager.
+[velocity_smoother-16] [INFO] [1791780161.312962459] [velocity_smoother]: Destroying
+[waypoint_follower-15] [INFO] [1791780161.314725282] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[waypoint_follower-15] [INFO] [1791780161.314819557] [waypoint_follower]: Running Nav2 LifecycleNode rcl preshutdown (waypoint_follower)
+[waypoint_follower-15] [INFO] [1791780161.314858896] [waypoint_follower]: Destroying bond (waypoint_follower) to lifecycle manager.
+[bt_navigator-14] [INFO] [1791780161.315719875] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[bt_navigator-14] [INFO] [1791780161.315819186] [bt_navigator]: Running Nav2 LifecycleNode rcl preshutdown (bt_navigator)
+[bt_navigator-14] [INFO] [1791780161.315862062] [bt_navigator]: Destroying bond (bt_navigator) to lifecycle manager.
+[bt_navigator-14] [INFO] [1791780161.316530137] [bt_navigator]: Destroying
+[waypoint_follower-15] [INFO] [1791780161.316032354] [waypoint_follower]: Destroying
+[behavior_server-13] [INFO] [1791780161.317765683] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[behavior_server-13] [INFO] [1791780161.317875269] [behavior_server]: Running Nav2 LifecycleNode rcl preshutdown (behavior_server)
+[behavior_server-13] [INFO] [1791780161.317922543] [behavior_server]: Destroying bond (behavior_server) to lifecycle manager.
+[behavior_server-13] [INFO] [1791780161.320411847] [behavior_server]: Destroying
+[route_server-12] [INFO] [1791780161.321172136] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[route_server-12] [INFO] [1791780161.321314013] [route_server]: Running Nav2 LifecycleNode rcl preshutdown (route_server)
+[route_server-12] [INFO] [1791780161.321361428] [route_server]: Destroying bond (route_server) to lifecycle manager.
+[route_server-12] [INFO] [1791780161.322314912] [route_server]: Destroying
+[planner_server-11] [INFO] [1791780161.322513351] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[planner_server-11] [INFO] [1791780161.322611898] [planner_server]: Running Nav2 LifecycleNode rcl preshutdown (planner_server)
+[planner_server-11] [INFO] [1791780161.322655182] [planner_server]: Destroying bond (planner_server) to lifecycle manager.
+[planner_server-11] [INFO] [1791780161.323396103] [global_costmap.global_costmap]: Destroying
+[smoother_server-10] [INFO] [1791780161.325111688] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[smoother_server-10] [INFO] [1791780161.325215777] [smoother_server]: Running Nav2 LifecycleNode rcl preshutdown (smoother_server)
+[smoother_server-10] [INFO] [1791780161.325264081] [smoother_server]: Destroying bond (smoother_server) to lifecycle manager.
+[smoother_server-10] [INFO] [1791780161.325985869] [smoother_server]: Destroying
+[controller_server-9] [INFO] [1791780161.326396308] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[controller_server-9] [INFO] [1791780161.326489842] [controller_server]: Running Nav2 LifecycleNode rcl preshutdown (controller_server)
+[controller_server-9] [INFO] [1791780161.326535122] [controller_server]: Destroying bond (controller_server) to lifecycle manager.
+[lifecycle_manager-8] [INFO] [1791780161.328044302] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[lifecycle_manager-8] [INFO] [1791780161.328139335] [lifecycle_manager_localization]: Running Nav2 LifecycleManager rcl preshutdown (lifecycle_manager_localization)
+[lifecycle_manager-8] [INFO] [1791780161.328198814] [lifecycle_manager_localization]: Waiting for service map_server/get_state...
+[lifecycle_manager-8] 
+[lifecycle_manager-8] >>> [rcutils|error_handling.c:108] rcutils_set_error_state()
+[lifecycle_manager-8] This error state is being overwritten:
+[lifecycle_manager-8] 
+[lifecycle_manager-8]   'rcl node's context is invalid, at ./src/rcl/node.c:404'
+[lifecycle_manager-8] 
+[lifecycle_manager-8] with this new error message:
+[lifecycle_manager-8] 
+[lifecycle_manager-8]   'publisher's context is invalid, at ./src/rcl/publisher.c:423'
+[lifecycle_manager-8] 
+[lifecycle_manager-8] rcutils_reset_error() should be called after error handling to avoid this.
+[lifecycle_manager-8] <<<
+[lifecycle_manager-8] Failed to publish log message to rosout: publisher's context is invalid, at ./src/rcl/publisher.c:423
+[lifecycle_manager-8] [INFO] [1791780161.328221286] [lifecycle_manager_localization]: Waiting for service map_server/get_state...
+[lifecycle_manager-8] 
+[lifecycle_manager-8] >>> [rcutils|error_handling.c:108] rcutils_set_error_state()
+[lifecycle_manager-8] This error state is being overwritten:
+[lifecycle_manager-8] 
+[lifecycle_manager-8]   'rcl node's context is invalid, at ./src/rcl/node.c:404'
+[lifecycle_manager-8] 
+[lifecycle_manager-8] with this new error message:
+[lifecycle_manager-8] 
+[lifecycle_manager-8]   'publisher's context is invalid, at ./src/rcl/publisher.c:423'
+[lifecycle_manager-8] 
+[lifecycle_manager-8] rcutils_reset_error() should be called after error handling to avoid this.
+[lifecycle_manager-8] <<<
+[lifecycle_manager-8] Failed to publish log message to rosout: publisher's context is invalid, at ./src/rcl/publisher.c:423
+[lifecycle_manager-8] terminate called after throwing an instance of 'std::runtime_error'
+[lifecycle_manager-8]   what():  context cannot be slept with because it's invalid
+[planner_server-11] [INFO] [1791780161.328068870] [planner_server]: Destroying
+[controller_server-9] [INFO] [1791780161.328358390] [local_costmap.local_costmap]: Destroying
+[amcl-7] [INFO] [1791780161.330258471] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[amcl-7] [INFO] [1791780161.330341828] [amcl]: Running Nav2 LifecycleNode rcl preshutdown (amcl)
+[amcl-7] [INFO] [1791780161.330380348] [amcl]: Destroying bond (amcl) to lifecycle manager.
+[amcl-7] [INFO] [1791780161.331344785] [amcl]: Destroying
+[map_server-6] [INFO] [1791780161.332380042] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[map_server-6] [INFO] [1791780161.332466288] [map_server]: Running Nav2 LifecycleNode rcl preshutdown (map_server)
+[map_server-6] [INFO] [1791780161.332505145] [map_server]: Destroying bond (map_server) to lifecycle manager.
+[controller_server-9] [INFO] [1791780161.332467347] [controller_server]: Destroying
+[map_server-6] [INFO] [1791780161.333304322] [map_server]: Destroying
+[robot_state_publisher-4] [INFO] [1791780161.335266059] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[parameter_bridge-3] [INFO] [1791780161.339194372] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[INFO] [opennav_docking-18]: process has finished cleanly [pid 57084]
+[INFO] [velocity_smoother-16]: process has finished cleanly [pid 57078]
+[INFO] [waypoint_follower-15]: process has finished cleanly [pid 57075]
+[INFO] [bt_navigator-14]: process has finished cleanly [pid 57074]
+[INFO] [collision_monitor-17]: process has finished cleanly [pid 57082]
+[INFO] [route_server-12]: process has finished cleanly [pid 57070]
+[INFO] [behavior_server-13]: process has finished cleanly [pid 57073]
+[INFO] [smoother_server-10]: process has finished cleanly [pid 57068]
+[INFO] [planner_server-11]: process has finished cleanly [pid 57069]
+[INFO] [map_server-6]: process has finished cleanly [pid 57064]
+[INFO] [robot_state_publisher-4]: process has finished cleanly [pid 56911]
+[INFO] [amcl-7]: process has finished cleanly [pid 57065]
+[INFO] [controller_server-9]: process has finished cleanly [pid 57067]
+[INFO] [parameter_bridge-3]: process has finished cleanly [pid 56909]
+[ERROR] [lifecycle_manager-19]: process[lifecycle_manager-19] failed to terminate '5' seconds after receiving 'SIGINT', escalating to 'SIGTERM'
+[ERROR] [lifecycle_manager-8]: process[lifecycle_manager-8] failed to terminate '5' seconds after receiving 'SIGINT', escalating to 'SIGTERM'
+[ERROR] [gazebo-1]: process[gazebo-1] failed to terminate '5' seconds after receiving 'SIGINT', escalating to 'SIGTERM'
+[INFO] [lifecycle_manager-19]: sending signal 'SIGTERM' to process[lifecycle_manager-19]
+[INFO] [lifecycle_manager-8]: sending signal 'SIGTERM' to process[lifecycle_manager-8]
+[INFO] [gazebo-1]: sending signal 'SIGTERM' to process[gazebo-1]
+[ERROR] [gazebo-1]: process has died [pid 56907, exit code -15, cmd 'ruby /opt/ros/jazzy/opt/gz_tools_vendor/bin/gz sim -r -s -v 3 --initial-sim-time 0.0 /home/linh-pham/agv_nav2_research_ws_bao/install/vacuum_robot_gazebo/share/vacuum_robot_gazebo/worlds/warehouse_cross_aisles.sdf --force-version 8'].
+[ERROR] [lifecycle_manager-19]: process has died [pid 57085, exit code -6, cmd '/opt/ros/jazzy/lib/nav2_lifecycle_manager/lifecycle_manager --ros-args --log-level info --ros-args -r __node:=lifecycle_manager_navigation -p use_sim_time:=True --params-file /tmp/launch_params_erkhqvkq --params-file /tmp/launch_params_tia58yvs'].
+[ERROR] [lifecycle_manager-8]: process has died [pid 57066, exit code -6, cmd '/opt/ros/jazzy/lib/nav2_lifecycle_manager/lifecycle_manager --ros-args --log-level info --ros-args -r __node:=lifecycle_manager_localization -p use_sim_time:=True --params-file /tmp/launch_params_ijd84vu2 --params-file /tmp/launch_params_wzuhxwqa'].

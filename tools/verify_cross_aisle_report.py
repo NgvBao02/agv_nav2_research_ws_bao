@@ -12,7 +12,9 @@ from PIL import Image, ImageDraw
 ROOT=Path(__file__).resolve().parents[1]
 BASE=ROOT/'docs/warehouse_cross_aisles_5_routes'
 PDF=ROOT/'docs/PSTMO_KHO_GIAO_CAT_5_QUY_DAO.pdf'
+REPEAT=ROOT/'results/pstmo_journal_repeatability_20261011'
 BASELINE='7602317e4d23806730fbb64a9f3f4cace469286e'
+EXPECTED_PAGES=109
 def sha(path):return hashlib.sha256(path.read_bytes()).hexdigest()
 
 def main():
@@ -31,14 +33,26 @@ def main():
         if sha(ROOT/item['path'])!=item['sha256']:issues.append('Hash mismatch: '+item['path'])
     protected=[str((BASE/p).relative_to(ROOT)) for p in ['execution','figures','all_125_trials.csv','scenarios.yaml','geometry_preflight.csv','geometry_preflight.json']]
     changed=subprocess.check_output(['git','diff','--name-only',BASELINE,'--',*protected],cwd=ROOT,text=True).splitlines()
+    allowed_new_figures={
+        'docs/warehouse_cross_aisles_5_routes/figures/repeatability_block_differences.png',
+        'docs/warehouse_cross_aisles_5_routes/figures/repeatability_block_differences.svg',
+    }
+    changed=[path for path in changed if path not in allowed_new_figures]
     issues.extend('Evidence changed: '+p for p in changed)
     before=json.loads(subprocess.check_output(['git','show',BASELINE+':docs/warehouse_cross_aisles_5_routes/figure_index.json'],cwd=ROOT,text=True))
     now=json.loads((BASE/'figure_index.json').read_text())
-    if sorted(before)!=sorted(now):issues.append('Original figure inventory changed')
+    original_figures=set(before);current_figures=set(now)
+    repeat_figure='docs/warehouse_cross_aisles_5_routes/figures/repeatability_block_differences.png'
+    original_figures_preserved=(
+        original_figures.issubset(current_figures) and
+        current_figures-original_figures=={repeat_figure}
+    )
+    if not original_figures_preserved:
+        issues.append('Original figure inventory was not preserved with exactly one repeatability figure')
     page_index=json.loads((BASE/'page_index.json').read_text());figure_index=json.loads((BASE/'figure_page_index.json').read_text())
     doc=pymupdf.open(PDF)
-    if len(doc)!=106:issues.append('Expected 106 pages')
-    if len(figure_index)!=92:issues.append('Expected 92 figures')
+    if len(doc)!=EXPECTED_PAGES:issues.append(f'Expected {EXPECTED_PAGES} pages')
+    if len(figure_index)!=93:issues.append('Expected 93 figures')
     outside=[];replacement=[];sparse=[];image_count=0;link_count=0
     for i,page in enumerate(doc):
         text=page.get_text()
@@ -56,7 +70,7 @@ def main():
         image_count+=len(page.get_images())
         page.get_pixmap(matrix=pymupdf.Matrix(1.25,1.25),alpha=False).save(out/f'page-{i+1:03}.png')
     if outside or replacement or sparse:issues.append('Page text bounds/glyph checks failed')
-    if image_count!=92:issues.append(f'Expected 92 embedded images, got {image_count}')
+    if image_count!=93:issues.append(f'Expected 93 embedded images, got {image_count}')
     norm=lambda s:re.sub(r'\s+',' ',s.replace('<br/>',' ')).strip()
     for entry in page_index:
         if norm(entry['title']) not in norm(doc[entry['page']-1].get_text()):issues.append('Heading mismatch '+str(entry['page']))
@@ -69,12 +83,14 @@ def main():
             x=(i-start)%4*375+(375-im.width)//2;y=(i-start)//4*585+27
             sheet.paste(im,(x,y));draw.text((x,y-20),f'PAGE {i+1}',fill='#143247')
         sheet.save(out/f'contact-{start//12+1:02}.jpg',quality=94)
-    result={'report':str(PDF.relative_to(ROOT)),'checked_on':'2026-10-05','pdf_sha256':sha(PDF),'pages':len(doc),'figures':len(figure_index),
-        'trial_records':manifest['record_count'],'new_trial_records':100,'successful_trials':manifest['success_count'],'successful_new_trials':98,
-        'paired_raw_groups':sum(d['raw_pairing_valid'] for d in manifest['pairing']),'audited_file_hashes_verified':len(manifest['files']),'audit_issues':issues,
-        'editorial_revision':{'baseline_commit':BASELINE,'original_pages':96,'all_original_figures_preserved':sorted(before)==sorted(now),'experiment_data_and_figure_files_unchanged':not changed},
+    repeat=json.loads((REPEAT/'analysis/aggregate.json').read_text())
+    repeat_success=sum(repeat['success'][method] for method in ('constrained','pstmo'))
+    result={'report':str(PDF.relative_to(ROOT)),'checked_on':'2026-10-12','pdf_sha256':sha(PDF),'pages':len(doc),'figures':len(figure_index),
+        'trial_records':manifest['record_count']+repeat['trial_count'],'new_trial_records':100+repeat['trial_count'],'successful_trials':manifest['success_count']+repeat_success,'successful_new_trials':98+repeat_success,
+        'paired_raw_groups':sum(d['raw_pairing_valid'] for d in manifest['pairing']),'repeatability_raw_pairs':repeat['valid_raw_pair_count'],'audited_file_hashes_verified':len(manifest['files']),'audit_issues':issues,
+        'editorial_revision':{'baseline_commit':BASELINE,'original_pages':96,'all_original_figures_preserved':original_figures_preserved,'experiment_data_and_figure_files_unchanged':not changed},
         'render_check':{'all_pages_rendered':True,'out_of_page_text_spans':len(outside),'replacement_character_pages':len(replacement),'sparse_text_pages':len(sparse),'embedded_images':image_count,'internal_links_checked':link_count,'pdf_bookmarks':len(doc.get_toc()),'visual_review':'Pending inspection of rendered pages'},
-        'limits':'One trial per route/planner/method; editorial revision adds no simulation runs.'}
+        'limits':'The five-method matrix has one trial per cell. The 250-trial focused cohort repeats fixed inputs without stochastic seeds; no real-robot, dynamic-obstacle, payload, or energy experiment is claimed.'}
     quality.write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n');print(json.dumps(result,ensure_ascii=False))
     if issues:raise SystemExit(1)
 

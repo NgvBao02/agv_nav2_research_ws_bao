@@ -51,6 +51,39 @@ dữ liệu tháng 8 trong `pstmo_execution_full_20260803/` và
 `pstmo_execution_theta_star_20260802/`; R02–R05 được chạy tháng 10/2026 và lưu
 cùng hồ sơ tài liệu.
 
+### Kiểm chứng lặp PSTMO–Constrained cho bài journal
+
+[`pstmo_journal_repeatability_20261011/`](pstmo_journal_repeatability_20261011/README.md)
+chạy 5 tuyến × 5 planner × 2 phương án × 5 lần lặp = 250 lượt với cấu hình
+source hiện hành. Mỗi job dùng stack Gazebo/Nav2 sạch; bốn worker dùng dải
+`ROS_DOMAIN_ID` và `GZ_PARTITION` không giao nhau.
+
+Đọc `study_manifest.json` trước, rồi `analysis/aggregate.json`. Phân tích ghép
+PSTMO với Constrained theo scenario, planner, repetition và Raw-path hash; năm
+lần lặp được lấy trung bình trong từng khối route–planner, nên đơn vị thống kê
+là 25 khối. CI dùng bootstrap theo khối, Wilcoxon hai phía dùng cho chênh lệch
+khối và Holm hiệu chỉnh ba outcome chính. Giao thức không phát lộ seed ngẫu
+nhiên, do đó đây là fixed-input execution repeatability, không phải multi-seed
+robustness.
+
+Audit cuối có 250/250 trial và 125/125 cặp cùng Raw hash. Constrained đạt
+122/125, PSTMO đạt 121/125; bảy thất bại thực thi được giữ nguyên. Không có
+can thiệp Collision Monitor hoặc mẫu footprint va chạm trên đường đã lập.
+Kết quả chính và các trade-off về sai số đích, khoảng hở, thời gian smoothing
+được ghi đầy đủ trong README/aggregate của cohort.
+
+`interrupted_attempts/` giữ nguyên các artifact mà node trial đã ghi nhưng
+runner chưa kịp bổ sung repetition/configuration khi phiên điều phối bị ngắt.
+Các attempt này có SHA-256 trong manifest, không được tính vào 250 trial chính
+thức và không được analyzer đọc như kết quả hoàn chỉnh.
+Một lỗi lifecycle hạ tầng đã chốt được lưu riêng trong
+`infrastructure_attempts/` rồi retry bằng workflow chỉ chạy lại lỗi hạ tầng;
+mọi thất bại thuật toán trong cùng job vẫn được tái sử dụng.
+
+[`journal_validation_smoke_20261011/`](journal_validation_smoke_20261011/) là
+pilot ba lượt Raw–Constrained–PSTMO dùng để kiểm tra pipeline trước cohort; không
+gộp pilot vào thống kê chính.
+
 ## Snapshot PSTMO ngày 02/08/2026
 
 Các thư mục dưới đây là những cấu hình khác nhau trong quá trình chọn pipeline;

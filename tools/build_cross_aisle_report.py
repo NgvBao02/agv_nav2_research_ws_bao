@@ -42,6 +42,8 @@ BASE = ROOT / 'docs/warehouse_cross_aisles_5_routes'
 FIG = BASE / 'figures'
 OUT = ROOT / 'docs/PSTMO_KHO_GIAO_CAT_5_QUY_DAO.pdf'
 OLD = ROOT / 'docs/pstmo_bao_cao_toan_dien_assets'
+REPEAT = ROOT / 'results/pstmo_journal_repeatability_20261011'
+REPEAT_ANALYSIS = REPEAT / 'analysis/aggregate.json'
 PLANNERS = ['NavFnAStar', 'NavFnDijkstra', 'ThetaStar', 'Smac2D', 'SmacHybrid']
 METHODS = ['raw', 'simple', 'savitzky_golay', 'constrained', 'pstmo']
 LABEL = dict(zip(METHODS, ['Raw', 'Simple', 'Savitzky-Golay', 'Constrained', 'PSTMO']))
@@ -81,6 +83,22 @@ def fmt(x, n=3):
 
 def digest(p):
     return hashlib.sha256(Path(p).read_bytes()).hexdigest()
+
+
+def load_repeatability():
+    if not REPEAT_ANALYSIS.exists():
+        raise RuntimeError(
+            'Repeatability analysis is missing; run '
+            'tools/analyze_journal_repeatability.py first'
+        )
+    result = json.loads(REPEAT_ANALYSIS.read_text(encoding='utf-8'))
+    if result.get('audit_issues'):
+        raise RuntimeError(
+            'Repeatability audit failed: ' + '; '.join(result['audit_issues'])
+        )
+    if result.get('trial_count') != 250 or result.get('valid_raw_pair_count') != 125:
+        raise RuntimeError('Repeatability cohort is incomplete or not fully paired')
+    return result
 
 
 def load_records(partial=False):
@@ -476,6 +494,37 @@ def aggregate_fig(records, metric, name, ylabel):
     return savefig(fig,name)
 
 
+def repeatability_figure(name):
+    rows = list(csv.DictReader(
+        (REPEAT / 'analysis/block_differences.csv').open(encoding='utf-8')
+    ))
+    selected = [
+        ('execution_time_s', 'Thời gian thực thi', 's'),
+        ('tracking_rmse_m', 'RMSE bám đường', 'm'),
+        ('executed_curvature_energy_1pm', 'Năng lượng độ cong thực thi', '1/m'),
+    ]
+    fig, axes = plt.subplots(1, 3, figsize=(12, 3.8), layout='constrained')
+    for axis, (metric, title, unit) in zip(axes, selected):
+        values = np.asarray([
+            float(row['pstmo_minus_constrained'])
+            for row in rows if row['metric'] == metric
+        ])
+        axis.axhline(0.0, color='#94a3b8', lw=1)
+        axis.boxplot(
+            values, vert=True, widths=.45, showfliers=False,
+            medianprops={'color': TEAL, 'linewidth': 2},
+            boxprops={'color': NAVY}, whiskerprops={'color': NAVY},
+            capprops={'color': NAVY},
+        )
+        jitter = np.linspace(-.12, .12, len(values))
+        axis.scatter(1.0 + jitter, values, s=18, color='#059669', alpha=.72, zorder=3)
+        axis.set_xticks([1], ['25 khối'])
+        axis.set_ylabel(f'PSTMO − Constrained ({unit})')
+        axis.set_title(title, fontsize=10)
+        axis.grid(True, axis='y')
+    return savefig(fig, name)
+
+
 FONT='/usr/share/fonts/truetype/dejavu/'
 for name,file in [('DV','DejaVuSans.ttf'),('DVB','DejaVuSans-Bold.ttf'),('DVI','DejaVuSans-Oblique.ttf')]:
     pdfmetrics.registerFont(TTFont(name,FONT+file))
@@ -490,7 +539,7 @@ class Report:
         self.c.setTitle('PSTMO | Kho có lối giao cắt | Nghiên cứu 5 quỹ đạo')
         self.c.setAuthor('Báo cáo thực nghiệm từ workspace AGV Nav2')
         self.c.setCreator('AGV Nav2 research workspace - measured-data report builder')
-        self.c.setSubject('Five routes, 125 Gazebo/Nav2 trials, paired planner and smoother comparisons')
+        self.c.setSubject('Five routes, 125-method matrix plus 250 repeated Gazebo/Nav2 trials')
         self.page=0;self.y=H-60;self.sections=[];self.figure_count=0
     def ref(self,key):
         return str(self.refs.get(key,'...'))
@@ -669,7 +718,7 @@ def case_pages(report, records, route, planner):
 
 def protocol_pages(report,records):
     report.start('2.1 | Thiết kế thí nghiệm',bookmark='protocol')
-    report.para('Phạm vi: một bản đồ kho tĩnh có các lối giao cắt; năm tuyến độc lập; năm bộ lập kế hoạch; năm phương án làm mượt. Tổng cộng 125 lượt thực thi được trình bày: 25 lượt đã có của R01 và 100 lượt chạy mới của R02-R05.',size=10)
+    report.para('Phạm vi ma trận chính: một bản đồ kho tĩnh có các lối giao cắt; năm tuyến; năm bộ lập kế hoạch; năm phương án làm mượt; tổng cộng 125 lượt. Cohort lặp được trình bày riêng ở mục 5.2, gồm 250 lượt PSTMO–Constrained và không được trộn vào trung bình của ma trận chính.',size=10)
     report.table(['Thành phần','Thiết lập'],[
         ['Môi trường','warehouse_cross_aisles; kích thước sàn 12 × 8 m; lưới 0,05 m; gốc (-6; -4) m'],
         ['Kệ hàng','8 khối 0,6 × 2,2 × 1,2 m; tâm x = -3, -1, 1, 3 m; y = ±2,4 m'],
@@ -707,7 +756,7 @@ def protocol_pages(report,records):
     report.para('Cách đọc hình: đồ thị đường giữ nguyên hệ tọa độ map; xanh đứt là kế hoạch, đỏ là quỹ đạo thực mô phỏng. Các hình phóng to giữ nguyên dữ liệu, chỉ thay giới hạn trục. Độ cong dùng thang symlog khi cần nhìn đồng thời đỉnh nhọn và vùng gần 0; số liệu bảng luôn ở đơn vị gốc.',size=9)
     report.para('Độ cong rời rạc phụ thuộc cách lấy mẫu. Vì vậy báo cáo bổ sung bảng đối chiếu theo metric tịnh tiến resample 0,05 m ở phần tổng hợp. Không diễn giải riêng một đỉnh κ rất lớn của đường Raw thành độ cong vật lý mà robot thực sự đã chạy.',size=9)
     report.para('R01 có hai nguồn lịch sử như báo cáo gốc: snapshot RViz cung cấp hình học/bảng góc; các lượt Gazebo cung cấp đường thực thi và động học. Phần tổng hợp dùng metric đường thực thi cho cả 125 lượt. Vì thế một số giá trị R01, nhất là Constrained và T smooth, có thể khác nhẹ bảng snapshot gốc; không trộn hai lần đo để tạo một lượt mới.',size=8.5)
-    report.para('Phạm vi kết luận: dữ liệu mô phỏng tĩnh trên năm tuyến chọn trước hỗ trợ so sánh trong map này. Chưa có thử nghiệm lặp nhiều seed, vật cản động, robot thật, tải thay đổi hoặc phép đo Wh. Khoảng xoay từ yaw robot ban đầu tới hướng cạnh đầu vẫn là giới hạn được nêu trong PSTMO.pdf.',size=9)
+    report.para('Phạm vi kết luận: dữ liệu mô phỏng tĩnh trên năm tuyến chọn trước hỗ trợ so sánh trong map này. Cohort mới đo độ lặp trong điều kiện cố định, chưa phải nhiều seed. Chưa có vật cản động, robot thật, tải thay đổi hoặc phép đo Wh. Khoảng xoay từ yaw robot ban đầu tới hướng cạnh đầu vẫn là giới hạn được nêu trong PSTMO.pdf.',size=9)
     report.figure(asset('sampling_sensitivity_example',sampling_figure,records),height=155,caption='Ví dụ ảnh hưởng của bước lấy mẫu tới độ cong rời rạc; đường liên tục và cách biểu diễn mẫu cần được phân biệt.')
 
 
@@ -736,7 +785,15 @@ def audit(records):
         'src/adaptive_pivot_g2/src/path_optimization.cpp',
         'src/adaptive_pivot_g2_benchmark/adaptive_pivot_g2_benchmark/execution_trial.py',
         'docs/warehouse_cross_aisles_5_routes/scenarios.yaml',
-        'tools/run_cross_aisle_study.py','tools/build_cross_aisle_report.py',
+        'docs/pstmo_bao_cao_toan_dien_assets/benchmark_hinh_hoc_tong_hop.json',
+        'results/pstmo_execution_full_20260803/execution_aggregate_5planners_7env.json',
+        'results/pstmo_hierarchical_alpha_two_trim_full_20260802/aggregate_summary.json',
+        'results/pstmo_greedy_los_single_pipeline_full_20260802/aggregate_summary.json',
+        'tools/run_cross_aisle_study.py',
+        'tools/run_journal_repeatability_study.py',
+        'tools/analyze_journal_repeatability.py',
+        'tools/build_cross_aisle_report.py',
+        'tools/verify_cross_aisle_report.py',
     ]
     for path in source_paths:manifest.append({'path':path,'sha256':digest(ROOT/path),'cohort':'source'})
     for planner in PLANNERS:
@@ -744,6 +801,29 @@ def audit(records):
         manifest.append({'path':str(p.relative_to(ROOT)),'sha256':digest(p),'cohort':'historic_geometry_snapshot'})
     p=OLD/'benchmark_hinh_hoc_175_luot.csv'
     manifest.append({'path':str(p.relative_to(ROOT)),'sha256':digest(p),'cohort':'historic_geometry_snapshot'})
+    repeat_files = [
+        REPEAT / 'study_manifest.json',
+        REPEAT / 'analysis/aggregate.json',
+        REPEAT / 'analysis/trial_metrics.csv',
+        REPEAT / 'analysis/block_differences.csv',
+        REPEAT / 'README.md',
+        REPEAT / 'analysis/README.md',
+    ]
+    repeat_files.extend(
+        path for path in REPEAT.rglob('*.json')
+        if path.name != 'study_manifest.json'
+        and path.parent.name != 'analysis'
+    )
+    repeat_files.extend(REPEAT.rglob('*.log'))
+    for path in sorted(set(repeat_files)):
+        if not path.exists():
+            issues.append(f'Missing repeatability evidence: {path.relative_to(ROOT)}')
+            continue
+        manifest.append({
+            'path': str(path.relative_to(ROOT)),
+            'sha256': digest(path),
+            'cohort': 'journal_repeatability_20261011',
+        })
     for route in ROUTES[1:]:
         for planner in PLANNERS:
             p=BASE/'execution'/route/f'{route}_{planner.lower()}_pstmo.diagnostics.json'
@@ -861,7 +941,7 @@ def conclusion_pages(report,records,manifest):
     reduced=sum(records[r,p,'pstmo']['planned_footprint_clearance_min_m']<records[r,p,'raw']['planned_footprint_clearance_min_m'] for r in ROUTES for p in PLANNERS)
     report.para(f'<b>3. Khoảng hở là một đánh đổi cần giữ trong kết luận.</b> PSTMO có khoảng hở kế hoạch nhỏ hơn Raw ở {reduced}/25 đầu vào. Để đánh giá chất lượng một tuyến, cần đọc đồng thời hình phóng to đầu kệ, sai số bám và khoảng hở trên quỹ đạo thực thi trong phụ lục A.',size=10,space=12)
     report.para('Ba lớp hệ thống giải thích cách đọc các kết quả này: planner quyết định đường đầu vào; PSTMO chọn hình dạng nối góc; controller quyết định vận tốc và sai số khi bám đường. Bộ dữ liệu quan sát được sự khác nhau của đầu ra tổng thể, chưa tách riêng đóng góp nhân quả của từng lớp.',size=9.5)
-    report.para('Hai lượt không đạt được giữ trong mẫu số tỷ lệ thành công. Trang tiếp theo giải thích đúng ngưỡng gây không đạt và phạm vi kết luận có thể sử dụng khi viết bài báo.',size=9.5,color=TEAL)
+    report.para('Hai lượt không đạt được giữ trong mẫu số tỷ lệ thành công. Các trang tiếp theo bổ sung cohort lặp PSTMO–Constrained, sau đó giải thích đúng ngưỡng gây không đạt và phạm vi kết luận có thể sử dụng khi viết bài báo.',size=9.5,color=TEAL)
 
 
 def source_pages(report,records,manifest):
@@ -875,9 +955,12 @@ def source_pages(report,records,manifest):
         ['geometry_preflight.csv / .json','100 tổ hợp sơ bộ; không cộng vào ma trận thực thi chính.'],
         ['all_125_trials.csv','Bảng gộp 25 lượt cũ + 100 lượt mới, kèm đường dẫn nguồn.'],
         ['audit_manifest.json','Kiểm tra ghép cặp Raw và SHA-256 của dữ liệu, mã nguồn.'],
+        ['results/pstmo_journal_repeatability_20261011/','250 lượt PSTMO–Constrained, manifest, log, diagnostics và phân tích theo khối.'],
         ['figures/*.png / *.svg','Hình độ phân giải cao và bản vector để đưa vào bài báo.'],
         ['page_index.json / figure_index.json / figure_page_index.json','Chỉ mục trang, danh sách ảnh và ánh xạ từng hình tới trang PDF.'],
         ['tools/run_cross_aisle_study.py','Chạy ma trận gốc, thêm recorder thụ động; không sửa thuật toán.'],
+        ['tools/run_journal_repeatability_study.py','Điều phối cohort lặp bằng bốn dải ROS domain độc lập.'],
+        ['tools/analyze_journal_repeatability.py','Audit ghép cặp, bootstrap theo khối, Wilcoxon và hiệu chỉnh Holm.'],
         ['tools/build_cross_aisle_report.py','Tính hình từ JSON và xuất PDF tiếng Việt.'],
     ],[1.8,2.8],size=8)
     report.para('Tái lập sau khi source /opt/ros/jazzy/setup.bash và install/setup.bash: chạy tools/run_cross_aisle_study.py với tên scenario và base-domain-id riêng. Trước khi chạy lại nên chọn thư mục kết quả mới để bảo toàn đợt gốc; script ma trận không tự coi một lượt lặp là dữ liệu đã công bố.',size=8.8)
@@ -890,7 +973,7 @@ def source_pages(report,records,manifest):
     for f in manifest['files']:
         if f['cohort']=='source':rows.append([f['path'],f['sha256']])
     report.table(['Tệp','SHA-256'],rows,[1.45,1.8],size=6.4)
-    report.para('Manifest JSON lưu thêm hash đầy đủ cho cả 125 tệp kết quả. Hash xác nhận nội dung tệp dùng trong báo cáo; không thay thế kiểm chứng khoa học hoặc kiểm thử trên phần cứng.',size=9)
+    report.para('Manifest JSON lưu hash đầy đủ cho ma trận chính, 250 lượt lặp, diagnostics và các bảng phân tích. Hash xác nhận nội dung tệp dùng trong báo cáo; không thay thế kiểm chứng khoa học hoặc kiểm thử trên phần cứng.',size=9)
 
 
 def paired_comparison(records,routes,method='raw'):
@@ -900,10 +983,10 @@ def paired_comparison(records,routes,method='raw'):
     return len(ok),sum(b['execution_time_s']<a['execution_time_s']-.001 for a,b in ok),statistics.fmean(gains) if gains else None
 
 
-def reading_pages(report,records):
+def reading_pages(report,records,repeatability):
     report.start('Tóm tắt nghiên cứu',bookmark='abstract')
     report.para('Câu hỏi của báo cáo là: trên một bản đồ kho có lối giao cắt, PSTMO thay đổi hình dạng đường đi như thế nào, robot bám đường đó ra sao, và thay đổi ấy có giúp giảm thời gian di chuyển hay không?',size=11,space=14)
-    report.para('Nghiên cứu gồm năm tuyến: một tuyến gốc R01 và bốn tuyến bổ sung R02-R05. Mỗi tuyến được khảo sát với năm bộ lập kế hoạch và năm phương án xử lý đường. Bộ dữ liệu có 125 lượt thực thi trong Gazebo, gồm 25 lượt lịch sử và 100 lượt bổ sung.',size=10)
+    report.para('Nghiên cứu gồm năm tuyến: một tuyến gốc R01 và bốn tuyến bổ sung R02-R05. Ma trận chính khảo sát năm bộ lập kế hoạch và năm phương án xử lý đường trong 125 lượt Gazebo. Cohort kiểm chứng bổ sung 250 lượt, gồm năm lần lặp PSTMO và Constrained trên đủ 25 khối tuyến–planner.',size=10)
     n,w,g=paired_comparison(records,ROUTES[1:])
     ns,ws,gs=paired_comparison(records,ROUTES[1:],'simple')
     report.table(['Điểm cần nắm','Kết quả và cách hiểu'],[
@@ -911,10 +994,11 @@ def reading_pages(report,records):
         ['Thời gian so với Raw',f'Trong đợt bổ sung, PSTMO nhanh hơn ở {w}/{n} cặp cùng đạt. Trung bình mức giảm theo cặp là {fmt(g,2)}%. Raw là đường chưa làm mượt.'],
         ['Thời gian so với Simple',f'PSTMO nhanh hơn ở {ws}/{ns} cặp cùng đạt; mức giảm trung bình là {fmt(gs,2)}%. Kết quả phụ thuộc đường đầu vào và đối chứng.'],
         ['Hình dạng và khoảng hở',f'PSTMO giảm Eκ so với Raw ở {sum(records[r,p,"pstmo"]["planned_curvature_energy_1pm"]<records[r,p,"raw"]["planned_curvature_energy_1pm"] for r in ROUTES for p in PLANNERS)}/25 đầu vào trong bộ thực thi. Mức uốn, đỉnh độ cong và khoảng hở là ba chỉ số riêng, cần đọc cùng nhau.'],
-        ['Phạm vi bằng chứng','Một lần chạy cho mỗi tổ hợp trên map tĩnh. Các số liệu mô tả bộ thí nghiệm hiện tại; chưa đo độ lặp lại hoặc hiệu quả trên robot thật.'],
+        ['Kiểm chứng lặp',f"Cohort bổ sung có {repeatability['success']['constrained']}/125 lượt Constrained và {repeatability['success']['pstmo']}/125 lượt PSTMO đạt; thống kê dùng 25 khối tuyến–planner."],
+        ['Phạm vi bằng chứng','Năm lần lặp dùng điều kiện cố định, không phải multi-seed. Chưa có nhiễu/vật cản động, tải thay đổi hoặc robot thật.'],
     ],[1,3],size=9.1)
     report.para('Mạch đọc được tổ chức theo câu hỏi: hiểu hệ thống và chỉ số (mục 1-2), xem kết quả chung (mục 3), xem điều rút ra từ từng tuyến (mục 4), rồi đối chiếu giới hạn kết luận (mục 5). Phụ lục A giữ toàn bộ hình, bảng và bản ghi xử lý góc theo từng bộ lập kế hoạch.',size=10,space=14)
-    report.para('Phiên bản biên tập ngày 05/10/2026 giữ bộ dữ liệu và toàn bộ 92 hình của bản trước. Các trang giải thích và bảng tổng hợp theo tuyến được bổ sung để người đọc có thể theo dõi lập luận trước khi tra số liệu chi tiết.',size=9,color='#475569')
+    report.para('Bản cập nhật ngày 12/10/2026 giữ nguyên 125 lượt và toàn bộ 92 hình trước, sau đó bổ sung cohort lặp, một hình thống kê và audit mới. Không sửa dữ liệu lịch sử để thay thế kết quả không thuận lợi.',size=9,color='#475569')
 
 
 def contents_page(report):
@@ -925,6 +1009,8 @@ def contents_page(report):
         ('3. Kết quả tổng hợp: thời gian, độ mượt, khoảng hở','summary'),
         *[(f'4.{i+1}. {RID[r]} - {TITLE[r]}',r) for i,r in enumerate(ROUTES)],
         ('5. Thảo luận và giới hạn kết luận','discussion'),
+        ('5.2. Kiểm chứng lặp PSTMO–Constrained','repeatability'),
+        ('5.4. Bằng chứng đa môi trường / ablation','evidence_context'),
         ('A. Hồ sơ chi tiết của 25 nhóm tuyến - planner','appendix'),
         ('B. Đối chiếu độ cong theo cách lấy mẫu','sampling'),
         ('C. Nguồn dữ liệu, tái lập và mã kiểm tra','sources'),
@@ -954,7 +1040,7 @@ def orientation_pages(report):
         ['Snapshot RViz','Bản lưu dữ liệu tại thời điểm quan sát bằng RViz. R01 có bộ snapshot hình học riêng và bộ thực thi Gazebo riêng.'],
         ['SHA-256 / mã kiểm tra','Mã dùng để kiểm tra nội dung tệp và xác nhận năm phương án nhận đúng cùng một đường Raw.'],
     ],[1.1,3],size=8.8)
-    report.para('<b>Một lượt chạy:</b> một tuyến + một planner + một phương án. Vì vậy 5 × 5 × 5 = 125 lượt; năm planner không phải năm lần chạy lặp cùng điều kiện.',size=10)
+    report.para('<b>Một lượt chạy:</b> một tuyến + một planner + một phương án. Ma trận chính có 5 × 5 × 5 = 125 lượt. Cohort mới lặp riêng PSTMO và Constrained năm lần trong từng khối; năm planner vẫn không được coi là năm lần lặp.',size=10)
 
     report.start('1.2 | Từ bản đồ đến robot chuyển động',bookmark='pipeline',level=1)
     report.para('Kết quả được giải thích theo chuỗi xử lý dưới đây. Mỗi bước trả lời một câu hỏi riêng; điều này giúp phân biệt đường đẹp về hình học với chuyển động tốt khi thực thi.',size=10)
@@ -1007,13 +1093,184 @@ def route_summary(report,records,route):
         +(f'Đỉnh độ cong κmax tăng ở {", ".join(higher)}; Eκ thấp hơn vẫn có thể đi kèm một đỉnh cong lớn hơn.' if higher else 'Đỉnh độ cong κmax của PSTMO không tăng so với Raw ở cả năm đầu vào.'),size=9.5)
     failed=[(p,m,d) for p in PLANNERS for m,d in group[p].items() if not d.get('success')]
     for p,m,d in failed:
-        report.para(f'<b>Lượt không đạt:</b> {p} / {LABEL[m]}, sai số đích {fmt(d["final_position_error_m"],6)} m so với ngưỡng {fmt(d["ground_truth_position_tolerance_m"],6)} m. Xem phân tích chung ở mục 5.2.',size=9.1,color='#b91c1c')
+        report.para(f'<b>Lượt không đạt:</b> {p} / {LABEL[m]}, sai số đích {fmt(d["final_position_error_m"],6)} m so với ngưỡng {fmt(d["ground_truth_position_tolerance_m"],6)} m. Xem phân tích chung ở mục 5.5.',size=9.1,color='#b91c1c')
     if i==0:report.para('Nguồn R01 trên trang này là bộ thực thi lịch sử. Bảng hình học trong phụ lục A1 giữ snapshot của tài liệu gốc; hai lần thu được ghi rõ để người đọc đối chiếu đúng.',size=8.8)
     report.para('Tra minh chứng: phụ lục A'+str(i+1)+' bắt đầu trang '+report.ref('detail_'+route)+'. Thứ tự planner và số trang từng nhóm có trong bảng tra trang '+report.ref('appendix')+'.',size=9,color=TEAL)
 
 
+def repeatability_pages(report, repeatability):
+    report.start(
+        '5.2 | Kiểm chứng lặp: PSTMO so với Constrained',
+        bookmark='repeatability', level=1)
+    success = repeatability['success']
+    report.para(
+        'Cohort bổ sung gồm 5 tuyến × 5 planner × 2 phương án × 5 lần lặp = '
+        '<b>250 lượt</b>. Hai phương án là PSTMO và Constrained, đối chứng '
+        'Smoother Server gần nhất về mục tiêu tối ưu. Mỗi lượt khởi động một '
+        'stack Gazebo/Nav2 sạch; 125/125 cặp có cùng SHA-256 của đường Raw.',
+        size=10)
+    report.table(['Phương án','Lượt đạt / 125','Chỉ PSTMO đạt','Chỉ Constrained đạt','McNemar p'],[[
+        'Constrained / PSTMO',
+        f"{success['constrained']} / {success['pstmo']}",
+        str(success['pstmo_only_success_pairs']),
+        str(success['constrained_only_success_pairs']),
+        f"{success['mcnemar_exact_two_sided_p']:.3g}",
+    ]],[1.4,1.2,1,1.35,.8],size=8)
+    if repeatability.get('failures'):
+        failure_rows = []
+        for failure in repeatability['failures']:
+            failure_rows.append([
+                RID.get(failure['scenario'], failure['scenario']),
+                failure['planner'],
+                LABEL.get(failure['method'], failure['method']),
+                f"r{int(failure['repetition']):02d}",
+                'Có' if failure['controller_action_succeeded'] else 'Không',
+                'Có' if failure['physically_settled'] else 'Không',
+                str(failure.get('controller_error_code', '-')),
+                fmt(failure['final_position_error_m'],6),
+            ])
+        report.table(
+            ['Tuyến','Planner','Phương án','Lặp','Action','Dừng','Code','e đích (m)'],
+            failure_rows,[.45,1.15,.9,.4,.5,.5,.45,.8],size=6.4)
+        report.para(
+            'Các lượt trên không đạt tiêu chí thực thi, được giữ trong mẫu số '
+            'và không retry vì không phải lỗi hạ tầng. Dung sai vị trí là '
+            '0,100000 m.',size=8.1,color='#b91c1c')
+    p = asset(
+        'repeatability_block_differences',
+        repeatability_figure,
+        'repeatability_block_differences')
+    report.figure(
+        p, height=205,
+        caption='Chênh lệch PSTMO − Constrained sau khi lấy trung bình năm lần '
+        'lặp trong từng khối tuyến–planner. Mỗi chấm là một trong 25 khối; '
+        'giá trị âm thuận lợi cho ba chỉ số này.')
+    rows=[]
+    for metric in [
+        'execution_time_s', 'tracking_rmse_m',
+        'executed_curvature_energy_1pm']:
+        result=repeatability['metrics'][metric]
+        lower,upper=result['mean_block_difference_bootstrap_95_ci']
+        rows.append([
+            result['label'],result['unit'],fmt(result['constrained_mean'],5),
+            fmt(result['pstmo_mean'],5),fmt(result['mean_block_difference_pstmo_minus_constrained'],5),
+            f'[{fmt(lower,5)}; {fmt(upper,5)}]',
+            f"{result['holm_adjusted_p_primary_family']:.3g}",
+        ])
+    report.table(
+        ['Chỉ số','Đơn vị','Constrained','PSTMO','Δ khối TB','CI 95%','p Holm'],
+        rows,[1.45,.55,.85,.75,.85,1.35,.65],size=6.9)
+    report.para(
+        'Đơn vị thống kê là 25 khối tuyến–planner, không phải 125 lượt độc lập. '
+        'CI được bootstrap 20.000 lần theo khối; kiểm định Wilcoxon hai phía '
+        'trên chênh lệch trung bình của từng khối; Holm hiệu chỉnh ba đầu ra '
+        'chính. Δ âm nghĩa là PSTMO thấp hơn Constrained.',size=8.8)
+
+    report.start(
+        '5.3 | Audit cohort lặp và phạm vi suy luận',
+        bookmark='repeatability_audit', level=1)
+    rows=[]
+    for metric in [
+        'planned_curvature_energy_1pm','actual_p95_abs_jerk_mps3',
+        'final_position_error_m','traveled_distance_m','smoothing_time_s',
+        'planned_footprint_clearance_min_m']:
+        result=repeatability['metrics'][metric]
+        lower,upper=result['mean_block_difference_bootstrap_95_ci']
+        rows.append([
+            result['label'],result['unit'],fmt(result['constrained_mean'],5),
+            fmt(result['pstmo_mean'],5),fmt(result['mean_block_difference_pstmo_minus_constrained'],5),
+            f'[{fmt(lower,5)}; {fmt(upper,5)}]',
+        ])
+    report.table(
+        ['Chỉ số phụ','Đơn vị','Constrained','PSTMO','Δ khối TB','CI 95%'],
+        rows,[1.65,.55,.85,.75,.85,1.35],size=7.1)
+    diagnostics=repeatability['diagnostics']
+    report.table(['Kiểm tra audit','Kết quả'],[
+        ['Bản ghi PSTMO diagnostics',f"{diagnostics['event_count']}/125"],
+        ['condition_only / hierarchical two-trim',
+         f"{diagnostics['condition_only_count']}/125 / {diagnostics['hierarchical_two_trim_count']}/125"],
+        ['Một pipeline / invariant cuối',
+         f"{diagnostics['single_pipeline_count']}/125 / {diagnostics['final_invariant_count']}/125"],
+        ['Tổng trạng thái DP / cạnh tương thích',
+         f"{diagnostics['total_dp_states']} / {diagnostics['total_compatible_edges']}"],
+        ['Can thiệp Collision Monitor / mẫu footprint va chạm',
+         f"{repeatability['collision_monitor_intervention_total']} / {repeatability['planned_footprint_collision_sample_total']}"],
+        ['Retry hạ tầng',str(repeatability['infrastructure_retry_trial_count'])],
+    ],[2.2,1.3],size=8)
+    report.para(
+        '<b>Diễn giải đúng:</b> năm lần lặp đo độ lặp của thực thi mô phỏng '
+        'trong điều kiện cố định. Pipeline chưa phát lộ seed ngẫu nhiên, nên '
+        'không gọi đây là thử nghiệm multi-seed hoặc robustness trước nhiễu. '
+        'Tải máy do bốn phiên song song có thể ảnh hưởng T smooth; thời gian '
+        'di chuyển dùng đồng hồ mô phỏng.',size=9.3)
+    report.para(
+        'Cohort này củng cố so sánh PSTMO–Constrained trên 25 đầu vào. Các so '
+        'sánh với Raw, Simple và Savitzky–Golay vẫn dựa trên ma trận chính một '
+        'lượt/ô. Dữ liệu đa môi trường lịch sử hỗ trợ khả năng chuyển cấu hình '
+        'giữa bản đồ ở mức mô tả; thử nghiệm nhiễu, vật cản động, tải và robot '
+        'thật vẫn chưa có.',size=9.3)
+
+
+def evidence_context_page(report):
+    geometry = json.loads((
+        ROOT / 'docs/pstmo_bao_cao_toan_dien_assets/'
+        'benchmark_hinh_hoc_tong_hop.json').read_text(encoding='utf-8'))
+    execution = json.loads((
+        ROOT / 'results/pstmo_execution_full_20260803/'
+        'execution_aggregate_5planners_7env.json').read_text(encoding='utf-8'))
+    hierarchical = json.loads((
+        ROOT / 'results/pstmo_hierarchical_alpha_two_trim_full_20260802/'
+        'aggregate_summary.json').read_text(encoding='utf-8'))
+    los = json.loads((
+        ROOT / 'results/pstmo_greedy_los_single_pipeline_full_20260802/'
+        'aggregate_summary.json').read_text(encoding='utf-8'))
+    report.start(
+        '5.4 | Bằng chứng đa môi trường và ablation lịch sử',
+        bookmark='evidence_context', level=1)
+    report.para(
+        'Ngoài cohort năm tuyến, workspace có các lớp bằng chứng rộng hơn. '
+        'Chúng giúp đánh giá tính nhất quán của cơ chế, nhưng không được trộn '
+        'vào kiểm định lặp ở mục 5.2 vì khác cohort, thời điểm hoặc cấu hình.',
+        size=10)
+    report.table(['Nguồn','Phạm vi','Kết quả có thể dùng','Giới hạn'],[
+        ['Hình học cấu hình hiện hành',
+         f"7 môi trường × 5 planner; {geometry['case_count']} nhóm",
+         f"{geometry['complete_five_method_cases']}/35 nhóm đủ 5 phương án; diagnostics PSTMO có DP/G².",
+         'Một đường mỗi môi trường–planner; không phải thực thi lặp.'],
+        ['Thực thi đa môi trường 08/2026',
+         f"{execution['audit']['trial_count']} lượt, 7 môi trường",
+         f"{execution['audit']['success_count']}/175 đạt; {execution['audit']['exact_raw_hash_complete_group_count']}/35 nhóm đủ Raw hash; {execution['audit']['collision_monitor_intervention_count']} can thiệp Collision Monitor.",
+         'Một lượt/ô; snapshot nguồn tại thời điểm chạy.'],
+        ['Hierarchical two-trim snapshot',
+         f"{hierarchical['design']['paired_group_count']} nhóm ghép cặp + stress test",
+         f"{hierarchical['validation']['pstmo_success_count']}/35 PSTMO đạt; {hierarchical['validation']['footprint_collision_sample_count']} mẫu va chạm footprint.",
+         'Cơ chế về sau thành mặc định nhưng dataset không đại diện toàn bộ source hiện tại.'],
+        ['Condition-only vs greedy LOS',
+         f"{los['condition_only_ablation']['paired_group_count']} Raw-matched pairs",
+         'Cô lập ảnh hưởng LOS trong pipeline legacy joint (d,q).',
+         'Ablation lịch sử khác search mode; không suy ra hiệu ứng LOS cho cấu hình hiện hành.'],
+    ],[1.25,1.25,1.65,1.65],size=6.8)
+    report.para(
+        '<b>Kết luận sử dụng:</b> dữ liệu đa môi trường cho thấy implementation '
+        'đã được thử ngoài map năm tuyến, còn snapshot phát triển giúp giải thích '
+        'quyết định thiết kế. Tuy nhiên, bằng chứng định lượng chính của bài '
+        'journal nên là ma trận hiện hành và cohort lặp có audit; các snapshot '
+        'khác cấu hình chỉ đưa vào supplementary/history.',size=9.5)
+    report.para(
+        '<b>Ablation còn thiếu:</b> để quy đóng góp nhân quả, cần chạy trên cùng '
+        'commit và cùng Raw path ba cặp DP-on/off, swept-footprint-on/off và '
+        'two-trim/preferred-only. Mỗi ablation phải giữ cả trial thất bại và '
+        'báo cáo feasibility, số pivot, Eκ, thời gian cùng vi phạm an toàn.',
+        size=9.5)
+    report.para(
+        'Robot thật không kết nối trong phiên thu dữ liệu này. Vì vậy báo cáo '
+        'không tạo số liệu phần cứng giả; calibration, latency onboard, current/Wh '
+        'và giám sát an toàn được giữ như work package trước tuyên bố real-world.',
+        size=9.5,color=TEAL)
+
+
 def limits_page(report,records):
-    report.start('5.2 | Hai lượt không đạt và giới hạn kết luận',bookmark='limits',level=1)
+    report.start('5.5 | Hai lượt không đạt và giới hạn kết luận',bookmark='limits',level=1)
     report.para('Tiêu chí hoàn tất yêu cầu đồng thời: action điều khiển báo thành công, robot dừng ổn định, sai số vị trí đích không vượt 0,10 m và sai số hướng không vượt 0,15 rad. Kiểm tra đích dùng trạng thái tham chiếu của Gazebo.',size=10)
     rows=[]
     for (r,p,m),d in records.items():
@@ -1024,13 +1281,13 @@ def limits_page(report,records):
     report.para('Đây là mô tả điều kiện gây không đạt theo bộ đánh giá. Các bản ghi hiện tại chưa đủ để quy nguyên nhân sâu hơn cho riêng bộ làm mượt, bộ điều khiển hay sai số định vị.',size=9.5,space=12)
     report.table(['Kết luận có thể rút ra','Giới hạn đi kèm'],[
         ['So sánh hình dạng đường trên cùng đầu vào','25/25 nhóm có cùng mã Raw; độ cong vẫn phụ thuộc bước lấy mẫu, xem phụ lục B.'],
-        ['So sánh thời gian trên các cặp cùng đạt','Mỗi tổ hợp chỉ có một lượt. Chưa có phương sai qua lặp lại, khoảng tin cậy hay kiểm định ý nghĩa thống kê.'],
+        ['So sánh lặp PSTMO–Constrained','Có 5 lần lặp/ô và phân tích theo 25 khối. Ba đối chứng còn lại chỉ có một lượt/ô trong ma trận chính.'],
         ['Mô tả khoảng hở và sai số trong mô phỏng','PGM là bản đồ tĩnh; khoảng hở hậu kiểm không thay cho đo tiếp xúc vật lý hoặc thử nghiệm robot thật.'],
-        ['So sánh trong một bản đồ với nhiều tuyến','Chưa khảo sát vật cản động, nhiễu định vị có kiểm soát, thay đổi tải hoặc nhiều bản đồ.'],
+        ['So sánh trong một bản đồ với nhiều tuyến','Cohort lặp chỉ dùng một map; chưa khảo sát vật cản động, nhiễu định vị có kiểm soát hoặc thay đổi tải.'],
         ['Ghi nhận T smooth và Eκ','T smooth chịu ảnh hưởng tải máy; Eκ không phải điện năng. Chưa có đo Wh.'],
         ['Mô tả nối G² tại các góc được xử lý','Không suy ra jerk theo thời gian liên tục; pha xoay ban đầu tới hướng cạnh đầu vẫn là giới hạn nêu trong PSTMO.pdf.'],
     ],[1.5,2.6],size=9)
-    report.para('Để mở rộng mức độ kết luận cho bài báo, các bước phù hợp là lặp lại cùng điều kiện, báo cáo phân bố sai số/thời gian, rồi khảo sát nhiễu và tải có kiểm soát. Những phép thử này chưa thuộc bộ dữ liệu hiện tại.',size=9.5)
+    report.para('Bước còn thiếu có giá trị cao nhất cho bài journal là ablation trực tiếp trên cùng source (DP, swept-footprint và two-trim), rồi khảo sát nhiễu/tải có kiểm soát và robot thật. Không dùng các snapshot phát triển khác cấu hình để thay thế một ablation nhân quả của phiên bản hiện hành.',size=9.5)
 
 
 def appendix_guide(report):
@@ -1051,16 +1308,16 @@ def appendix_guide(report):
     report.para('Đồ thị động học hiển thị tối đa khoảng 900 mẫu mỗi chuỗi để dễ quan sát. Các chỉ số bảng được lấy từ bộ đánh giá đầy đủ. Khoảng hở trên đồ thị là hậu kiểm PGM tại các mẫu hiển thị.',size=9.5)
 
 
-def compose_report(report,records,manifest):
+def compose_report(report,records,manifest,repeatability):
     report.start('KHO CÓ LỐI GIAO CẮT<br/>Nghiên cứu năm quỹ đạo',bookmark='cover')
     report.para('PSTMO • ROS 2 Navigation2 • Robot vi sai • Gazebo',size=12,color=TEAL,space=14)
-    report.para('BÁO CÁO THỰC NGHIỆM - BẢN BIÊN TẬP LẠI',size=10,bold=True)
+    report.para('BÁO CÁO THỰC NGHIỆM - BẢN BỔ SUNG KIỂM CHỨNG LẶP',size=10,bold=True)
     p=asset('map_3d_routes',map3d,records)
     report.figure(p,height=315,caption='Dựng hình theo kích thước world SDF; năm đường PSTMO với đầu vào ThetaStar được đặt trên đúng tọa độ map. Đây là hình khoa học dựng từ dữ liệu.')
-    report.table(['5 tuyến','5 planner','5 phương án','125 lượt'],[['1 tuyến gốc + 4 tuyến mới','5 bộ lập kế hoạch','Raw + 4 bộ làm mượt','25 lịch sử + 100 bổ sung']],size=9)
+    report.table(['5 tuyến','5 planner','Ma trận chính','Cohort lặp'],[['1 tuyến gốc + 4 tuyến mới','5 bộ lập kế hoạch','5 phương án × 125 lượt','PSTMO–Constrained × 250 lượt']],size=9)
     report.para('Từ câu hỏi nghiên cứu đến minh chứng: cách tạo đường, kết quả thực thi, các đánh đổi về độ cong và khoảng hở, cùng hồ sơ chi tiết cho từng tuyến.',size=11)
-    report.para('Dữ liệu bổ sung: 03/10/2026 · Dữ liệu gốc: 02-03/08/2026<br/>Biên tập lại: 05/10/2026 · Workspace: agv_nav2_research_ws_bao',size=8.5,color='#64748b')
-    reading_pages(report,records)
+    report.para('Dữ liệu ma trận chính: 02/08–03/10/2026 · Cohort lặp bắt đầu: 11/10/2026<br/>Cập nhật báo cáo: 12/10/2026 · Workspace: agv_nav2_research_ws_bao',size=8.5,color='#64748b')
+    reading_pages(report,records,repeatability)
     contents_page(report)
     orientation_pages(report)
     protocol_pages(report,records)
@@ -1073,6 +1330,8 @@ def compose_report(report,records,manifest):
         route_intro(report,records,r)
         route_summary(report,records,r)
     conclusion_pages(report,records,manifest)
+    repeatability_pages(report,repeatability)
+    evidence_context_page(report)
     limits_page(report,records)
     appendix_guide(report)
     for r in ROUTES:
@@ -1095,17 +1354,18 @@ def build(preview=False):
             report.start(RID[r]+' '+p,bookmark='preview_'+r+p,level=1)
             case_pages(report,records,r,p)
         report.finish();print('Preview',report.page,'pages',flush=True);return
+    repeatability=load_repeatability()
     manifest=audit(records)
     if manifest['issues']:
         raise RuntimeError('Audit failed; refusing final PDF: '+ '; '.join(manifest['issues']))
     draft=Report(OUT,dry=True)
-    compose_report(draft,records,manifest)
+    compose_report(draft,records,manifest,repeatability)
     draft.finish()
     FIGURES.clear()
     report=Report(OUT,refs=draft.destinations)
-    compose_report(report,records,manifest)
+    compose_report(report,records,manifest,repeatability)
     if report.destinations!=draft.destinations:raise RuntimeError('Pagination changed between passes')
-    if report.figure_count!=92 or len(set(FIGURES))!=92:raise RuntimeError('Expected all 92 original figures')
+    if report.figure_count!=93 or len(set(FIGURES))!=93:raise RuntimeError('Expected 92 original figures plus one repeatability figure')
     report.finish()
     (BASE/'figure_index.json').write_text(json.dumps(FIGURES,ensure_ascii=False,indent=2))
     print(json.dumps({'pdf':str(OUT),'pages':report.page,'figures':report.figure_count,'records':len(records),'successes':manifest['success_count']},ensure_ascii=False),flush=True)

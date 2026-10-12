@@ -26,6 +26,9 @@
 - Hình học PSTMO hiện hành: `docs/pstmo_bao_cao_toan_dien_assets/`.
 - Ma trận thực thi 175 lượt: `results/pstmo_execution_full_20260803/`.
 - Năm tuyến kho giao cắt: `docs/warehouse_cross_aisles_5_routes/`.
+- Cohort lặp phục vụ bài journal:
+  `results/pstmo_journal_repeatability_20261011/`; đọc `study_manifest.json`
+  rồi `analysis/aggregate.json` trước JSON từng lượt.
 - Audit mô hình 3D: `docs/robot_3d_report/`.
 
 Các nguồn trên vẫn là snapshot. Nếu source/config thay đổi sau khi sinh dữ
@@ -37,6 +40,8 @@ liệu, tài liệu phải nói rõ rằng kết quả chưa được chạy l�
   có ngày tương đương.
 - Lưu scenario, method/planner, repetition, commit hoặc source hash, config
   hash, Raw path hash, seed nếu có và thông tin môi trường.
+- Nếu pipeline không phát lộ seed, ghi `seed: null` và mô tả đúng là lặp trong
+  điều kiện cố định; không suy diễn thành independent multi-seed trials.
 - Giữ summary nhỏ ở cấp experiment; nén lossless trace/log lớn khi phù hợp.
 - Thêm README khi dataset được dùng để báo cáo, có protocol riêng, chứa failure
   quan trọng hoặc dễ bị nhầm với cohort khác.

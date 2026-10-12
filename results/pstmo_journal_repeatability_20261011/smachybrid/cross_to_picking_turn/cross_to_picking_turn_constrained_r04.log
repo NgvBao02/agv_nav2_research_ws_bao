@@ -1,0 +1,837 @@
+=== infrastructure attempt 1 ===
+[INFO] [launch]: All log files can be found below /home/linh-pham/.ros/log/2026-10-12-11-42-48-764013-linh-pham-LOQ-15IAX9-58869
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [gazebo-1]: process started with pid [58907]
+[INFO] [create-2]: process started with pid [58908]
+[INFO] [parameter_bridge-3]: process started with pid [58910]
+[INFO] [robot_state_publisher-4]: process started with pid [58911]
+[INFO] [execution_trial-5]: process started with pid [58912]
+[robot_state_publisher-4] [INFO] [1791780169.180065892] [robot_state_publisher]: Robot initialized
+[gazebo-1] [1;32m[Msg] [0m[1;32mGazebo Sim Server v[0m[1;32m8.15.0[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mLoading SDF world file[[0m[1;32m/home/linh-pham/agv_nav2_research_ws_bao/install/vacuum_robot_gazebo/share/vacuum_robot_gazebo/worlds/warehouse_cross_aisles.sdf[0m[1;32m].[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mServing entity system service on [[0m[1;32m/[0m[1;32mentity/system/add[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mCreate[0m[1;32m service on [[0m[1;32m/world/warehouse_cross_aisles/create_multiple[0m[1;32m] (async)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mCreate[0m[1;32m service on [[0m[1;32m/world/warehouse_cross_aisles/create_multiple/blocking[0m[1;32m] (blocking)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mRemove[0m[1;32m service on [[0m[1;32m/world/warehouse_cross_aisles/remove[0m[1;32m] (async)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mRemove[0m[1;32m service on [[0m[1;32m/world/warehouse_cross_aisles/remove/blocking[0m[1;32m] (blocking)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mPose[0m[1;32m service on [[0m[1;32m/world/warehouse_cross_aisles/set_pose[0m[1;32m] (async)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mPose[0m[1;32m service on [[0m[1;32m/world/warehouse_cross_aisles/set_pose/blocking[0m[1;32m] (blocking)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mPose[0m[1;32m service on [[0m[1;32m/world/warehouse_cross_aisles/set_pose_vector[0m[1;32m] (async)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mPose[0m[1;32m service on [[0m[1;32m/world/warehouse_cross_aisles/set_pose_vector/blocking[0m[1;32m] (blocking)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mLight configuration[0m[1;32m service on [[0m[1;32m/world/warehouse_cross_aisles/light_config[0m[1;32m] (async)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mLight configuration[0m[1;32m service on [[0m[1;32m/world/warehouse_cross_aisles/light_config/blocking[0m[1;32m] (blocking)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mPhysics[0m[1;32m service on [[0m[1;32m/world/warehouse_cross_aisles/set_physics[0m[1;32m] (async)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mPhysics[0m[1;32m service on [[0m[1;32m/world/warehouse_cross_aisles/set_physics/blocking[0m[1;32m] (blocking)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mSphericalCoordinates[0m[1;32m service on [[0m[1;32m/world/warehouse_cross_aisles/set_spherical_coordinates[0m[1;32m] (async)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mSphericalCoordinates[0m[1;32m service on [[0m[1;32m/world/warehouse_cross_aisles/set_spherical_coordinates/blocking[0m[1;32m] (blocking)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mEnable collision[0m[1;32m service on [[0m[1;32m/world/warehouse_cross_aisles/enable_collision[0m[1;32m] (async)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mEnable collision[0m[1;32m service on [[0m[1;32m/world/warehouse_cross_aisles/enable_collision/blocking[0m[1;32m] (blocking)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mDisable collision[0m[1;32m service on [[0m[1;32m/world/warehouse_cross_aisles/disable_collision[0m[1;32m] (async)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mDisable collision[0m[1;32m service on [[0m[1;32m/world/warehouse_cross_aisles/disable_collision/blocking[0m[1;32m] (blocking)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mMaterial[0m[1;32m service on [[0m[1;32m/world/warehouse_cross_aisles/visual_config[0m[1;32m] (async)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mMaterial[0m[1;32m service on [[0m[1;32m/world/warehouse_cross_aisles/visual_config/blocking[0m[1;32m] (blocking)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mMaterial[0m[1;32m service on [[0m[1;32m/world/warehouse_cross_aisles/wheel_slip[0m[1;32m] (async)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mMaterial[0m[1;32m service on [[0m[1;32m/world/warehouse_cross_aisles/wheel_slip/blocking[0m[1;32m] (blocking)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mLoaded level [[0m[1;32mdefault[0m[1;32m][0m[1;32m[0m
+[create-2] [INFO] [1791780169.624393286] [spawn_vacuum_robot]: Entity creation successful.
+[INFO] [create-2]: process has finished cleanly [pid 58908]
+[parameter_bridge-3] [INFO] [1791780170.197031553] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/clock (gz.msgs.Clock) -> /clock (rosgraph_msgs/msg/Clock)] (Lazy 0)
+[parameter_bridge-3] [INFO] [1791780170.198150047] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/joint_states (gz.msgs.Model) -> /joint_states (sensor_msgs/msg/JointState)] (Lazy 0)
+[parameter_bridge-3] [INFO] [1791780170.200505769] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/odom (gz.msgs.Odometry) -> /odom (nav_msgs/msg/Odometry)] (Lazy 0)
+[parameter_bridge-3] [INFO] [1791780170.202060481] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/tf (gz.msgs.Pose_V) -> /tf (tf2_msgs/msg/TFMessage)] (Lazy 0)
+[parameter_bridge-3] [INFO] [1791780170.203372347] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/scan (gz.msgs.LaserScan) -> /scan (sensor_msgs/msg/LaserScan)] (Lazy 0)
+[parameter_bridge-3] [INFO] [1791780170.203925775] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/imu/data (gz.msgs.IMU) -> /imu/data (sensor_msgs/msg/Imu)] (Lazy 0)
+[parameter_bridge-3] [INFO] [1791780170.204360777] [ros_gz_bridge]: Creating ROS->GZ Bridge: [/cmd_vel (geometry_msgs/msg/Twist) -> /cmd_vel (gz.msgs.Twist)] (Lazy 0)
+[parameter_bridge-3] [INFO] [1791780170.204978000] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/ground_truth/odom (gz.msgs.Odometry) -> /ground_truth/odom (nav_msgs/msg/Odometry)] (Lazy 0)
+[gazebo-1] [1;32m[Msg] [0m[1;32mServing world controls on [[0m[1;32m/world/warehouse_cross_aisles[0m[1;32m/control], [[0m[1;32m/world/warehouse_cross_aisles[0m[1;32m/control/state] and [[0m[1;32m/world/warehouse_cross_aisles[0m[1;32m/playback/control][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mServing GUI information on [[0m[1;32m/world/warehouse_cross_aisles[0m[1;32m/[0m[1;32mgui/info[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mWorld [[0m[1;32mwarehouse_cross_aisles[0m[1;32m] initialized with [[0m[1;32mresearch_physics[0m[1;32m] physics profile.[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mServing world SDF generation service on [[0m[1;32m/world/warehouse_cross_aisles[0m[1;32m/[0m[1;32mgenerate_world_sdf[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mServing world names on [[0m[1;32m/gazebo/worlds[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mResource path add service on [[0m[1;32m/gazebo/resource_paths/add[0m[1;32m].[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mResource path get service on [[0m[1;32m/gazebo/resource_paths/get[0m[1;32m].[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mResource path resolve service on [[0m[1;32m/gazebo/resource_paths/resolve[0m[1;32m].[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mResource paths published on [[0m[1;32m/gazebo/resource_paths[0m[1;32m].[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mServer control service on [[0m[1;32m/server_control[0m[1;32m].[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mFound no publishers on /stats, adding root stats topic[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mFound no publishers on /clock, adding root clock topic[0m[1;32m[0m
+[gazebo-1] [1;33mWarning [Utils.cc:132][0m [/sdf/model[@name="vacuum_robot"]/link[@name="base_link"]/sensor[@name="rplidar_a1m8"]/gz_frame_id:/home/linh-pham/agv_nav2_research_ws_bao/install/vacuum_robot_gazebo/share/vacuum_robot_gazebo/models/vacuum_robot/model.sdf:L107]: XML Element[gz_frame_id], child of element[sensor], not defined in SDF. Copying[gz_frame_id] as children of [sensor].
+[gazebo-1] [1;33mWarning [Utils.cc:132][0m [/sdf/model[@name="vacuum_robot"]/link[@name="base_link"]/sensor[@name="bno055_imu"]/gz_frame_id:/home/linh-pham/agv_nav2_research_ws_bao/install/vacuum_robot_gazebo/share/vacuum_robot_gazebo/models/vacuum_robot/model.sdf:L128]: XML Element[gz_frame_id], child of element[sensor], not defined in SDF. Copying[gz_frame_id] as children of [sensor].
+[gazebo-1] libEGL warning: pci id for fd 61: 10de:25ec, driver (null)
+[gazebo-1] 
+[gazebo-1] pci id for fd 62: 10de:25ec, driver (null)
+[gazebo-1] pci id for fd 63: 10de:25ec, driver (null)
+[gazebo-1] libEGL warning: egl: failed to create dri2 screen
+[gazebo-1] libEGL warning: pci id for fd 61: 10de:25ec, driver (null)
+[gazebo-1] 
+[gazebo-1] pci id for fd 62: 10de:25ec, driver (null)
+[gazebo-1] pci id for fd 63: 10de:25ec, driver (null)
+[gazebo-1] libEGL warning: egl: failed to create dri2 screen
+[gazebo-1] libEGL warning: pci id for fd 61: 10de:25ec, driver (null)
+[gazebo-1] 
+[INFO] [map_server-6]: process started with pid [59209]
+[INFO] [amcl-7]: process started with pid [59210]
+[INFO] [lifecycle_manager-8]: process started with pid [59211]
+[INFO] [controller_server-9]: process started with pid [59212]
+[INFO] [smoother_server-10]: process started with pid [59213]
+[INFO] [planner_server-11]: process started with pid [59214]
+[INFO] [route_server-12]: process started with pid [59215]
+[INFO] [behavior_server-13]: process started with pid [59216]
+[INFO] [bt_navigator-14]: process started with pid [59217]
+[INFO] [waypoint_follower-15]: process started with pid [59218]
+[INFO] [velocity_smoother-16]: process started with pid [59221]
+[INFO] [collision_monitor-17]: process started with pid [59222]
+[INFO] [opennav_docking-18]: process started with pid [59225]
+[INFO] [lifecycle_manager-19]: process started with pid [59232]
+[amcl-7] [INFO] [1791780172.162479629] [amcl]: 
+[amcl-7] 	amcl lifecycle node launched. 
+[amcl-7] 	Waiting on external lifecycle transitions to activate
+[amcl-7] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[amcl-7] [INFO] [1791780172.162841627] [amcl]: Creating
+[lifecycle_manager-8] [INFO] [1791780172.163066012] [lifecycle_manager_localization]: Creating
+[lifecycle_manager-8] [INFO] [1791780172.173068800] [lifecycle_manager_localization]: [34m[1mCreating and initializing lifecycle service clients[0m[0m
+[velocity_smoother-16] [INFO] [1791780172.176301404] [velocity_smoother]: 
+[velocity_smoother-16] 	velocity_smoother lifecycle node launched. 
+[velocity_smoother-16] 	Waiting on external lifecycle transitions to activate
+[velocity_smoother-16] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[bt_navigator-14] [INFO] [1791780172.180262951] [bt_navigator]: 
+[bt_navigator-14] 	bt_navigator lifecycle node launched. 
+[bt_navigator-14] 	Waiting on external lifecycle transitions to activate
+[bt_navigator-14] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[bt_navigator-14] [INFO] [1791780172.183997936] [bt_navigator]: Creating
+[planner_server-11] [INFO] [1791780172.197523820] [planner_server]: 
+[planner_server-11] 	planner_server lifecycle node launched. 
+[planner_server-11] 	Waiting on external lifecycle transitions to activate
+[planner_server-11] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[waypoint_follower-15] [INFO] [1791780172.198122781] [waypoint_follower]: 
+[waypoint_follower-15] 	waypoint_follower lifecycle node launched. 
+[waypoint_follower-15] 	Waiting on external lifecycle transitions to activate
+[waypoint_follower-15] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[waypoint_follower-15] [INFO] [1791780172.198529769] [waypoint_follower]: Creating
+[planner_server-11] [INFO] [1791780172.200050386] [planner_server]: Creating
+[behavior_server-13] [INFO] [1791780172.213954156] [behavior_server]: 
+[behavior_server-13] 	behavior_server lifecycle node launched. 
+[behavior_server-13] 	Waiting on external lifecycle transitions to activate
+[behavior_server-13] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[lifecycle_manager-19] [INFO] [1791780172.216788637] [lifecycle_manager_navigation]: Creating
+[lifecycle_manager-19] [INFO] [1791780172.222720300] [lifecycle_manager_navigation]: [34m[1mCreating and initializing lifecycle service clients[0m[0m
+[planner_server-11] [INFO] [1791780172.222953135] [global_costmap.global_costmap]: 
+[planner_server-11] 	global_costmap lifecycle node launched. 
+[planner_server-11] 	Waiting on external lifecycle transitions to activate
+[planner_server-11] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[planner_server-11] [INFO] [1791780172.223359172] [global_costmap.global_costmap]: Creating Costmap
+[map_server-6] [INFO] [1791780172.226676516] [map_server]: 
+[map_server-6] 	map_server lifecycle node launched. 
+[map_server-6] 	Waiting on external lifecycle transitions to activate
+[map_server-6] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[map_server-6] [INFO] [1791780172.226819251] [map_server]: Creating
+[controller_server-9] [INFO] [1791780172.233684122] [controller_server]: 
+[controller_server-9] 	controller_server lifecycle node launched. 
+[controller_server-9] 	Waiting on external lifecycle transitions to activate
+[controller_server-9] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[smoother_server-10] [INFO] [1791780172.234314053] [smoother_server]: 
+[smoother_server-10] 	smoother_server lifecycle node launched. 
+[smoother_server-10] 	Waiting on external lifecycle transitions to activate
+[smoother_server-10] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[smoother_server-10] [INFO] [1791780172.236114765] [smoother_server]: Creating smoother server
+[controller_server-9] [INFO] [1791780172.238888607] [controller_server]: Creating controller server
+[collision_monitor-17] [INFO] [1791780172.239857613] [collision_monitor]: 
+[collision_monitor-17] 	collision_monitor lifecycle node launched. 
+[collision_monitor-17] 	Waiting on external lifecycle transitions to activate
+[collision_monitor-17] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[route_server-12] [INFO] [1791780172.255639216] [route_server]: 
+[route_server-12] 	route_server lifecycle node launched. 
+[route_server-12] 	Waiting on external lifecycle transitions to activate
+[route_server-12] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[opennav_docking-18] [INFO] [1791780172.264330239] [docking_server]: 
+[opennav_docking-18] 	docking_server lifecycle node launched. 
+[opennav_docking-18] 	Waiting on external lifecycle transitions to activate
+[opennav_docking-18] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[opennav_docking-18] [INFO] [1791780172.264480220] [docking_server]: Creating docking_server
+[controller_server-9] [INFO] [1791780172.267738345] [local_costmap.local_costmap]: 
+[controller_server-9] 	local_costmap lifecycle node launched. 
+[controller_server-9] 	Waiting on external lifecycle transitions to activate
+[controller_server-9] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[controller_server-9] [INFO] [1791780172.268119223] [local_costmap.local_costmap]: Creating Costmap
+[lifecycle_manager-8] [INFO] [1791780172.273867052] [lifecycle_manager_localization]: [34m[1mStarting managed nodes bringup...[0m[0m
+[lifecycle_manager-8] [INFO] [1791780172.274441017] [lifecycle_manager_localization]: [34m[1mConfiguring map_server[0m[0m
+[map_server-6] [INFO] [1791780172.274743296] [map_server]: Configuring
+[map_server-6] [INFO] [1791780172.274801568] [map_io]: Loading yaml file: /home/linh-pham/agv_nav2_research_ws_bao/install/vacuum_robot_gazebo/share/vacuum_robot_gazebo/maps/warehouse_cross_aisles.yaml
+[map_server-6] [INFO] [1791780172.274997400] [map_io]: resolution: 0.05
+[map_server-6] [INFO] [1791780172.275002462] [map_io]: origin[0]: -6
+[map_server-6] [INFO] [1791780172.275005628] [map_io]: origin[1]: -4
+[map_server-6] [INFO] [1791780172.275007910] [map_io]: origin[2]: 0
+[map_server-6] [INFO] [1791780172.275010226] [map_io]: free_thresh: 0.25
+[map_server-6] [INFO] [1791780172.275012202] [map_io]: occupied_thresh: 0.65
+[map_server-6] [INFO] [1791780172.275015510] [map_io]: mode: trinary
+[map_server-6] [INFO] [1791780172.275018526] [map_io]: negate: 0
+[map_server-6] [INFO] [1791780172.275156188] [map_io]: Loading image_file: /home/linh-pham/agv_nav2_research_ws_bao/install/vacuum_robot_gazebo/share/vacuum_robot_gazebo/maps/warehouse_cross_aisles.pgm
+[map_server-6] [INFO] [1791780172.275853889] [map_io]: Read map /home/linh-pham/agv_nav2_research_ws_bao/install/vacuum_robot_gazebo/share/vacuum_robot_gazebo/maps/warehouse_cross_aisles.pgm: 240 X 160 map @ 0.05 m/cell
+[lifecycle_manager-8] [INFO] [1791780172.282566752] [lifecycle_manager_localization]: [34m[1mConfiguring amcl[0m[0m
+[amcl-7] [INFO] [1791780172.282867616] [amcl]: Configuring
+[amcl-7] [INFO] [1791780172.282967790] [amcl]: initTransforms
+[amcl-7] [INFO] [1791780172.291130302] [amcl]: initPubSub
+[amcl-7] [INFO] [1791780172.297564420] [amcl]: Subscribed to map topic.
+[lifecycle_manager-8] [INFO] [1791780172.300857930] [lifecycle_manager_localization]: [34m[1mActivating map_server[0m[0m
+[map_server-6] [INFO] [1791780172.301036809] [map_server]: Activating
+[map_server-6] [INFO] [1791780172.301176036] [map_server]: Creating bond (map_server) to lifecycle manager.
+[lifecycle_manager-8] [INFO] [1791780172.406064948] [lifecycle_manager_localization]: Server map_server connected with bond.
+[lifecycle_manager-8] [INFO] [1791780172.406097980] [lifecycle_manager_localization]: [34m[1mActivating amcl[0m[0m
+[amcl-7] [INFO] [1791780172.406310808] [amcl]: Activating
+[amcl-7] [INFO] [1791780172.406350246] [amcl]: initialPoseReceived
+[amcl-7] [INFO] [1791780172.406451698] [amcl]: Setting pose (0.678000): -5.000 0.000 0.000
+[amcl-7] [INFO] [1791780172.407490407] [amcl]: Creating bond (amcl) to lifecycle manager.
+[amcl-7] [INFO] [1791780172.413603843] [amcl]: Received a 240 X 160 map @ 0.050 m/pix
+[amcl-7] [INFO] [1791780172.484085682] [amcl]: createLaserObject
+[lifecycle_manager-19] [INFO] [1791780172.488306670] [lifecycle_manager_navigation]: [34m[1mStarting managed nodes bringup...[0m[0m
+[lifecycle_manager-19] [INFO] [1791780172.488348564] [lifecycle_manager_navigation]: [34m[1mConfiguring controller_server[0m[0m
+[controller_server-9] [INFO] [1791780172.488694600] [controller_server]: Configuring controller interface
+[controller_server-9] [INFO] [1791780172.488739100] [controller_server]: getting progress checker plugins..
+[controller_server-9] [INFO] [1791780172.488932485] [controller_server]: getting goal checker plugins..
+[controller_server-9] [INFO] [1791780172.489003547] [controller_server]: Controller frequency set to 20.0000Hz
+[controller_server-9] [INFO] [1791780172.489033399] [local_costmap.local_costmap]: Configuring
+[controller_server-9] [INFO] [1791780172.497929638] [local_costmap.local_costmap]: Using plugin "voxel_layer"
+[controller_server-9] [INFO] [1791780172.501042701] [local_costmap.local_costmap]: Subscribed to Topics: scan
+[controller_server-9] [INFO] [1791780172.511821551] [local_costmap.local_costmap]: Initialized plugin "voxel_layer"
+[controller_server-9] [INFO] [1791780172.511852361] [local_costmap.local_costmap]: Using plugin "inflation_layer"
+[controller_server-9] [INFO] [1791780172.512183660] [local_costmap.local_costmap]: Initialized plugin "inflation_layer"
+[lifecycle_manager-8] [INFO] [1791780172.516092283] [lifecycle_manager_localization]: Server amcl connected with bond.
+[lifecycle_manager-8] [INFO] [1791780172.516136784] [lifecycle_manager_localization]: [34m[1mManaged nodes are active[0m[0m
+[lifecycle_manager-8] [INFO] [1791780172.516150193] [lifecycle_manager_localization]: [34m[1mCreating bond timer...[0m[0m
+[controller_server-9] [INFO] [1791780172.530385691] [controller_server]: Created progress_checker : progress_checker of type nav2_controller::PoseProgressChecker
+[controller_server-9] [INFO] [1791780172.531186996] [controller_server]: Controller Server has progress_checker  progress checkers available.
+[controller_server-9] [INFO] [1791780172.531814900] [controller_server]: Created goal checker : general_goal_checker of type nav2_controller::SimpleGoalChecker
+[controller_server-9] [INFO] [1791780172.532282109] [controller_server]: Controller Server has general_goal_checker  goal checkers available.
+[controller_server-9] [INFO] [1791780172.533086773] [controller_server]: Created controller : FollowPath of type nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController
+[controller_server-9] [INFO] [1791780172.538926738] [controller_server]: Controller Server has FollowPath  controllers available.
+[lifecycle_manager-19] [INFO] [1791780172.549085913] [lifecycle_manager_navigation]: [34m[1mConfiguring smoother_server[0m[0m
+[smoother_server-10] [INFO] [1791780172.549345145] [smoother_server]: Configuring smoother server
+[smoother_server-10] [INFO] [1791780172.562886029] [smoother_server]: Created smoother : simple_smoother of type nav2_smoother::SimpleSmoother
+[smoother_server-10] [INFO] [1791780172.564792079] [smoother_server]: Created smoother : savitzky_golay of type nav2_smoother::SavitzkyGolaySmoother
+[smoother_server-10] [INFO] [1791780172.570526480] [smoother_server]: Created smoother : constrained of type nav2_constrained_smoother/ConstrainedSmoother
+[smoother_server-10] [INFO] [1791780172.573715546] [smoother_server]: Created smoother : pstmo of type adaptive_pivot_g2_nav2/AdaptivePivotG2Smoother
+[smoother_server-10] [INFO] [1791780172.576125742] [smoother_server]: Configured PSTMO smoother 'pstmo' with hierarchical_alpha_two_trim search and condition_only preprocessing
+[smoother_server-10] [INFO] [1791780172.576637803] [smoother_server]: Created smoother : adaptive_hybrid of type adaptive_pivot_g2_nav2/SafetyGatedHybridSmoother
+[smoother_server-10] [INFO] [1791780172.580531230] [smoother_server]: Configured PSTMO smoother 'adaptive_hybrid.pivot' with legacy_joint_d_q search and condition_only preprocessing
+[smoother_server-10] [INFO] [1791780172.580918239] [smoother_server]: Configured safety-gated hybrid smoother as 'adaptive_hybrid'
+[smoother_server-10] [INFO] [1791780172.580940998] [smoother_server]: Smoother Server has simple_smoother savitzky_golay constrained pstmo adaptive_hybrid  smoothers available.
+[lifecycle_manager-19] [INFO] [1791780172.587693043] [lifecycle_manager_navigation]: [34m[1mConfiguring planner_server[0m[0m
+[planner_server-11] [INFO] [1791780172.587989690] [planner_server]: Configuring
+[planner_server-11] [INFO] [1791780172.588040294] [global_costmap.global_costmap]: Configuring
+[planner_server-11] [INFO] [1791780172.597951683] [global_costmap.global_costmap]: Using plugin "static_layer"
+[planner_server-11] [INFO] [1791780172.601305797] [global_costmap.global_costmap]: Subscribing to the map topic (/map) with transient local durability
+[planner_server-11] [INFO] [1791780172.603196570] [global_costmap.global_costmap]: Initialized plugin "static_layer"
+[planner_server-11] [INFO] [1791780172.603236009] [global_costmap.global_costmap]: Using plugin "inflation_layer"
+[planner_server-11] [INFO] [1791780172.603604264] [global_costmap.global_costmap]: Initialized plugin "inflation_layer"
+[planner_server-11] [INFO] [1791780172.625744257] [global_costmap.global_costmap]: StaticLayer: Resizing costmap to 240 X 160 at 0.050000 m/pix
+[planner_server-11] [INFO] [1791780172.626413462] [planner_server]: Created global planner plugin NavFnAStar of type nav2_navfn_planner::NavfnPlanner
+[planner_server-11] [INFO] [1791780172.626447003] [planner_server]: Configuring plugin NavFnAStar of type NavfnPlanner
+[planner_server-11] [INFO] [1791780172.626830997] [planner_server]: Created global planner plugin NavFnDijkstra of type nav2_navfn_planner::NavfnPlanner
+[planner_server-11] [INFO] [1791780172.626848094] [planner_server]: Configuring plugin NavFnDijkstra of type NavfnPlanner
+[planner_server-11] [INFO] [1791780172.627733094] [planner_server]: Created global planner plugin ThetaStar of type nav2_theta_star_planner::ThetaStarPlanner
+[planner_server-11] [INFO] [1791780172.633129884] [planner_server]: Created global planner plugin Smac2D of type nav2_smac_planner::SmacPlanner2D
+[planner_server-11] [INFO] [1791780172.633170543] [planner_server]: Configuring Smac2D of type SmacPlanner2D
+[planner_server-11] [INFO] [1791780172.634764456] [planner_server]: Configured plugin Smac2D of type SmacPlanner2D with tolerance 0.10, maximum iterations 1000000, max on approach iterations 1000, and not allowing unknown traversal.
+[planner_server-11] [INFO] [1791780172.636824538] [planner_server]: Created global planner plugin SmacHybrid of type nav2_smac_planner::SmacPlannerHybrid
+[planner_server-11] [INFO] [1791780172.636871007] [planner_server]: Configuring SmacHybrid of type SmacPlannerHybrid
+[planner_server-11] [INFO] [1791780172.638475543] [planner_server]: Even sized heuristic lookup table size set 160.000000, increasing size by 1 to make odd
+[planner_server-11] [INFO] [1791780172.943664707] [planner_server]: Configured plugin SmacHybrid of type SmacPlannerHybrid with maximum iterations 1000000, max on approach iterations 1000, and not allowing unknown traversal. Tolerance 0.10.Using motion model: Dubin.
+[planner_server-11] [INFO] [1791780172.943708165] [planner_server]: Planner Server has NavFnAStar NavFnDijkstra ThetaStar Smac2D SmacHybrid  planners available.
+[lifecycle_manager-19] [INFO] [1791780172.954367492] [lifecycle_manager_navigation]: [34m[1mConfiguring route_server[0m[0m
+[route_server-12] [INFO] [1791780172.954661132] [route_server]: Configuring
+[route_server-12] [INFO] [1791780172.985386597] [route_server]: Created GraphFileLoader GeoJsonGraphFileLoader of type nav2_route::GeoJsonGraphFileLoader
+[route_server-12] [INFO] [1791780172.985429340] [route_server]: Configuring geojson graph file loader
+[route_server-12] [INFO] [1791780172.985437108] [route_server]: No graph file provided to load yet.
+[route_server-12] [INFO] [1791780172.986929982] [route_server]: Created edge cost function plugin DistanceScorer of type nav2_route::DistanceScorer
+[route_server-12] [INFO] [1791780172.986957060] [route_server]: Configuring distance scorer.
+[route_server-12] [INFO] [1791780172.987152009] [route_server]: Created edge cost function plugin CostmapScorer of type nav2_route::CostmapScorer
+[route_server-12] [INFO] [1791780172.987162276] [route_server]: Configuring costmap scorer.
+[route_server-12] [INFO] [1791780172.988866419] [route_server]: Created route operation ReroutingService of type nav2_route::ReroutingService
+[route_server-12] [INFO] [1791780172.988902253] [route_server]: Configuring Rerouting service operation.
+[route_server-12] [INFO] [1791780172.990189614] [route_server]: Created route operation CollisionMonitor of type nav2_route::CollisionMonitor
+[route_server-12] [INFO] [1791780172.990294896] [route_server]: Using costmap topic: local_costmap/costmap_raw instead of server costmap topic: global_costmap/costmap_raw for CollisionMonitor.
+[lifecycle_manager-19] [INFO] [1791780172.993129292] [lifecycle_manager_navigation]: [34m[1mConfiguring behavior_server[0m[0m
+[behavior_server-13] [INFO] [1791780172.993378928] [behavior_server]: Configuring
+[behavior_server-13] [INFO] [1791780172.999973767] [behavior_server]: Creating behavior plugin spin of type nav2_behaviors::Spin
+[behavior_server-13] [INFO] [1791780173.001022502] [behavior_server]: Creating behavior plugin backup of type nav2_behaviors::BackUp
+[behavior_server-13] [INFO] [1791780173.002014467] [behavior_server]: Creating behavior plugin drive_on_heading of type nav2_behaviors::DriveOnHeading
+[behavior_server-13] [INFO] [1791780173.003823660] [behavior_server]: Creating behavior plugin assisted_teleop of type nav2_behaviors::AssistedTeleop
+[behavior_server-13] [INFO] [1791780173.005784937] [behavior_server]: Creating behavior plugin wait of type nav2_behaviors::Wait
+[behavior_server-13] [INFO] [1791780173.013828655] [behavior_server]: Configuring spin
+[behavior_server-13] [INFO] [1791780173.023581819] [behavior_server]: Configuring backup
+[behavior_server-13] [INFO] [1791780173.029577924] [behavior_server]: Configuring drive_on_heading
+[behavior_server-13] [INFO] [1791780173.034485780] [behavior_server]: Configuring assisted_teleop
+[behavior_server-13] [INFO] [1791780173.042177613] [behavior_server]: Configuring wait
+[lifecycle_manager-19] [INFO] [1791780173.048393062] [lifecycle_manager_navigation]: [34m[1mConfiguring velocity_smoother[0m[0m
+[velocity_smoother-16] [INFO] [1791780173.048713336] [velocity_smoother]: Configuring velocity smoother
+[lifecycle_manager-19] [INFO] [1791780173.056016349] [lifecycle_manager_navigation]: [34m[1mConfiguring collision_monitor[0m[0m
+[collision_monitor-17] [INFO] [1791780173.056244869] [collision_monitor]: Configuring
+[collision_monitor-17] [INFO] [1791780173.062197962] [collision_monitor]: [scan]: Creating Scan
+[collision_monitor-17] [INFO] [1791780173.063968205] [collision_monitor]: [FootprintApproach]: Creating Polygon
+[collision_monitor-17] [INFO] [1791780173.064077792] [collision_monitor]: [FootprintApproach]: Polygon points are not defined. Using dynamic subscription instead.
+[collision_monitor-17] [INFO] [1791780173.064355392] [collision_monitor]: [FootprintApproach]: Making footprint subscriber on /local_costmap/published_footprint topic
+[lifecycle_manager-19] [INFO] [1791780173.078388146] [lifecycle_manager_navigation]: [34m[1mConfiguring bt_navigator[0m[0m
+[bt_navigator-14] [INFO] [1791780173.078719275] [bt_navigator]: Configuring
+[bt_navigator-14] [INFO] [1791780173.085155354] [bt_navigator]: Creating navigator id navigate_to_pose of type nav2_bt_navigator::NavigateToPoseNavigator
+[bt_navigator-14] [INFO] [1791780173.147212069] [bt_navigator]: Creating navigator id navigate_through_poses of type nav2_bt_navigator::NavigateThroughPosesNavigator
+[lifecycle_manager-19] [INFO] [1791780173.173678655] [lifecycle_manager_navigation]: [34m[1mConfiguring waypoint_follower[0m[0m
+[waypoint_follower-15] [INFO] [1791780173.173970089] [waypoint_follower]: Configuring
+[waypoint_follower-15] [INFO] [1791780173.199269387] [waypoint_follower]: Created waypoint_task_executor : wait_at_waypoint of type nav2_waypoint_follower::WaitAtWaypoint
+[lifecycle_manager-19] [INFO] [1791780173.200630807] [lifecycle_manager_navigation]: [34m[1mConfiguring docking_server[0m[0m
+[opennav_docking-18] [INFO] [1791780173.200897231] [docking_server]: Configuring docking_server
+[opennav_docking-18] [INFO] [1791780173.200943170] [docking_server]: Controller frequency set to 50.0000Hz
+[opennav_docking-18] [INFO] [1791780173.248214859] [docking_server]: Created charging dock plugin simple_charging_dock of type opennav_docking::SimpleChargingDock
+[opennav_docking-18] [WARN] [1791780173.259670250] [docking_server]: Dock database filepath nor dock parameters set. Docking actions can only be executed specifying the dock pose via the action request. Or update the dock database via the reload_database service.
+[opennav_docking-18] [INFO] [1791780173.259707450] [docking_server]: Docking Server has 1 dock types and 0 dock instances available.
+[lifecycle_manager-19] [INFO] [1791780173.271583873] [lifecycle_manager_navigation]: [34m[1mActivating controller_server[0m[0m
+[controller_server-9] [INFO] [1791780173.271998379] [controller_server]: Activating
+[controller_server-9] [INFO] [1791780173.272046854] [local_costmap.local_costmap]: Activating
+[controller_server-9] [INFO] [1791780173.272550718] [local_costmap.local_costmap]: Checking transform
+[controller_server-9] [INFO] [1791780173.273105510] [local_costmap.local_costmap]: start
+[controller_server-9] [INFO] [1791780173.480085855] [controller_server]: Activating controller: FollowPath of type regulated_pure_pursuit_controller::RegulatedPurePursuitController
+[controller_server-9] [INFO] [1791780173.480181055] [controller_server]: Creating bond (controller_server) to lifecycle manager.
+[lifecycle_manager-19] [INFO] [1791780173.595068077] [lifecycle_manager_navigation]: Server controller_server connected with bond.
+[lifecycle_manager-19] [INFO] [1791780173.595174339] [lifecycle_manager_navigation]: [34m[1mActivating smoother_server[0m[0m
+[smoother_server-10] [INFO] [1791780173.595472124] [smoother_server]: Activating
+[smoother_server-10] [INFO] [1791780173.595510800] [smoother_server]: Activating smoother: constrained of type nav2_constrained_smoother::ConstrainedSmoother
+[smoother_server-10] [INFO] [1791780173.595519755] [smoother_server]: Creating bond (smoother_server) to lifecycle manager.
+[lifecycle_manager-19] [INFO] [1791780173.707375664] [lifecycle_manager_navigation]: Server smoother_server connected with bond.
+[lifecycle_manager-19] [INFO] [1791780173.707420986] [lifecycle_manager_navigation]: [34m[1mActivating planner_server[0m[0m
+[planner_server-11] [INFO] [1791780173.707699562] [planner_server]: Activating
+[planner_server-11] [INFO] [1791780173.707730640] [global_costmap.global_costmap]: Activating
+[planner_server-11] [INFO] [1791780173.707735964] [global_costmap.global_costmap]: Checking transform
+[planner_server-11] [INFO] [1791780173.707866749] [global_costmap.global_costmap]: start
+[planner_server-11] [INFO] [1791780173.758052095] [planner_server]: Activating plugin Smac2D of type SmacPlanner2D
+[planner_server-11] [INFO] [1791780173.758094209] [planner_server]: Activating plugin ThetaStar of type nav2_theta_star_planner
+[planner_server-11] [INFO] [1791780173.758113382] [planner_server]: Activating plugin SmacHybrid of type SmacPlannerHybrid
+[planner_server-11] [INFO] [1791780173.759577836] [planner_server]: Activating plugin NavFnDijkstra of type NavfnPlanner
+[planner_server-11] [INFO] [1791780173.759623607] [planner_server]: Activating plugin NavFnAStar of type NavfnPlanner
+[planner_server-11] [INFO] [1791780173.760804256] [planner_server]: Creating bond (planner_server) to lifecycle manager.
+[lifecycle_manager-19] [INFO] [1791780173.866508140] [lifecycle_manager_navigation]: Server planner_server connected with bond.
+[lifecycle_manager-19] [INFO] [1791780173.866546352] [lifecycle_manager_navigation]: [34m[1mActivating route_server[0m[0m
+[route_server-12] [INFO] [1791780173.867005833] [route_server]: Activating
+[route_server-12] [INFO] [1791780173.867161039] [route_server]: Creating bond (route_server) to lifecycle manager.
+[lifecycle_manager-19] [INFO] [1791780173.975590237] [lifecycle_manager_navigation]: Server route_server connected with bond.
+[lifecycle_manager-19] [INFO] [1791780173.975633027] [lifecycle_manager_navigation]: [34m[1mActivating behavior_server[0m[0m
+[behavior_server-13] [INFO] [1791780173.976003706] [behavior_server]: Activating
+[behavior_server-13] [INFO] [1791780173.976032502] [behavior_server]: Activating spin
+[behavior_server-13] [INFO] [1791780173.976047128] [behavior_server]: Activating backup
+[behavior_server-13] [INFO] [1791780173.976057959] [behavior_server]: Activating drive_on_heading
+[behavior_server-13] [INFO] [1791780173.976068267] [behavior_server]: Activating assisted_teleop
+[behavior_server-13] [INFO] [1791780173.976078424] [behavior_server]: Activating wait
+[behavior_server-13] [INFO] [1791780173.976092802] [behavior_server]: Creating bond (behavior_server) to lifecycle manager.
+[lifecycle_manager-19] [INFO] [1791780174.084811127] [lifecycle_manager_navigation]: Server behavior_server connected with bond.
+[lifecycle_manager-19] [INFO] [1791780174.084857240] [lifecycle_manager_navigation]: [34m[1mActivating velocity_smoother[0m[0m
+[velocity_smoother-16] [INFO] [1791780174.085751042] [velocity_smoother]: Activating
+[velocity_smoother-16] [INFO] [1791780174.085833410] [velocity_smoother]: Creating bond (velocity_smoother) to lifecycle manager.
+[lifecycle_manager-19] [INFO] [1791780174.201002106] [lifecycle_manager_navigation]: Server velocity_smoother connected with bond.
+[lifecycle_manager-19] [INFO] [1791780174.201050439] [lifecycle_manager_navigation]: [34m[1mActivating collision_monitor[0m[0m
+[collision_monitor-17] [INFO] [1791780174.201425882] [collision_monitor]: Activating
+[collision_monitor-17] [INFO] [1791780174.201518885] [collision_monitor]: Creating bond (collision_monitor) to lifecycle manager.
+[lifecycle_manager-19] [INFO] [1791780174.309772817] [lifecycle_manager_navigation]: Server collision_monitor connected with bond.
+[lifecycle_manager-19] [INFO] [1791780174.309820549] [lifecycle_manager_navigation]: [34m[1mActivating bt_navigator[0m[0m
+[bt_navigator-14] [INFO] [1791780174.310340093] [bt_navigator]: Activating
+[bt_navigator-14] [INFO] [1791780174.389187356] [bt_navigator]: Creating bond (bt_navigator) to lifecycle manager.
+[lifecycle_manager-19] [INFO] [1791780174.495188478] [lifecycle_manager_navigation]: Server bt_navigator connected with bond.
+[lifecycle_manager-19] [INFO] [1791780174.495248320] [lifecycle_manager_navigation]: [34m[1mActivating waypoint_follower[0m[0m
+[waypoint_follower-15] [INFO] [1791780174.496905225] [waypoint_follower]: Activating
+[waypoint_follower-15] [INFO] [1791780174.496950260] [waypoint_follower]: Creating bond (waypoint_follower) to lifecycle manager.
+[lifecycle_manager-19] [INFO] [1791780174.606111847] [lifecycle_manager_navigation]: Server waypoint_follower connected with bond.
+[lifecycle_manager-19] [INFO] [1791780174.606161796] [lifecycle_manager_navigation]: [34m[1mActivating docking_server[0m[0m
+[opennav_docking-18] [INFO] [1791780174.607221176] [docking_server]: Activating docking_server
+[opennav_docking-18] [INFO] [1791780174.625033888] [docking_server]: Creating bond (docking_server) to lifecycle manager.
+[lifecycle_manager-19] [INFO] [1791780174.733104083] [lifecycle_manager_navigation]: Server docking_server connected with bond.
+[lifecycle_manager-19] [INFO] [1791780174.733151328] [lifecycle_manager_navigation]: [34m[1mManaged nodes are active[0m[0m
+[lifecycle_manager-19] [INFO] [1791780174.733159099] [lifecycle_manager_navigation]: [34m[1mCreating bond timer...[0m[0m
+[amcl-7] [INFO] [1791780174.734577132] [amcl]: initialPoseReceived
+[amcl-7] [WARN] [1791780174.734668749] [amcl]: Failed to transform initial pose in time (Lookup would require extrapolation into the future.  Requested time 2.979000 but the latest data is at time 2.952000, when looking up transform from frame [base_link] to frame [odom])
+[amcl-7] [INFO] [1791780174.734695677] [amcl]: Setting pose (2.979000): -5.000 0.000 0.000
+[amcl-7] [INFO] [1791780174.735843967] [amcl]: initialPoseReceived
+[amcl-7] [WARN] [1791780174.735946800] [amcl]: Failed to transform initial pose in time (Lookup would require extrapolation into the future.  Requested time 2.979000 but the latest data is at time 2.952000, when looking up transform from frame [base_link] to frame [odom])
+[amcl-7] [INFO] [1791780174.735957032] [amcl]: Setting pose (2.979000): -5.000 0.000 0.000
+[planner_server-11] [INFO] [1791780176.738900407] [global_costmap.global_costmap]: Received request to clear entirely the global_costmap
+[controller_server-9] [INFO] [1791780176.740719558] [local_costmap.local_costmap]: Received request to clear entirely the local_costmap
+[planner_server-11] [WARN] [1791780177.720883980] [planner_server]: Planner loop missed its desired rate of 5.0000 Hz. Current loop rate is 2.1097 Hz
+[smoother_server-10] [INFO] [1791780177.746458054] [smoother_server]: Received a path to smooth.
+[controller_server-9] [INFO] [1791780177.767069482] [controller_server]: Received a goal, begin computing control effort.
+[parameter_bridge-3] [INFO] [1791780177.808440176] [ros_gz_bridge]: Passing message from ROS geometry_msgs/msg/Twist to Gazebo gz.msgs.Twist (showing msg only once per type)
+[parameter_bridge-3] Exception sending a multicast message:Network is unreachable
+[parameter_bridge-3] Exception sending a multicast message:Network is unreachable
+[parameter_bridge-3] Exception sending a multicast message:Network is unreachable
+[gazebo-1] [1;32m[Msg] [0m[1;32mDiffDrive subscribing to twist messages on [[0m[1;32m/cmd_vel[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mOdometryPublisher publishing odometry on [[0m[1;32m/ground_truth/odom[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mOdometryPublisher publishing odometry with covariance on [[0m[1;32m/model/vacuum_robot/odometry_with_covariance[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mOdometryPublisher publishing Pose_V (TF) on [[0m[1;32m/ground_truth/tf_gz[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mLoading plugin [[0m[1;32mgz-rendering-ogre2[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mServing scene information on [[0m[1;32m/world/warehouse_cross_aisles[0m[1;32m/[0m[1;32mscene/info[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mServing graph information on [[0m[1;32m/world/warehouse_cross_aisles[0m[1;32m/[0m[1;32mscene/graph[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mServing full state on [[0m[1;32m/world/warehouse_cross_aisles[0m[1;32m/[0m[1;32mstate[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mServing full state (async) on [[0m[1;32m/world/warehouse_cross_aisles[0m[1;32m/[0m[1;32mstate_async[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mPublishing scene information on [[0m[1;32m/world/warehouse_cross_aisles/scene/info[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mPublishing entity deletions on [[0m[1;32m/world/warehouse_cross_aisles/scene/deletion[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mPublishing state changes on [[0m[1;32m/world/warehouse_cross_aisles/state[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mPublishing pose messages on [[0m[1;32m/world/warehouse_cross_aisles[0m[1;32m/[0m[1;32mpose/info[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mPublishing dynamic pose messages on [[0m[1;32m/world/warehouse_cross_aisles[0m[1;32m/[0m[1;32mdynamic_pose/info[0m[1;32m][0m[1;32m[0m
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[parameter_bridge-3] Exception sending a multicast message:Network is unreachable
+[parameter_bridge-3] Exception sending a multicast message:Network is unreachable
+[parameter_bridge-3] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[parameter_bridge-3] Exception sending a multicast message:Network is unreachable
+[parameter_bridge-3] Exception sending a multicast message:Network is unreachable
+[parameter_bridge-3] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[parameter_bridge-3] Exception sending a multicast message:Network is unreachable
+[parameter_bridge-3] Exception sending a multicast message:Network is unreachable
+[parameter_bridge-3] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[gazebo-1] Exception sending a multicast message:Network is unreachable
+[controller_server-9] [INFO] [1791780188.224170962] [local_costmap.local_costmap]: Message Filter dropping message: frame 'laser' at time 12.309 for reason 'the timestamp on the message is earlier than all the data in the transform cache'
+[amcl-7] [INFO] [1791780188.228630963] [amcl]: Message Filter dropping message: frame 'laser' at time 12.492 for reason 'the timestamp on the message is earlier than all the data in the transform cache'
+[controller_server-9] [ERROR] [1791780188.288524848] [RPPPathHandler]: Exception in transformPose: Lookup would require extrapolation into the future.  Requested time 13.680000 but the latest data is at time 13.129000, when looking up transform from frame [odom] to frame [map]
+[controller_server-9] [ERROR] [1791780188.288638442] [controller_server]: Unable to transform robot pose into global plan's frame
+[controller_server-9] [WARN] [1791780188.288727638] [controller_server]: [follow_path] [ActionServer] Aborting handle.
+[amcl-7] [INFO] [1791780188.350885486] [amcl]: Message Filter dropping message: frame 'laser' at time 15.207 for reason 'the timestamp on the message is earlier than all the data in the transform cache'
+[execution_trial-5] [INFO] [1791780191.432831109] [execution_trial]: Execution trial finished: method=constrained, success=False, time=13.413s, output=/home/linh-pham/agv_nav2_research_ws_bao/results/pstmo_journal_repeatability_20261011/smachybrid/cross_to_picking_turn/cross_to_picking_turn_constrained_r04.json
+[INFO] [execution_trial-5]: process has finished cleanly [pid 58912]
+[INFO] [lifecycle_manager-19]: sending signal 'SIGINT' to process[lifecycle_manager-19]
+[INFO] [opennav_docking-18]: sending signal 'SIGINT' to process[opennav_docking-18]
+[INFO] [collision_monitor-17]: sending signal 'SIGINT' to process[collision_monitor-17]
+[INFO] [velocity_smoother-16]: sending signal 'SIGINT' to process[velocity_smoother-16]
+[INFO] [waypoint_follower-15]: sending signal 'SIGINT' to process[waypoint_follower-15]
+[INFO] [bt_navigator-14]: sending signal 'SIGINT' to process[bt_navigator-14]
+[INFO] [behavior_server-13]: sending signal 'SIGINT' to process[behavior_server-13]
+[INFO] [route_server-12]: sending signal 'SIGINT' to process[route_server-12]
+[INFO] [planner_server-11]: sending signal 'SIGINT' to process[planner_server-11]
+[INFO] [smoother_server-10]: sending signal 'SIGINT' to process[smoother_server-10]
+[INFO] [controller_server-9]: sending signal 'SIGINT' to process[controller_server-9]
+[INFO] [lifecycle_manager-8]: sending signal 'SIGINT' to process[lifecycle_manager-8]
+[INFO] [amcl-7]: sending signal 'SIGINT' to process[amcl-7]
+[INFO] [map_server-6]: sending signal 'SIGINT' to process[map_server-6]
+[INFO] [robot_state_publisher-4]: sending signal 'SIGINT' to process[robot_state_publisher-4]
+[INFO] [parameter_bridge-3]: sending signal 'SIGINT' to process[parameter_bridge-3]
+[INFO] [gazebo-1]: sending signal 'SIGINT' to process[gazebo-1]
+[lifecycle_manager-19] [INFO] [1791780191.668699191] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[lifecycle_manager-19] [INFO] [1791780191.668778773] [lifecycle_manager_navigation]: Running Nav2 LifecycleManager rcl preshutdown (lifecycle_manager_navigation)
+[lifecycle_manager-19] [INFO] [1791780191.668802120] [lifecycle_manager_navigation]: [34m[1mTerminating bond timer...[0m[0m
+[opennav_docking-18] [INFO] [1791780191.670785303] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[opennav_docking-18] [INFO] [1791780191.670879991] [docking_server]: Running Nav2 LifecycleNode rcl preshutdown (docking_server)
+[opennav_docking-18] [INFO] [1791780191.670931155] [docking_server]: Deactivating docking_server
+[collision_monitor-17] [INFO] [1791780191.673775236] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[collision_monitor-17] [INFO] [1791780191.673871390] [collision_monitor]: Running Nav2 LifecycleNode rcl preshutdown (collision_monitor)
+[collision_monitor-17] [INFO] [1791780191.673920746] [collision_monitor]: Deactivating
+[collision_monitor-17] [INFO] [1791780191.673946021] [collision_monitor]: Destroying bond (collision_monitor) to lifecycle manager.
+[velocity_smoother-16] [INFO] [1791780191.677110031] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[velocity_smoother-16] [INFO] [1791780191.677311836] [velocity_smoother]: Running Nav2 LifecycleNode rcl preshutdown (velocity_smoother)
+[velocity_smoother-16] [INFO] [1791780191.677366769] [velocity_smoother]: Deactivating
+[velocity_smoother-16] [INFO] [1791780191.677393875] [velocity_smoother]: Destroying bond (velocity_smoother) to lifecycle manager.
+[waypoint_follower-15] [INFO] [1791780191.679720825] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[waypoint_follower-15] [INFO] [1791780191.679833090] [waypoint_follower]: Running Nav2 LifecycleNode rcl preshutdown (waypoint_follower)
+[waypoint_follower-15] [INFO] [1791780191.679882980] [waypoint_follower]: Deactivating
+[waypoint_follower-15] [INFO] [1791780191.679908882] [waypoint_follower]: Destroying bond (waypoint_follower) to lifecycle manager.
+[opennav_docking-18] [INFO] [1791780191.679737327] [docking_server]: Destroying bond (docking_server) to lifecycle manager.
+[bt_navigator-14] [INFO] [1791780191.682160676] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[bt_navigator-14] [INFO] [1791780191.682265859] [bt_navigator]: Running Nav2 LifecycleNode rcl preshutdown (bt_navigator)
+[bt_navigator-14] [INFO] [1791780191.682315980] [bt_navigator]: Deactivating
+[bt_navigator-14] [INFO] [1791780191.682347213] [bt_navigator]: Destroying bond (bt_navigator) to lifecycle manager.
+[behavior_server-13] [INFO] [1791780191.684178000] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[behavior_server-13] [INFO] [1791780191.684301641] [behavior_server]: Running Nav2 LifecycleNode rcl preshutdown (behavior_server)
+[behavior_server-13] [INFO] [1791780191.684353146] [behavior_server]: Deactivating
+[behavior_server-13] [INFO] [1791780191.684382271] [behavior_server]: Destroying bond (behavior_server) to lifecycle manager.
+[route_server-12] [INFO] [1791780191.686486254] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[route_server-12] [INFO] [1791780191.686600657] [route_server]: Running Nav2 LifecycleNode rcl preshutdown (route_server)
+[route_server-12] [INFO] [1791780191.686656074] [route_server]: Deactivating
+[route_server-12] [INFO] [1791780191.686677901] [route_server]: Destroying bond (route_server) to lifecycle manager.
+[velocity_smoother-16] [INFO] [1791780191.687958186] [velocity_smoother]: Cleaning up
+[velocity_smoother-16] [INFO] [1791780191.688005883] [velocity_smoother]: Destroying bond (velocity_smoother) to lifecycle manager.
+[opennav_docking-18] [INFO] [1791780191.690069553] [docking_server]: Cleaning up docking_server
+[waypoint_follower-15] [INFO] [1791780191.690421483] [waypoint_follower]: Cleaning up
+[planner_server-11] [INFO] [1791780191.691294941] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[planner_server-11] [INFO] [1791780191.691358612] [planner_server]: Running Nav2 LifecycleNode rcl preshutdown (planner_server)
+[planner_server-11] [INFO] [1791780191.691401539] [planner_server]: Deactivating
+[planner_server-11] [INFO] [1791780191.691424286] [global_costmap.global_costmap]: Deactivating
+[smoother_server-10] [INFO] [1791780191.691455449] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[smoother_server-10] [INFO] [1791780191.691513924] [smoother_server]: Running Nav2 LifecycleNode rcl preshutdown (smoother_server)
+[smoother_server-10] [INFO] [1791780191.691566844] [smoother_server]: Deactivating
+[smoother_server-10] [INFO] [1791780191.691592576] [smoother_server]: Deactivating smoother: constrained of type nav2_constrained_smoother::ConstrainedSmoother
+[smoother_server-10] [INFO] [1791780191.691601524] [smoother_server]: Destroying bond (smoother_server) to lifecycle manager.
+[bt_navigator-14] [INFO] [1791780191.694488475] [bt_navigator]: Cleaning up
+[behavior_server-13] [INFO] [1791780191.695166574] [behavior_server]: Cleaning up
+[controller_server-9] [INFO] [1791780191.695288484] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[controller_server-9] [INFO] [1791780191.695347708] [controller_server]: Running Nav2 LifecycleNode rcl preshutdown (controller_server)
+[controller_server-9] [INFO] [1791780191.695390098] [controller_server]: Deactivating
+[controller_server-9] [INFO] [1791780191.695406100] [controller_server]: Deactivating controller: FollowPath of type regulated_pure_pursuit_controller::RegulatedPurePursuitController
+[controller_server-9] [INFO] [1791780191.695421315] [local_costmap.local_costmap]: Deactivating
+[lifecycle_manager-8] [INFO] [1791780191.696243682] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[lifecycle_manager-8] [INFO] [1791780191.696350769] [lifecycle_manager_localization]: Running Nav2 LifecycleManager rcl preshutdown (lifecycle_manager_localization)
+[lifecycle_manager-8] [INFO] [1791780191.696381152] [lifecycle_manager_localization]: [34m[1mTerminating bond timer...[0m[0m
+[collision_monitor-17] [WARN] [1791780191.696947038] [LifecyclePublisher]: Trying to publish message on the topic '/cmd_vel', but the publisher is not activated
+[route_server-12] [INFO] [1791780191.697651772] [route_server]: Cleaning up
+[waypoint_follower-15] [INFO] [1791780191.698826865] [waypoint_follower]: Destroying bond (waypoint_follower) to lifecycle manager.
+[amcl-7] [INFO] [1791780191.699673725] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[amcl-7] [INFO] [1791780191.699769862] [amcl]: Running Nav2 LifecycleNode rcl preshutdown (amcl)
+[amcl-7] [INFO] [1791780191.699818054] [amcl]: Deactivating
+[amcl-7] [INFO] [1791780191.699836041] [amcl]: Destroying bond (amcl) to lifecycle manager.
+[smoother_server-10] [INFO] [1791780191.701925977] [smoother_server]: Cleaning up
+[smoother_server-10] [INFO] [1791780191.702083843] [smoother_server]: Cleaning up smoother: constrained of type nav2_constrained_smoother::ConstrainedSmoother
+[map_server-6] [INFO] [1791780191.702246065] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[map_server-6] [INFO] [1791780191.702341215] [map_server]: Running Nav2 LifecycleNode rcl preshutdown (map_server)
+[map_server-6] [INFO] [1791780191.702388514] [map_server]: Deactivating
+[map_server-6] [INFO] [1791780191.702401659] [map_server]: Destroying bond (map_server) to lifecycle manager.
+[collision_monitor-17] [INFO] [1791780191.705032380] [collision_monitor]: Cleaning up
+[collision_monitor-17] [INFO] [1791780191.705067342] [collision_monitor]: [FootprintApproach]: Destroying Polygon
+[collision_monitor-17] [INFO] [1791780191.705078215] [collision_monitor]: [scan]: Destroying Scan
+[robot_state_publisher-4] [INFO] [1791780191.705956199] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[velocity_smoother-16] [INFO] [1791780191.707258201] [velocity_smoother]: Destroying
+[planner_server-11] [INFO] [1791780191.708388798] [planner_server]: Deactivating plugin Smac2D of type SmacPlanner2D
+[planner_server-11] [INFO] [1791780191.708431197] [planner_server]: Deactivating plugin ThetaStar of type nav2_theta_star_planner
+[planner_server-11] [INFO] [1791780191.708446436] [planner_server]: Deactivating plugin SmacHybrid of type SmacPlannerHybrid
+[planner_server-11] [INFO] [1791780191.708458862] [planner_server]: Deactivating plugin NavFnDijkstra of type NavfnPlanner
+[planner_server-11] [INFO] [1791780191.708468618] [planner_server]: Deactivating plugin NavFnAStar of type NavfnPlanner
+[planner_server-11] [INFO] [1791780191.708483033] [planner_server]: Destroying bond (planner_server) to lifecycle manager.
+[parameter_bridge-3] [INFO] [1791780191.709366247] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[amcl-7] [INFO] [1791780191.710443543] [amcl]: Cleaning up
+[map_server-6] [INFO] [1791780191.712661613] [map_server]: Cleaning up
+[map_server-6] [INFO] [1791780191.712804066] [map_server]: Destroying bond (map_server) to lifecycle manager.
+[planner_server-11] [INFO] [1791780191.718899712] [planner_server]: Cleaning up
+[collision_monitor-17] [INFO] [1791780191.719933856] [collision_monitor]: Destroying bond (collision_monitor) to lifecycle manager.
+[amcl-7] [INFO] [1791780191.726395337] [amcl]: Destroying bond (amcl) to lifecycle manager.
+[map_server-6] [INFO] [1791780191.727659858] [map_server]: Destroying
+[behavior_server-13] [INFO] [1791780191.729212494] [behavior_server]: Destroying bond (behavior_server) to lifecycle manager.
+[smoother_server-10] [INFO] [1791780191.731606297] [smoother_server]: Destroying bond (smoother_server) to lifecycle manager.
+[opennav_docking-18] [INFO] [1791780191.735402750] [docking_server]: Destroying bond (docking_server) to lifecycle manager.
+[collision_monitor-17] [INFO] [1791780191.738076484] [collision_monitor]: Destroying
+[lifecycle_manager-8] [INFO] [1791780191.742392172] [lifecycle_manager_localization]: Destroying lifecycle_manager_localization
+[smoother_server-10] [INFO] [1791780191.742787205] [smoother_server]: Destroying
+[waypoint_follower-15] [INFO] [1791780191.744904255] [waypoint_follower]: Destroying
+[planner_server-11] [INFO] [1791780191.743765561] [global_costmap.global_costmap]: Cleaning up
+[amcl-7] [INFO] [1791780191.745827120] [amcl]: Destroying
+[route_server-12] [INFO] [1791780191.747524649] [route_server]: Destroying bond (route_server) to lifecycle manager.
+[route_server-12] [INFO] [1791780191.760220699] [route_server]: Destroying
+[planner_server-11] [INFO] [1791780191.764110553] [planner_server]: Cleaning up plugin Smac2D of type SmacPlanner2D
+[planner_server-11] [INFO] [1791780191.764301960] [planner_server]: CleaningUp plugin ThetaStar of type nav2_theta_star_planner
+[planner_server-11] [INFO] [1791780191.764478177] [planner_server]: Cleaning up plugin SmacHybrid of type SmacPlannerHybrid
+[planner_server-11] [INFO] [1791780191.764873180] [planner_server]: Cleaning up plugin NavFnDijkstra of type NavfnPlanner
+[planner_server-11] [INFO] [1791780191.764936274] [planner_server]: Cleaning up plugin NavFnAStar of type NavfnPlanner
+[planner_server-11] [INFO] [1791780191.764957205] [planner_server]: Destroying plugin Smac2D of type SmacPlanner2D
+[planner_server-11] [INFO] [1791780191.764972712] [planner_server]: Destroying plugin SmacHybrid of type SmacPlannerHybrid
+[planner_server-11] [INFO] [1791780191.764984488] [planner_server]: Destroying plugin NavFnDijkstra of type NavfnPlanner
+[planner_server-11] [INFO] [1791780191.764989431] [planner_server]: Destroying plugin NavFnAStar of type NavfnPlanner
+[opennav_docking-18] [INFO] [1791780191.765959497] [docking_server]: Destroying
+[behavior_server-13] [INFO] [1791780191.786657160] [behavior_server]: Destroying
+[planner_server-11] [INFO] [1791780191.788393419] [planner_server]: Destroying bond (planner_server) to lifecycle manager.
+[planner_server-11] [INFO] [1791780191.794172218] [global_costmap.global_costmap]: Destroying
+[planner_server-11] [INFO] [1791780191.804542356] [planner_server]: Destroying
+[bt_navigator-14] [INFO] [1791780191.820586786] [bt_navigator]: Completed Cleaning up
+[bt_navigator-14] [INFO] [1791780191.820641161] [bt_navigator]: Destroying bond (bt_navigator) to lifecycle manager.
+[bt_navigator-14] [INFO] [1791780191.824152993] [bt_navigator]: Destroying
+[INFO] [parameter_bridge-3]: process has finished cleanly [pid 58910]
+[INFO] [velocity_smoother-16]: process has finished cleanly [pid 59221]
+[lifecycle_manager-19] [INFO] [1791780191.869777289] [lifecycle_manager_navigation]: Destroying lifecycle_manager_navigation
+[controller_server-9] [INFO] [1791780191.874259153] [controller_server]: Destroying bond (controller_server) to lifecycle manager.
+[INFO] [amcl-7]: process has finished cleanly [pid 59210]
+[INFO] [robot_state_publisher-4]: process has finished cleanly [pid 58911]
+[controller_server-9] [INFO] [1791780191.884437191] [controller_server]: Cleaning up
+[controller_server-9] [INFO] [1791780191.884466974] [controller_server]: Cleaning up controller: FollowPath of type regulated_pure_pursuit_controller::RegulatedPurePursuitController
+[controller_server-9] [INFO] [1791780191.884506982] [local_costmap.local_costmap]: Cleaning up
+[INFO] [collision_monitor-17]: process has finished cleanly [pid 59222]
+[INFO] [map_server-6]: process has finished cleanly [pid 59209]
+[INFO] [smoother_server-10]: process has finished cleanly [pid 59213]
+[controller_server-9] [INFO] [1791780191.893974964] [controller_server]: Destroying bond (controller_server) to lifecycle manager.
+[INFO] [lifecycle_manager-8]: process has finished cleanly [pid 59211]
+[controller_server-9] [INFO] [1791780191.896117045] [local_costmap.local_costmap]: Destroying
+[INFO] [route_server-12]: process has finished cleanly [pid 59215]
+[controller_server-9] [INFO] [1791780191.899115662] [controller_server]: Destroying
+[INFO] [waypoint_follower-15]: process has finished cleanly [pid 59218]
+[INFO] [opennav_docking-18]: process has finished cleanly [pid 59225]
+[INFO] [behavior_server-13]: process has finished cleanly [pid 59216]
+[INFO] [planner_server-11]: process has finished cleanly [pid 59214]
+[INFO] [bt_navigator-14]: process has finished cleanly [pid 59217]
+[INFO] [lifecycle_manager-19]: process has finished cleanly [pid 59232]
+[INFO] [controller_server-9]: process has finished cleanly [pid 59212]
+[ERROR] [gazebo-1]: process[gazebo-1] failed to terminate '5' seconds after receiving 'SIGINT', escalating to 'SIGTERM'
+[INFO] [gazebo-1]: sending signal 'SIGTERM' to process[gazebo-1]
+[ERROR] [gazebo-1]: process has died [pid 58907, exit code -15, cmd 'ruby /opt/ros/jazzy/opt/gz_tools_vendor/bin/gz sim -r -s -v 3 --initial-sim-time 0.0 /home/linh-pham/agv_nav2_research_ws_bao/install/vacuum_robot_gazebo/share/vacuum_robot_gazebo/worlds/warehouse_cross_aisles.sdf --force-version 8'].

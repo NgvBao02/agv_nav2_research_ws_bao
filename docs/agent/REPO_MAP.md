@@ -28,17 +28,18 @@ nó trên toàn `src/`; mở thêm phạm vi khi kết quả vượt ra ngoài p
 
 ## Nguồn sự thật theo chủ đề
 
-| Chủ đề | Nguồn ưu tiên |
-| --- | --- |
-| Hình học, tìm ứng viên, G², DP, time parameterization | `src/adaptive_pivot_g2/include/` và `src/adaptive_pivot_g2/src/` |
-| Hành vi plugin PSTMO/Hybrid | `src/adaptive_pivot_g2_nav2/` |
-| Tham số Nav2 đang chạy | `src/vacuum_robot_gazebo/config/nav2_params.yaml` |
-| Planner/smoother/environment hỗ trợ | catalog trong `src/adaptive_pivot_g2_rviz/include/` và `nav2_params.yaml` |
-| Metric và giao thức benchmark | `src/adaptive_pivot_g2_benchmark/` |
-| Robot mô phỏng, sensor, bridge | `src/vacuum_robot_gazebo/models/`, `urdf/`, `config/bridge.yaml` |
-| World/map | `src/vacuum_robot_gazebo/worlds/` và `maps/` cùng basename |
-| Kết quả dùng để báo cáo | `results/README.md`, rồi README/aggregate của đúng cohort |
-| Cách dựng báo cáo | README hồ sơ tương ứng và script trong `tools/` |
+| Chủ đề                                                   | Nguồn ưu tiên                                                                                                                               |
+| ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| Hình học, tìm ứng viên, G², DP, time parameterization | `src/adaptive_pivot_g2/include/` và `src/adaptive_pivot_g2/src/`                                                                          |
+| Hành vi plugin PSTMO/Hybrid                                | `src/adaptive_pivot_g2_nav2/`                                                                                                                |
+| Tham số Nav2 đang chạy                                   | `src/vacuum_robot_gazebo/config/nav2_params.yaml`                                                                                            |
+| Planner/smoother/environment hỗ trợ                       | catalog trong`src/adaptive_pivot_g2_rviz/include/` và `nav2_params.yaml`                                                                  |
+| Metric và giao thức benchmark                             | `src/adaptive_pivot_g2_benchmark/`                                                                                                           |
+| Robot mô phỏng, sensor, bridge                            | `src/vacuum_robot_gazebo/models/`, `urdf/`, `config/bridge.yaml`                                                                         |
+| World/map                                                   | `src/vacuum_robot_gazebo/worlds/` và `maps/` cùng basename                                                                               |
+| Kết quả dùng để báo cáo                              | `results/README.md`, rồi README/aggregate của đúng cohort                                                                                |
+| Cách dựng báo cáo                                       | README hồ sơ tương ứng và script trong`tools/`                                                                                         |
+| Cohort journal lặp                                         | `tools/run_journal_repeatability_study.py`, `tools/analyze_journal_repeatability.py` và `results/pstmo_journal_repeatability_20261011/` |
 
 ## Luồng chạy chính
 

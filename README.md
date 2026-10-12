@@ -176,7 +176,28 @@ ros2 run adaptive_pivot_g2_benchmark execution_matrix -- \
 
 `--resume` chỉ tái sử dụng trial thành công có đúng planner, method, repetition
 và fingerprint cấu hình. Lỗi khởi tạo hạ tầng được retry riêng; timeout hoặc
-va chạm của thuật toán không bị che bằng retry.
+va chạm của thuật toán không bị che bằng retry. Tùy chọn mức thấp
+`--resume-preserve-failures` tái sử dụng cả trial thất bại đã chốt; nó chỉ dành
+cho workflow đã lưu riêng lỗi hạ tầng cần chạy lại. Với nghiên cứu năm tuyến,
+dùng `tools/run_cross_aisle_study.py --retry-infrastructure-only` để workflow
+tự lưu attempt cũ và không chạy lại thất bại thuật toán.
+
+Cohort lặp tập trung cho bài journal chạy PSTMO và Constrained năm lần trên đủ
+5 tuyến × 5 planner, sau đó phân tích theo 25 khối tuyến–planner:
+
+```bash
+python3 tools/run_journal_repeatability_study.py \
+  --output-root results/pstmo_journal_repeatability_20261011 \
+  --repetitions 5 --workers 4
+PYTHONNOUSERSITE=1 python3 tools/analyze_journal_repeatability.py \
+  --cohort results/pstmo_journal_repeatability_20261011
+```
+
+Đây là phép lặp thực thi với đầu vào cố định, không phải multi-seed. Bốn worker
+dùng các ROS domain/Gazebo partition riêng; thời gian xử lý CPU có thể chịu ảnh
+hưởng tải song song. Nếu tiến trình điều phối bị ngắt, chạy lại cùng lệnh với
+`--resume`: script chỉ tái sử dụng trial đã hoàn tất và lưu attempt chưa được
+runner chốt vào `interrupted_attempts/` trước khi chạy phần còn thiếu.
 
 ## Build, test và kiểm tra URDF
 
@@ -209,16 +230,19 @@ ros2 launch vacuum_robot_gazebo check_urdf.launch.py
 - Hồ sơ lý thuyết 62 trang:
   [DOCX](docs/CO_SO_LY_THUYET_TOAN_DIEN_DU_AN_AGV_PSTMO.docx) và
   [ghi chú tái dựng](docs/theory_report/README.md).
-- Nghiên cứu 125 lượt trên năm tuyến kho giao cắt:
+- Nghiên cứu năm tuyến kho giao cắt, gồm ma trận chính 125 lượt và cohort lặp
+  PSTMO–Constrained 250 lượt:
   [PDF](docs/PSTMO_KHO_GIAO_CAT_5_QUY_DAO.pdf) và
   [hồ sơ dữ liệu](docs/warehouse_cross_aisles_5_routes/README.md).
+- Dàn ý journal đã tái cấu trúc theo RQ, phương pháp, thống kê và threats to
+  validity: [`Viet_bao/journal/dan_y/ver2/`](Viet_bao/journal/dan_y/ver2/).
 - Hồ sơ mô hình 3D và mô phỏng robot:
   [PDF](docs/BAO_CAO_MO_HINH_3D_STEP_URDF_GAZEBO_RVIZ2.pdf) và
   [hồ sơ kiểm chứng](docs/robot_3d_report/README.md).
 - [Thuật ngữ Anh–Việt (PDF)](docs/PSTMO_thuat_ngu_Anh_Viet.pdf),
   [slide PSTMO](<docs/slide PSTMO.pptx>),
-  [bài báo REV-ECIT 2026](<bao_Rev_ecit_2026/ver2/REV ECIT2026 PSTMO.pdf>) và
-  [bài báo ICEEIS 2026](final_bao_ICEEIS/final/ieee/ICEEIS2026_PSTMO_final.pdf).
+  [bài báo REV-ECIT 2026](<Viet_bao/bao_Rev_ecit_2026/ver2/REV ECIT2026 PSTMO.pdf>) và
+  [bài báo ICEEIS 2026](Viet_bao/final_bao_ICEEIS/final/ieee/ICEEIS2026_PSTMO_final.pdf).
 - [`results/README.md`](results/README.md) phân loại dataset hiện hành, snapshot
   lịch sử, ablation và pilot; [`REFERENCES/`](REFERENCES/) chứa tài liệu tham
   khảo được lưu cùng repo.

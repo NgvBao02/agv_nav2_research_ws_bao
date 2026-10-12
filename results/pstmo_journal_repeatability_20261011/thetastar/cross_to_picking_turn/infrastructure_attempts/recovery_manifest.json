@@ -1,0 +1,32 @@
+{
+  "policy": "Only setup/infrastructure failures are archived and rerun; matching finalized algorithm failures are preserved.",
+  "recoveries": [
+    {
+      "archived_at_utc": "2026-10-12T04:48:45.203902+00:00",
+      "artifacts": [
+        {
+          "archive_path": "results/pstmo_journal_repeatability_20261011/thetastar/cross_to_picking_turn/infrastructure_attempts/cross_to_picking_turn_pstmo_r02__infrastructure_attempt_01.json",
+          "bytes": 863,
+          "kind": "trial_json",
+          "original_path": "results/pstmo_journal_repeatability_20261011/thetastar/cross_to_picking_turn/cross_to_picking_turn_pstmo_r02.json",
+          "sha256": "0ae6708eb602a275cd27bffb1b78d0642d5c9ba180e03661861dd7130eb063bf"
+        },
+        {
+          "archive_path": "results/pstmo_journal_repeatability_20261011/thetastar/cross_to_picking_turn/infrastructure_attempts/cross_to_picking_turn_pstmo_r02__infrastructure_attempt_01.log",
+          "bytes": 63075,
+          "kind": "trial_log",
+          "original_path": "results/pstmo_journal_repeatability_20261011/thetastar/cross_to_picking_turn/cross_to_picking_turn_pstmo_r02.log",
+          "sha256": "b5c5532c641e76df516175ebe212830b1360d0083217a94e45bf163249423172"
+        }
+      ],
+      "prior_infrastructure_attempt_count": 1,
+      "reason": "RuntimeError: navigation lifecycle status service is unavailable",
+      "trial": {
+        "method": "pstmo",
+        "planner": "ThetaStar",
+        "repetition": 2,
+        "scenario": "cross_to_picking_turn"
+      }
+    }
+  ]
+}

@@ -36,6 +36,7 @@ from adaptive_pivot_g2_benchmark.execution_matrix import (
     _arguments,
     _compact_summary_record,
     _is_infrastructure_failure,
+    _matching_finalized_record,
     _matching_successful_record,
     _process_group_exists,
     _run_launch,
@@ -685,12 +686,44 @@ class TestPathMetrics(unittest.TestCase):
             'success': False,
             'error': 'trial did not produce a result file',
         }))
+        self.assertTrue(_is_infrastructure_failure({
+            'success': False,
+            'error': (
+                'RuntimeError: navigation lifecycle status service is '
+                'unavailable'
+            ),
+        }))
         self.assertFalse(_is_infrastructure_failure({
             'success': False,
             'error': 'RuntimeError: FollowPath action timed out',
             'controller_status': 2,
         }))
         self.assertFalse(_is_infrastructure_failure({'success': True}))
+
+    def test_execution_matrix_can_preserve_matching_finalized_failure(self):
+        with tempfile.TemporaryDirectory() as directory:
+            result_path = FilePath(directory) / 'trial.json'
+            result_path.write_text(json.dumps({
+                'scenario': 'west_east_center',
+                'planner': 'ThetaStar',
+                'method': 'pstmo',
+                'success': False,
+                'error': 'FollowPath action aborted',
+                'repetition': 2,
+                'configuration_sha256': 'config-a',
+            }), encoding='utf-8')
+
+            record = _matching_finalized_record(
+                result_path,
+                'west_east_center',
+                'ThetaStar',
+                'pstmo',
+                2,
+                'config-a',
+            )
+            self.assertIsNotNone(record)
+            self.assertFalse(record['success'])
+            self.assertTrue(record['resumed'])
 
     def test_execution_matrix_summary_does_not_duplicate_high_rate_traces(self):
         compact = _compact_summary_record({
