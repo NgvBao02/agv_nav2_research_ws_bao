@@ -236,6 +236,9 @@ ros2 launch vacuum_robot_gazebo check_urdf.launch.py
   [hồ sơ dữ liệu](docs/warehouse_cross_aisles_5_routes/README.md).
 - Dàn ý journal đã tái cấu trúc theo RQ, phương pháp, thống kê và threats to
   validity: [`Viet_bao/journal/dan_y/ver2/`](Viet_bao/journal/dan_y/ver2/).
+- Bản viết đầy đủ phần II–III journal PSTMO, Word hai cột theo mẫu IEEE A4
+  có sẵn, kèm hình dữ liệu và kiểm tra bố cục:
+  [`Viet_bao/journal/ver3/`](Viet_bao/journal/ver3/README.md).
 - Hồ sơ mô hình 3D và mô phỏng robot:
   [PDF](docs/BAO_CAO_MO_HINH_3D_STEP_URDF_GAZEBO_RVIZ2.pdf) và
   [hồ sơ kiểm chứng](docs/robot_3d_report/README.md).
