@@ -242,6 +242,12 @@ ros2 launch vacuum_robot_gazebo check_urdf.launch.py
 - Hồ sơ mô hình 3D và mô phỏng robot:
   [PDF](docs/BAO_CAO_MO_HINH_3D_STEP_URDF_GAZEBO_RVIZ2.pdf) và
   [hồ sơ kiểm chứng](docs/robot_3d_report/README.md).
+- Bản REV-ECIT 2026 đã biên tập lại theo trọng tâm đánh giá thực thi, kèm
+  hình vẽ lại và hồ sơ đối chiếu 175 lượt:
+  [`Viet_bao/bao_Rev_ecit_2026/ver4/`](Viet_bao/bao_Rev_ecit_2026/ver4/README.md).
+- Bản REV-ECIT 2026 ver5 bổ sung hình Bézier bậc năm, so sánh đủ bốn đối
+  chứng và phân tích năm ca thất bại, với bản Word/PDF sáu trang:
+  [`Viet_bao/bao_Rev_ecit_2026/ver5/`](Viet_bao/bao_Rev_ecit_2026/ver5/README.md).
 - [Thuật ngữ Anh–Việt (PDF)](docs/PSTMO_thuat_ngu_Anh_Viet.pdf),
   [slide PSTMO](<docs/slide PSTMO.pptx>),
   [bài báo REV-ECIT 2026](<Viet_bao/bao_Rev_ecit_2026/ver2/REV ECIT2026 PSTMO.pdf>) và

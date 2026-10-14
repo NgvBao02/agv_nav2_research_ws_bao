@@ -123,7 +123,12 @@ def setup_plots():
 
 def savefig(fig, name, description, sources=None):
     fig.savefig(FIG / f'{name}.png', dpi=450)
-    fig.savefig(FIG / f'{name}.svg')
+    svg_path=FIG / f'{name}.svg'
+    fig.savefig(svg_path)
+    # Matplotlib emits spaces before line endings inside path data. Normalize
+    # generated SVGs so repository whitespace checks remain deterministic.
+    svg_path.write_text('\n'.join(line.rstrip() for line in
+        svg_path.read_text(encoding='utf-8').splitlines())+'\n',encoding='utf-8')
     FIGURES[name] = {'description': description, 'width_in': fig.get_figwidth(),
                      'height_in': fig.get_figheight(), 'sources': sources or []}
     plt.close(fig)
@@ -152,11 +157,11 @@ def figures():
     setup_plots()
     fig, ax = plt.subplots(figsize=(COL, 2.28))
     ax.axis('off'); ax.set(xlim=(0, 10), ylim=(0, 10))
-    labels = ['Raw path + costmap + footprint', 'Conditioning; phát hiện góc',
-              'Ứng viên Bézier G² / pivot an toàn',
+    labels = ['Đường vào + bản đồ chi phí + vùng bao', 'Tiền xử lý; phát hiện góc',
+              'Ứng viên Bézier G² / quay tại chỗ an toàn',
               'Lọc động học và thời gian; chấm điểm',
-              'DP chọn chuỗi tương thích; kiểm tra cuối',
-              'Path → RPP → robot; ghi ground truth']
+              'Quy hoạch động; kiểm tra cuối',
+              'Đường tham chiếu → RPP → robot; ghi quỹ đạo thực']
     for i, label in enumerate(labels):
         y = 9.35 - i * 1.65
         ax.add_patch(Rectangle((.12, y-.57), 9.75, 1.14, fill=False, lw=.7))
@@ -246,7 +251,7 @@ def figures():
         axs[1].set_xticks(x,SHORT,rotation=15,ha='right')
         axs[0].legend(ncol=3,loc='lower center',bbox_to_anchor=(.5,1.01),frameon=False,columnspacing=.7,handlelength=1.1)
         fig.subplots_adjust(left=.17,right=.98,bottom=.15,top=.86,hspace=.20)
-        savefig(fig,f'r{ri:02}_metrics',f'R{ri:02}, toàn bộ 25 trial; cột gạch/× là trial không đạt và không được gộp vào trung bình thành công.')
+        savefig(fig,f'r{ri:02}_metrics',f'R{ri:02}, toàn bộ 25 lượt; cột gạch/× là lượt không đạt và không được gộp vào trung bình thành công.')
 
     fig,axs=plt.subplots(2,1,figsize=(COL,3.75))
     for ax,key,label in [(axs[0],'execution_time_s','(a) Δ thời gian (s)'),
@@ -273,20 +278,20 @@ def figures():
     for m,color in [('constrained',COLORS[3]),('pstmo',COLORS[4])]:
         j=DATA[route,'ThetaStar',m];plan=np.array(j['selected_path_xy']);gt=np.array(j['ground_truth_state_trace'])
         label='Constrained' if m=='constrained' else 'PSTMO'
-        axs[0].plot(plan[:,0],plan[:,1],'--',color=color,lw=1.0,label=label+' path')
-        axs[0].plot(gt[:,1],gt[:,2],'-',color=color,lw=1.0,label=label+' GT')
+        axs[0].plot(plan[:,0],plan[:,1],'--',color=color,lw=1.0,label=label+' tham chiếu')
+        axs[0].plot(gt[:,1],gt[:,2],'-',color=color,lw=1.0,label=label+' thực')
         axs[1].plot(gt[:,0],gt[:,5],color=color,lw=.65,label=label)
     axs[0].set(xlim=(center[0]-1.15,center[0]+1.15),ylim=(center[1]-.68,center[1]+.68))
     axs[0].legend(loc='lower center',bbox_to_anchor=(.5,1.01),ncol=2,frameon=False,fontsize=7.5,columnspacing=.7)
-    axs[1].set(xlabel='Thời gian mô phỏng tương đối (s)',ylabel='ω ground truth (rad/s)')
+    axs[1].set(xlabel='Thời gian mô phỏng tương đối (s)',ylabel='ω thực (rad/s)')
     axs[1].axhline(0,color='gray',lw=.5);axs[1].grid(alpha=.25)
     fig.subplots_adjust(left=.20,right=.98,bottom=.13,top=.86,hspace=.48)
-    savefig(fig,'execution_trace','R02/ThetaStar, ma trận khảo sát: path và trace ground truth gốc; không lọc đường ω(t).',
+    savefig(fig,'execution_trace','R02/ThetaStar, ma trận khảo sát: đường tham chiếu và quỹ đạo thực; không lọc đường ω(t).',
             [next(r['source'] for r in ROWS if (r['route'],r['planner'],r['method'])==(route,'ThetaStar',m)) for m in ['constrained','pstmo']])
 
     fig,axs=plt.subplots(3,1,figsize=(COL,4.0))
     for ax,key,scale,lab in zip(axs,['execution_time_s','tracking_rmse_m','executed_curvature_energy_1pm'],[1,1000,1],
-                              ['Δ thời gian (s)','Δ RMSE (mm)',r'Δ E thực thi ($m^{-1}$)']):
+                              ['Δ thời gian (s)','Δ RMSE (mm)',r'Δ $E_{\kappa,exec}$ ($m^{-1}$)']):
         subset=[b for b in BLOCKS if b['metric']==key]
         order={(r,p):i*5+j for i,r in enumerate(ROUTES) for j,p in enumerate(PLANNERS)}
         subset.sort(key=lambda b:order[b['scenario'],b['planner']])
@@ -298,7 +303,7 @@ def figures():
         ax.set_xticks([2,7,12,17,22],[f'R{i:02}' for i in range(1,6)])
         ax.set_ylabel(lab);ax.grid(axis='y',alpha=.25)
     fig.subplots_adjust(left=.21,right=.98,bottom=.07,top=.98,hspace=.33)
-    savefig(fig,'repeat_blocks','25 hiệu ứng trung bình trong khối; thứ tự planner A*, Dijkstra, Theta*, Smac2D, Hybrid; không phải 125 quan sát độc lập.',
+    savefig(fig,'repeat_blocks','25 hiệu ứng trung bình trong khối; thứ tự bộ lập kế hoạch A*, Dijkstra, Theta*, Smac2D, Hybrid; không phải 125 quan sát độc lập.',
             ['results/pstmo_journal_repeatability_20261011/analysis/block_differences.csv'])
 
     fig,axs=plt.subplots(2,1,figsize=(COL,3.7))
@@ -311,11 +316,11 @@ def figures():
         axs[0].scatter(xs,ys,s=23,color=routecols[ri],marker=['o','s','^','D','v'][ri],label=f'R{ri+1:02}')
         axs[1].scatter(ts,es,s=23,color=routecols[ri],marker=['o','s','^','D','v'][ri])
     for ax in axs:ax.axhline(0,color='gray',lw=.6);ax.axvline(0,color='gray',lw=.6);ax.grid(alpha=.2)
-    axs[0].set(xlabel='Δ khoảng hở nhỏ nhất (cm)',ylabel=r'Δ E đường lập ($m^{-1}$)')
+    axs[0].set(xlabel='Δ khoảng hở nhỏ nhất (cm)',ylabel=r'Δ $E_{\kappa,ref}$ ($m^{-1}$)')
     axs[1].set(xlabel='Δ thời gian (s)',ylabel='Δ sai số đích (mm)')
     axs[0].legend(ncol=5,loc='lower center',bbox_to_anchor=(.5,1.01),frameon=False,columnspacing=.45,handletextpad=.2)
     fig.subplots_adjust(left=.22,right=.98,bottom=.13,top=.89,hspace=.49)
-    savefig(fig,'tradeoffs','Mỗi điểm là một khối route–planner của cohort lặp; chênh lệch PSTMO − Constrained.')
+    savefig(fig,'tradeoffs','Mỗi điểm là một khối tuyến–bộ lập kế hoạch của bộ lặp; chênh lệch PSTMO − Constrained.')
 
     fig,ax=plt.subplots(figsize=(COL,2.6))
     for mi,m in enumerate(['constrained','pstmo']):
@@ -328,43 +333,43 @@ def figures():
     ax.set_yscale('log');ax.set_xticks([0,1],['Constrained','PSTMO']);ax.set_ylabel('Sai số vị trí cuối (m, log)')
     ax.legend(frameon=False,loc='upper center',fontsize=8);ax.grid(axis='y',alpha=.3)
     fig.subplots_adjust(left=.2,right=.98,bottom=.14,top=.98)
-    savefig(fig,'endpoints','Toàn bộ 250 trial; điểm nằm dưới ngưỡng vị trí vẫn phải đạt action, yaw và điều kiện dừng.')
+    savefig(fig,'endpoints','Toàn bộ 250 lượt; điểm nằm dưới ngưỡng vị trí vẫn phải thỏa điều kiện tác vụ, hướng và trạng thái dừng.')
 
 
 def tables():
     TABLES['params']=(['Thông số PSTMO','Giá trị'],[
-        ['Trim d / α thô','0,02–0,80 m / 0,1:0,1:0,5'],
-        ['Bước kiểm tra / xuất path','0,02 / 0,05 m'],
+        ['Khoảng cắt d / α thô','0,02–0,80 m / 0,1:0,1:0,5'],
+        ['Bước kiểm tra / xuất đường','0,02 / 0,05 m'],
         ['Ngưỡng góc / biên đoạn','5° / 0,05 m (tự suy ra)'],
-        ['δT / time slack','0,15 / 10,0 s'],
-        ['wcost / wω / wE','0,15 / 0,10 / 0,75'],
-        ['Escale','1 m⁻¹'],
-        ['vmax / ωmax','0,30 m/s / 0,80 rad/s'],
-        ['vwheel,max / alat,max','0,36 m/s / 0,18 m/s²'],
-        ['a+ / a− / αω,max','0,35 / 0,45 m/s² / 1,20 rad/s²'],
-        ['Chế độ tiền xử lý','condition_only'],
-        ['Chế độ tìm ứng viên','hierarchical_alpha_two_trim']], [1.65,1.73])
+        ['Biên lợi thế / cửa sổ thời gian','0,15 / 10,0 s'],
+        ['Trọng số chi phí / góc / độ cong','0,15 / 0,10 / 0,75'],
+        ['Hệ số chuẩn hóa độ cong','1 m⁻¹'],
+        ['Vận tốc thẳng / góc cực đại','0,30 m/s / 0,80 rad/s'],
+        ['Vận tốc bánh / gia tốc ngang cực đại','0,36 m/s / 0,18 m/s²'],
+        ['Gia tốc / giảm tốc / gia tốc góc','0,35 / 0,45 m/s² / 1,20 rad/s²'],
+        ['Tiền xử lý','Điều hòa dữ liệu, không rút gọn đường'],
+        ['Tìm ứng viên','Phân cấp theo α với hai khoảng cắt']], [1.82,1.56])
     TABLES['robot']=(['Đại lượng','Giá trị'],[
         ['Hệ phần mềm','ROS 2 Jazzy, Nav2, Gazebo'],
-        ['Footprint điều hướng','0,44 × 0,34 m'],
+        ['Vùng bao điều hướng','0,44 × 0,34 m'],
         ['Bán kính bánh dẫn động','0,0425 m'],
-        ['Track trong PSTMO','0,2548 m'],
-        ['Track hiệu dụng plugin mô phỏng','0,2834 m'],
+        ['Khoảng cách bánh trong PSTMO','0,2548 m'],
+        ['Khoảng cách bánh hiệu dụng trong mô phỏng','0,2834 m'],
         ['Độ phân giải bản đồ','0,05 m/ô'],
-        ['RPP: tần số / lookahead','20 Hz / 0,50 m'],
+        ['RPP: tần số / khoảng nhìn trước','20 Hz / 0,50 m'],
         ['Vận tốc đặt / xoay hướng','0,30 m/s / 0,25 rad/s'],
-        ['Nav2 goal checker: xy / yaw','0,06 m / 0,10 rad'],
-        ['Hậu kiểm: xy / yaw','0,10 m / 0,15 rad'],
+        ['Bộ kiểm tra đích Nav2: vị trí / hướng','0,06 m / 0,10 rad'],
+        ['Hậu kiểm: vị trí / hướng','0,10 m / 0,15 rad'],
         ['Hậu kiểm dừng: |v| / |ω|','≤ 0,01 m/s / ≤ 0,02 rad/s']], [1.8,1.58])
     TABLES['scenarios']=(['Tuyến','Xuất phát (x, y) m','Đích (x, y) m'],[
         [f'R{i+1:02}',', '.join(f'{v:.1f}' for v in DATA[r,'ThetaStar','raw']['start'][:2]),
          ', '.join(f'{v:.1f}' for v in DATA[r,'ThetaStar','raw']['goal'][:2])] for i,r in enumerate(ROUTES)], [.46,1.46,1.46])
     TABLES['baselines']=(['Phương án','Cấu hình đáng chú ý'],[
-        ['Raw','Không hậu xử lý; giữ đường planner'],
-        ['Simple','1.000 vòng tối đa; tolerance 10⁻¹⁰; refine 2 lần'],
-        ['SG','Savitzky–Golay; refine 2 lần'],
-        ['Constrained','w_smooth = 200000; w_cost = 0,015; w_dist = w_curve = 0; tối đa 70 vòng'],
-        ['PSTMO','Tham số trong Bảng I; cùng RPP và footprint điều hướng']], [.88,2.5])
+        ['Raw','Không hậu xử lý; giữ đường của bộ lập kế hoạch'],
+        ['Simple','Tối đa 1.000 vòng; dung sai 10⁻¹⁰; tinh chỉnh hai lần'],
+        ['SG','Savitzky–Golay; tinh chỉnh hai lần'],
+        ['Constrained','Trọng số trơn 200.000; chi phí 0,015; khoảng cách và độ cong bằng 0; tối đa 70 vòng'],
+        ['PSTMO','Tham số trong Bảng I; cùng RPP và vùng bao điều hướng']], [.88,2.5])
     for i,r in enumerate(ROUTES,1):
         rows=[]
         for m,label in zip(METHODS,LABELS):
@@ -373,46 +378,46 @@ def tables():
                 f"{1000*mean(r,m,'tracking_rmse_m',True):.1f}",
                 f"{mean(r,m,'planned_curvature_energy_1pm'):.2f}",
                 f"{100*mean(r,m,'planned_footprint_clearance_min_m'):.1f}"])
-        TABLES[f'r{i:02}']=(['Phương án','Đạt','T (s)','e (mm)','E (m⁻¹)','c (cm)'],rows,[.80,.35,.53,.55,.59,.56])
+        TABLES[f'r{i:02}']=(['Phương án','Đạt','T (s)','e (mm)','Eκ,ref (m⁻¹)','c (cm)'],rows,[.76,.33,.49,.51,.79,.50])
         rows=[]
         for p,label in zip(PLANNERS,SHORT):
             vals=[pair(r,p,k) for k in ['execution_time_s','tracking_rmse_m','planned_curvature_energy_1pm']]
             rows.append([label]+['—' if v is None else f'{v*(1000 if j==1 else 1):+.2f}' for j,v in enumerate(vals)])
-        TABLES[f'r{i:02}_paired']=(['Planner','ΔT (s)','Δe (mm)','ΔE (m⁻¹)'],rows,[.91,.80,.82,.85])
+        TABLES[f'r{i:02}_paired']=(['Bộ lập kế hoạch','ΔT (s)','Δe (mm)','ΔEκ,ref (m⁻¹)'],rows,[1.10,.65,.68,.95])
     rows=[]
     for m,label in zip(METHODS,LABELS):
         n=sum(r['success'] for r in ROWS if r['method']==m)
         rows.append([label,f'{n}/25',f"{mean(None,m,'execution_time_s',True):.2f}",
                      f"{1000*mean(None,m,'tracking_rmse_m',True):.1f}",f"{mean(None,m,'planned_curvature_energy_1pm'):.2f}"])
-    TABLES['pooled']=(['Phương án','Đạt','T (s)','e (mm)','E (m⁻¹)'],rows,[.85,.50,.66,.67,.70])
+    TABLES['pooled']=(['Phương án','Đạt','T (s)','e (mm)','Eκ,ref (m⁻¹)'],rows,[.82,.45,.58,.61,.92])
     keys=['execution_time_s','tracking_rmse_m','executed_curvature_energy_1pm']
-    names=['T (s)','e (mm)','E thực thi (m⁻¹)']; scales=[1,1000,1]
+    names=['T (s)','e (mm)','Eκ,exec (m⁻¹)']; scales=[1,1000,1]
     rows=[]; means=[]
     for k,n,s in zip(keys,names,scales):
         a=AGG['metrics'][k];lo,hi=a['mean_block_difference_bootstrap_95_ci']
         rows.append([n,f"{a['mean_block_difference_pstmo_minus_constrained']*s:.3f}",f'[{lo*s:.3f}; {hi*s:.3f}]',f"{a['holm_adjusted_p_primary_family']:.2e}"])
         means.append([n,f"{a['constrained_mean']*s:.3f}",f"{a['pstmo_mean']*s:.3f}",f"{a['blocks_pstmo_lower']}/25"])
-    TABLES['primary']=(['Chỉ số','Δ khối','CI 95%','p Holm'],rows,[.88,.62,1.12,.76])
+    TABLES['primary']=(['Chỉ số','Δ khối','Khoảng tin cậy 95%','p Holm'],rows,[.84,.58,1.32,.64])
     TABLES['means']=(['Chỉ số','Constrained','PSTMO','Khối giảm'],means,[.88,.93,.73,.84])
     rows=[]
     for p,label in zip(PLANNERS,SHORT):
         vals=[np.mean([float(b['pstmo_minus_constrained'])*s for b in BLOCKS
                        if b['planner']==p and b['metric']==k]) for k,s in zip(keys,scales)]
         rows.append([label]+[f'{v:+.3f}' for v in vals])
-    TABLES['by_planner']=(['Planner','ΔT (s)','Δe (mm)','ΔE thực thi'],rows,[.80,.80,.85,.93])
+    TABLES['by_planner']=(['Bộ lập kế hoạch','ΔT (s)','Δe (mm)','ΔEκ,exec'],rows,[1.12,.66,.68,.92])
     rows=[]
-    for k,n,s in [('planned_curvature_energy_1pm','E đường lập (m⁻¹)',1),
-        ('actual_p95_abs_jerk_mps3','Jerk p95 (m/s³)',1),('traveled_distance_m','Quãng đường (m)',1),
+    for k,n,s in [('planned_curvature_energy_1pm','Eκ,ref (m⁻¹)',1),
+        ('actual_p95_abs_jerk_mps3','Độ giật p95 (m/s³)',1),('traveled_distance_m','Quãng đường (m)',1),
         ('final_position_error_m','Sai số đích (mm)',1000),('planned_footprint_clearance_min_m','Khoảng hở (mm)',1000),
-        ('smoothing_time_s','SmoothPath (ms)',1000)]:
+        ('smoothing_time_s','Thời lượng hậu xử lý (ms)',1000)]:
         a=AGG['metrics'][k];lo,hi=a['mean_block_difference_bootstrap_95_ci']
         rows.append([n,f"{a['mean_block_difference_pstmo_minus_constrained']*s:+.3f}",f'[{lo*s:+.3f}; {hi*s:+.3f}]'])
-    TABLES['secondary']=(['Chỉ số phụ','Δ khối','CI 95%'],rows,[1.15,.73,1.50])
-    TABLES['failures']=(['Tuyến/planner','PA/lặp','Trạng thái','eđích (m)'],[
-        ['R05 / A*','P / 4','Abort 102','1,580262'],['R05 / Dijkstra','P / 4','Abort 102','0,685907'],
-        ['R05 / Smac2D','C / 3','Abort 102','3,465366'],['R05 / Smac2D','P / 1','Abort 102','1,148750'],
-        ['R05 / Hybrid','C / 4','Abort 102','3,655099'],['R04 / Hybrid','P / 4','Vượt xy','0,101583'],
-        ['R04 / Theta*','C / 4','Vượt xy','0,100358']], [1.08,.52,.83,.95])
+    TABLES['secondary']=(['Chỉ số phụ','Δ khối','Khoảng tin cậy 95%'],rows,[1.15,.65,1.58])
+    TABLES['failures']=(['Tuyến/bộ lập kế hoạch','Phương án/lần','Trạng thái','Sai số đích (m)'],[
+        ['R05 / A*','P / 4','Dừng trước đích','1,580262'],['R05 / Dijkstra','P / 4','Dừng trước đích','0,685907'],
+        ['R05 / Smac2D','C / 3','Dừng trước đích','3,465366'],['R05 / Smac2D','P / 1','Dừng trước đích','1,148750'],
+        ['R05 / Hybrid','C / 4','Dừng trước đích','3,655099'],['R04 / Hybrid','P / 4','Vượt ngưỡng vị trí','0,101583'],
+        ['R04 / Theta*','C / 4','Vượt ngưỡng vị trí','0,100358']], [1.12,.70,1.00,.64])
 
 
 def normalized_template():

@@ -1,0 +1,508 @@
+{
+  "trial_count": 175,
+  "success_count": 170,
+  "paired_group_count": 34,
+  "geometry_spacing_m": 0.05,
+  "means": {
+    "raw": {
+      "execution_time_s": 57.12044117647059,
+      "tracking_rmse_m": 0.026863561412800416,
+      "traveled_distance_m": 10.156421754200782,
+      "smoothing_time_s": 0.0,
+      "planned_path_length_m": 10.339529203815314,
+      "max_abs_curvature_1pm": 11.18713832148593,
+      "curvature_energy_1pm": 50.206700933141214
+    },
+    "simple": {
+      "execution_time_s": 54.448588235294125,
+      "tracking_rmse_m": 0.0273639957719561,
+      "traveled_distance_m": 10.110535648441658,
+      "smoothing_time_s": 0.002382352941176471,
+      "planned_path_length_m": 10.242315228395906,
+      "max_abs_curvature_1pm": 4.762637215410802,
+      "curvature_energy_1pm": 9.417812829038024
+    },
+    "savitzky_golay": {
+      "execution_time_s": 56.67679411764706,
+      "tracking_rmse_m": 0.02783171236462675,
+      "traveled_distance_m": 10.15168490544013,
+      "smoothing_time_s": 8.823529411764706e-05,
+      "planned_path_length_m": 10.302178504943619,
+      "max_abs_curvature_1pm": 6.934232330494715,
+      "curvature_energy_1pm": 22.699148511290378
+    },
+    "constrained": {
+      "execution_time_s": 57.292764705882355,
+      "tracking_rmse_m": 0.027575485760993813,
+      "traveled_distance_m": 10.17019180919739,
+      "smoothing_time_s": 0.023647058823529413,
+      "planned_path_length_m": 10.33814694430731,
+      "max_abs_curvature_1pm": 7.387544047138474,
+      "curvature_energy_1pm": 28.065318955774607
+    },
+    "pstmo": {
+      "execution_time_s": 53.14764705882353,
+      "tracking_rmse_m": 0.025511633313504384,
+      "traveled_distance_m": 10.071989900268806,
+      "smoothing_time_s": 0.10773529411764708,
+      "planned_path_length_m": 10.175553485086395,
+      "max_abs_curvature_1pm": 3.299170740971042,
+      "curvature_energy_1pm": 4.659938607475385
+    }
+  },
+  "failures": [
+    {
+      "environment": "warehouse_dispatch",
+      "planner": "SmacHybrid",
+      "method": "raw",
+      "source": "results/pstmo_execution_full_20260803/warehouse_dispatch/full_replenishment_smachybrid_raw.json",
+      "error": ""
+    },
+    {
+      "environment": "warehouse_dispatch",
+      "planner": "SmacHybrid",
+      "method": "simple",
+      "source": "results/pstmo_execution_full_20260803/warehouse_dispatch/full_replenishment_smachybrid_simple.json",
+      "error": "RuntimeError: simple smoothing failed: code=503, message=''"
+    },
+    {
+      "environment": "warehouse_dispatch",
+      "planner": "SmacHybrid",
+      "method": "savitzky_golay",
+      "source": "results/pstmo_execution_full_20260803/warehouse_dispatch/full_replenishment_smachybrid_savitzky_golay.json",
+      "error": ""
+    },
+    {
+      "environment": "warehouse_dispatch",
+      "planner": "SmacHybrid",
+      "method": "constrained",
+      "source": "results/pstmo_execution_full_20260803/warehouse_dispatch/full_replenishment_smachybrid_constrained.json",
+      "error": ""
+    },
+    {
+      "environment": "warehouse_dispatch",
+      "planner": "SmacHybrid",
+      "method": "pstmo",
+      "source": "results/pstmo_execution_full_20260803/warehouse_dispatch/full_replenishment_smachybrid_pstmo.json",
+      "error": ""
+    }
+  ],
+  "pstmo_faster_than_simple": 21,
+  "pstmo_lower_rmse_than_simple": 24,
+  "spearman_energy_time": 0.6342245989304813,
+  "source_scalar_checks": "All successful trial RMSE and original geometry recomputed and matched",
+  "cases": {
+    "research_warehouse/NavFnAStar": {
+      "raw": {
+        "execution_time_s": 31.911,
+        "tracking_rmse_m": 0.022097136628486037,
+        "traveled_distance_m": 4.5366874446292496,
+        "smoothing_time_s": 0.0,
+        "planned_path_length_m": 4.656465743783097,
+        "geometry_uniform_005": {
+          "point_count": 95,
+          "path_length_m": 4.617014289107271,
+          "max_abs_curvature_1pm": 10.710951044805608,
+          "curvature_energy_1pm": 45.44221061527057
+        },
+        "geometry_original": {
+          "point_count": 182,
+          "path_length_m": 4.656465743783097,
+          "max_abs_curvature_1pm": 65.48532181057294,
+          "curvature_energy_1pm": 444.1165057795072
+        }
+      },
+      "simple": {
+        "execution_time_s": 31.194000000000003,
+        "tracking_rmse_m": 0.024576355923769683,
+        "traveled_distance_m": 4.5192781354654485,
+        "smoothing_time_s": 0.003,
+        "planned_path_length_m": 4.5834530624203484,
+        "geometry_uniform_005": {
+          "point_count": 93,
+          "path_length_m": 4.582846015488058,
+          "max_abs_curvature_1pm": 3.76817016947778,
+          "curvature_energy_1pm": 4.483166086552803
+        },
+        "geometry_original": {
+          "point_count": 182,
+          "path_length_m": 4.5834530624203484,
+          "max_abs_curvature_1pm": 3.9891234433743215,
+          "curvature_energy_1pm": 4.9558701521427535
+        }
+      },
+      "savitzky_golay": {
+        "execution_time_s": 31.839000000000002,
+        "tracking_rmse_m": 0.021953690094118877,
+        "traveled_distance_m": 4.530700491063666,
+        "smoothing_time_s": 0.0,
+        "planned_path_length_m": 4.605006715536069,
+        "geometry_uniform_005": {
+          "point_count": 94,
+          "path_length_m": 4.602346036860217,
+          "max_abs_curvature_1pm": 7.9978315770211825,
+          "curvature_energy_1pm": 16.539711802607638
+        },
+        "geometry_original": {
+          "point_count": 182,
+          "path_length_m": 4.605006715536069,
+          "max_abs_curvature_1pm": 10.089929393680574,
+          "curvature_energy_1pm": 21.57640730798912
+        }
+      },
+      "constrained": {
+        "execution_time_s": 31.674000000000003,
+        "tracking_rmse_m": 0.021275874726862435,
+        "traveled_distance_m": 4.546645586097258,
+        "smoothing_time_s": 0.015000000000000001,
+        "planned_path_length_m": 4.615511021455067,
+        "geometry_uniform_005": {
+          "point_count": 94,
+          "path_length_m": 4.609639973893631,
+          "max_abs_curvature_1pm": 8.171254334168392,
+          "curvature_energy_1pm": 24.630605720851754
+        },
+        "geometry_original": {
+          "point_count": 182,
+          "path_length_m": 4.615511021455067,
+          "max_abs_curvature_1pm": 38.91526468842487,
+          "curvature_energy_1pm": 53.219272742266774
+        }
+      },
+      "pstmo": {
+        "execution_time_s": 31.416,
+        "tracking_rmse_m": 0.015192512638494063,
+        "traveled_distance_m": 4.5169210709870224,
+        "smoothing_time_s": 0.027000000000000003,
+        "planned_path_length_m": 4.557156332204841,
+        "geometry_uniform_005": {
+          "point_count": 93,
+          "path_length_m": 4.556790705423674,
+          "max_abs_curvature_1pm": 3.2566445835754316,
+          "curvature_energy_1pm": 2.950611473438621
+        },
+        "geometry_original": {
+          "point_count": 182,
+          "path_length_m": 4.557156332204841,
+          "max_abs_curvature_1pm": 3.5920545824656416,
+          "curvature_energy_1pm": 3.24111276536321
+        }
+      }
+    },
+    "office_maze/Smac2D": {
+      "raw": {
+        "execution_time_s": 68.37,
+        "tracking_rmse_m": 0.01965949630039424,
+        "traveled_distance_m": 12.682808365853928,
+        "smoothing_time_s": 0.0,
+        "planned_path_length_m": 12.806150516472808,
+        "geometry_uniform_005": {
+          "point_count": 258,
+          "path_length_m": 12.803944391627233,
+          "max_abs_curvature_1pm": 2.2832376693384853,
+          "curvature_energy_1pm": 8.67100024015589
+        },
+        "geometry_original": {
+          "point_count": 216,
+          "path_length_m": 12.806150516472808,
+          "max_abs_curvature_1pm": 2.323820317231305,
+          "curvature_energy_1pm": 8.766059623404502
+        }
+      },
+      "simple": {
+        "execution_time_s": 63.408,
+        "tracking_rmse_m": 0.024399639457912695,
+        "traveled_distance_m": 12.597863702730352,
+        "smoothing_time_s": 0.0,
+        "planned_path_length_m": 12.715454509965083,
+        "geometry_uniform_005": {
+          "point_count": 256,
+          "path_length_m": 12.714163785042105,
+          "max_abs_curvature_1pm": 1.598615946000395,
+          "curvature_energy_1pm": 5.500789405503131
+        },
+        "geometry_original": {
+          "point_count": 216,
+          "path_length_m": 12.715454509965083,
+          "max_abs_curvature_1pm": 1.6175589423254881,
+          "curvature_energy_1pm": 5.517930344367303
+        }
+      },
+      "savitzky_golay": {
+        "execution_time_s": 67.17,
+        "tracking_rmse_m": 0.021053697048153307,
+        "traveled_distance_m": 12.693039425681782,
+        "smoothing_time_s": 0.0,
+        "planned_path_length_m": 12.80358603243208,
+        "geometry_uniform_005": {
+          "point_count": 258,
+          "path_length_m": 12.801460874518328,
+          "max_abs_curvature_1pm": 2.104456194559465,
+          "curvature_energy_1pm": 8.338074921278823
+        },
+        "geometry_original": {
+          "point_count": 216,
+          "path_length_m": 12.80358603243208,
+          "max_abs_curvature_1pm": 2.1876762541130272,
+          "curvature_energy_1pm": 8.390268909589373
+        }
+      },
+      "constrained": {
+        "execution_time_s": 70.59,
+        "tracking_rmse_m": 0.020695076316143382,
+        "traveled_distance_m": 12.759012497803399,
+        "smoothing_time_s": 0.018000000000000002,
+        "planned_path_length_m": 12.884634577834223,
+        "geometry_uniform_005": {
+          "point_count": 259,
+          "path_length_m": 12.882332067891308,
+          "max_abs_curvature_1pm": 2.4362725520871527,
+          "curvature_energy_1pm": 10.165115724991606
+        },
+        "geometry_original": {
+          "point_count": 216,
+          "path_length_m": 12.884634577834223,
+          "max_abs_curvature_1pm": 2.4975528479743927,
+          "curvature_energy_1pm": 10.243877252480937
+        }
+      },
+      "pstmo": {
+        "execution_time_s": 56.559000000000005,
+        "tracking_rmse_m": 0.020914944715534543,
+        "traveled_distance_m": 12.499156192611379,
+        "smoothing_time_s": 0.17400000000000002,
+        "planned_path_length_m": 12.566297314213617,
+        "geometry_uniform_005": {
+          "point_count": 253,
+          "path_length_m": 12.565989677251972,
+          "max_abs_curvature_1pm": 1.317213048620581,
+          "curvature_energy_1pm": 2.7805393258560698
+        },
+        "geometry_original": {
+          "point_count": 933,
+          "path_length_m": 12.566297314213617,
+          "max_abs_curvature_1pm": 1.4131924194397263,
+          "curvature_energy_1pm": 2.8598791235261243
+        }
+      }
+    },
+    "warehouse_dispatch/Smac2D": {
+      "raw": {
+        "execution_time_s": 79.42800000000001,
+        "tracking_rmse_m": 0.03739973577066626,
+        "traveled_distance_m": 15.050318185100807,
+        "smoothing_time_s": 0.0,
+        "planned_path_length_m": 15.279985108283109,
+        "geometry_uniform_005": {
+          "point_count": 307,
+          "path_length_m": 15.278477573297403,
+          "max_abs_curvature_1pm": 2.528389672269621,
+          "curvature_energy_1pm": 6.855659618698185
+        },
+        "geometry_original": {
+          "point_count": 303,
+          "path_length_m": 15.279985108283109,
+          "max_abs_curvature_1pm": 2.561108318667094,
+          "curvature_energy_1pm": 6.938925940272726
+        }
+      },
+      "simple": {
+        "execution_time_s": 77.08500000000001,
+        "tracking_rmse_m": 0.04036917852896573,
+        "traveled_distance_m": 14.993662509477529,
+        "smoothing_time_s": 0.003,
+        "planned_path_length_m": 15.211581602406177,
+        "geometry_uniform_005": {
+          "point_count": 306,
+          "path_length_m": 15.21060029578811,
+          "max_abs_curvature_1pm": 1.899885759159316,
+          "curvature_energy_1pm": 4.907526324944851
+        },
+        "geometry_original": {
+          "point_count": 303,
+          "path_length_m": 15.211581602406177,
+          "max_abs_curvature_1pm": 1.889680601399809,
+          "curvature_energy_1pm": 4.927954132590294
+        }
+      },
+      "savitzky_golay": {
+        "execution_time_s": 80.97,
+        "tracking_rmse_m": 0.03952734184228771,
+        "traveled_distance_m": 15.06571342702953,
+        "smoothing_time_s": 0.003,
+        "planned_path_length_m": 15.278278608619352,
+        "geometry_uniform_005": {
+          "point_count": 307,
+          "path_length_m": 15.276784065547409,
+          "max_abs_curvature_1pm": 2.428463136874915,
+          "curvature_energy_1pm": 6.585953054146093
+        },
+        "geometry_original": {
+          "point_count": 303,
+          "path_length_m": 15.278278608619352,
+          "max_abs_curvature_1pm": 2.463012460637121,
+          "curvature_energy_1pm": 6.63499682193971
+        }
+      },
+      "constrained": {
+        "execution_time_s": 81.882,
+        "tracking_rmse_m": 0.0403737577064501,
+        "traveled_distance_m": 15.084098286523268,
+        "smoothing_time_s": 0.021,
+        "planned_path_length_m": 15.348296917900955,
+        "geometry_uniform_005": {
+          "point_count": 308,
+          "path_length_m": 15.346084391932193,
+          "max_abs_curvature_1pm": 3.232740078484012,
+          "curvature_energy_1pm": 10.112611741960823
+        },
+        "geometry_original": {
+          "point_count": 303,
+          "path_length_m": 15.348296917900955,
+          "max_abs_curvature_1pm": 3.3636266108025907,
+          "curvature_energy_1pm": 10.527953176456661
+        }
+      },
+      "pstmo": {
+        "execution_time_s": 76.221,
+        "tracking_rmse_m": 0.033857652023756395,
+        "traveled_distance_m": 15.004898996670564,
+        "smoothing_time_s": 0.081,
+        "planned_path_length_m": 15.16576776893468,
+        "geometry_uniform_005": {
+          "point_count": 305,
+          "path_length_m": 15.165233449295481,
+          "max_abs_curvature_1pm": 2.8582297626387745,
+          "curvature_energy_1pm": 4.460979769976268
+        },
+        "geometry_original": {
+          "point_count": 542,
+          "path_length_m": 15.16576776893468,
+          "max_abs_curvature_1pm": 3.1691943479777,
+          "curvature_energy_1pm": 4.835300512507907
+        }
+      }
+    }
+  },
+  "all_baseline_comparisons": {
+    "raw": {
+      "time_mean_gain_s": 3.972794117647059,
+      "time_reduction_percent": 6.955118055501919,
+      "time_wins": 32,
+      "time_ties": 0,
+      "rmse_wins": 21,
+      "rmse_ties": 0,
+      "rmse_mean_gain_mm": 1.3519280992960319,
+      "spearman_energy_time": 0.4108479755538579
+    },
+    "simple": {
+      "time_mean_gain_s": 1.3009411764705874,
+      "time_reduction_percent": 2.3893019426852726,
+      "time_wins": 21,
+      "time_ties": 0,
+      "rmse_wins": 24,
+      "rmse_ties": 0,
+      "rmse_mean_gain_mm": 1.8523624584517144,
+      "spearman_energy_time": 0.6342245989304813
+    },
+    "savitzky_golay": {
+      "time_mean_gain_s": 3.5291470588235296,
+      "time_reduction_percent": 6.226793723543872,
+      "time_wins": 31,
+      "time_ties": 0,
+      "rmse_wins": 25,
+      "rmse_ties": 0,
+      "rmse_mean_gain_mm": 2.3200790511223652,
+      "spearman_energy_time": 0.5352177234530175
+    },
+    "constrained": {
+      "time_mean_gain_s": 4.1451176470588225,
+      "time_reduction_percent": 7.234975774581944,
+      "time_wins": 31,
+      "time_ties": 0,
+      "rmse_wins": 23,
+      "rmse_ties": 0,
+      "rmse_mean_gain_mm": 2.063852447489428,
+      "spearman_energy_time": 0.3231474407944996
+    }
+  },
+  "failure_details": [
+    {
+      "method": "raw",
+      "execution_time_s": 1.614,
+      "distance_m": 0.00010201978793048136,
+      "final_error_m": 11.833752170987594,
+      "log": "results/pstmo_execution_full_20260803/warehouse_dispatch/full_replenishment_smachybrid_raw.log",
+      "evidence": [
+        "[controller_server-9] [WARN] [1785701771.147105936] [controller_server]: RegulatedPurePursuitController detected collision ahead!",
+        "[controller_server-9] [WARN] [1785701771.197274000] [controller_server]: RegulatedPurePursuitController detected collision ahead!",
+        "[controller_server-9] [WARN] [1785701771.246816939] [controller_server]: RegulatedPurePursuitController detected collision ahead!",
+        "[controller_server-9] [WARN] [1785701771.296738320] [controller_server]: RegulatedPurePursuitController detected collision ahead!",
+        "[controller_server-9] [WARN] [1785701771.346992292] [controller_server]: RegulatedPurePursuitController detected collision ahead!",
+        "[controller_server-9] [WARN] [1785701771.396678588] [controller_server]: RegulatedPurePursuitController detected collision ahead!",
+        "[controller_server-9] [WARN] [1785701771.446966343] [controller_server]: RegulatedPurePursuitController detected collision ahead!",
+        "[controller_server-9] [ERROR] [1785701771.447020234] [controller_server]: Controller patience exceeded"
+      ]
+    },
+    {
+      "method": "simple",
+      "execution_time_s": null,
+      "distance_m": null,
+      "final_error_m": null,
+      "log": "results/pstmo_execution_full_20260803/warehouse_dispatch/full_replenishment_smachybrid_simple.log",
+      "evidence": [
+        "[smoother_server-10] [ERROR] [1785701787.657926954] [smoother_server]: Smoothed path leads to a collision at x: -4.741290, y: 3.482165, theta: 0.352672"
+      ]
+    },
+    {
+      "method": "savitzky_golay",
+      "execution_time_s": 1.554,
+      "distance_m": 0.00010097268652590268,
+      "final_error_m": 11.833753151338671,
+      "log": "results/pstmo_execution_full_20260803/warehouse_dispatch/full_replenishment_smachybrid_savitzky_golay.log",
+      "evidence": [
+        "[controller_server-9] [WARN] [1785701804.642472829] [controller_server]: RegulatedPurePursuitController detected collision ahead!",
+        "[controller_server-9] [WARN] [1785701804.692077121] [controller_server]: RegulatedPurePursuitController detected collision ahead!",
+        "[controller_server-9] [WARN] [1785701804.741928100] [controller_server]: RegulatedPurePursuitController detected collision ahead!",
+        "[controller_server-9] [WARN] [1785701804.792756928] [controller_server]: RegulatedPurePursuitController detected collision ahead!",
+        "[controller_server-9] [WARN] [1785701804.841871611] [controller_server]: RegulatedPurePursuitController detected collision ahead!",
+        "[controller_server-9] [WARN] [1785701804.892038453] [controller_server]: RegulatedPurePursuitController detected collision ahead!",
+        "[controller_server-9] [WARN] [1785701804.941880176] [controller_server]: RegulatedPurePursuitController detected collision ahead!",
+        "[controller_server-9] [ERROR] [1785701804.941930106] [controller_server]: Controller patience exceeded"
+      ]
+    },
+    {
+      "method": "constrained",
+      "execution_time_s": 4.689,
+      "distance_m": 0.35298809327204067,
+      "final_error_m": 11.71245469388621,
+      "log": "results/pstmo_execution_full_20260803/warehouse_dispatch/full_replenishment_smachybrid_constrained.log",
+      "evidence": [
+        "[controller_server-9] [WARN] [1785701825.179610249] [controller_server]: RegulatedPurePursuitController detected collision ahead!",
+        "[controller_server-9] [WARN] [1785701825.229500166] [controller_server]: RegulatedPurePursuitController detected collision ahead!",
+        "[controller_server-9] [WARN] [1785701825.279456072] [controller_server]: RegulatedPurePursuitController detected collision ahead!",
+        "[controller_server-9] [WARN] [1785701825.329272544] [controller_server]: RegulatedPurePursuitController detected collision ahead!",
+        "[controller_server-9] [WARN] [1785701825.379466646] [controller_server]: RegulatedPurePursuitController detected collision ahead!",
+        "[controller_server-9] [WARN] [1785701825.429282041] [controller_server]: RegulatedPurePursuitController detected collision ahead!",
+        "[controller_server-9] [WARN] [1785701825.479331761] [controller_server]: RegulatedPurePursuitController detected collision ahead!",
+        "[controller_server-9] [ERROR] [1785701825.479420095] [controller_server]: Controller patience exceeded"
+      ]
+    },
+    {
+      "method": "pstmo",
+      "execution_time_s": 1.653,
+      "distance_m": 0.00010072520733710439,
+      "final_error_m": 11.833753377124312,
+      "log": "results/pstmo_execution_full_20260803/warehouse_dispatch/full_replenishment_smachybrid_pstmo.log",
+      "evidence": [
+        "[controller_server-9] [WARN] [1785701844.149995557] [controller_server]: RegulatedPurePursuitController detected collision ahead!",
+        "[controller_server-9] [WARN] [1785701844.200530674] [controller_server]: RegulatedPurePursuitController detected collision ahead!",
+        "[controller_server-9] [WARN] [1785701844.249274779] [controller_server]: RegulatedPurePursuitController detected collision ahead!",
+        "[controller_server-9] [WARN] [1785701844.298886205] [controller_server]: RegulatedPurePursuitController detected collision ahead!",
+        "[controller_server-9] [WARN] [1785701844.349500282] [controller_server]: RegulatedPurePursuitController detected collision ahead!",
+        "[controller_server-9] [WARN] [1785701844.399287397] [controller_server]: RegulatedPurePursuitController detected collision ahead!",
+        "[controller_server-9] [ERROR] [1785701844.399448539] [controller_server]: Controller patience exceeded"
+      ]
+    }
+  ]
+}

@@ -21,7 +21,7 @@
       "height_in": 2.28,
       "sources": [],
       "number": 1,
-      "caption": "Luồng xử lý PSTMO và vị trí tích hợp vào Nav2. Các khối là sơ đồ thuật toán; dữ liệu thực thi được thu độc lập từ ground truth của mô phỏng."
+      "caption": "Luồng xử lý PSTMO và vị trí tích hợp vào Nav2. Các khối là sơ đồ thuật toán; quỹ đạo thực được thu độc lập từ trạng thái chính xác do mô phỏng cung cấp."
     },
     "bezier": {
       "description": "Sơ đồ hình học với d=1, α=0,3; không phải quỹ đạo thử nghiệm.",
@@ -29,7 +29,7 @@
       "height_in": 2.3,
       "sources": [],
       "number": 2,
-      "caption": "Cấu trúc Bézier bậc năm cho một góc vuông minh họa. P₀ và P₅ nằm trên hai cạnh; ba điểm đầu và ba điểm cuối thẳng hàng theo các tiếp tuyến tương ứng. Hình không biểu diễn một trial đo được."
+      "caption": "Cấu trúc Bézier bậc năm cho một góc vuông minh họa. P₀ và P₅ nằm trên hai cạnh; ba điểm đầu và ba điểm cuối thẳng hàng theo các tiếp tuyến tương ứng. Hình không biểu diễn một lượt đo cụ thể."
     },
     "routes": {
       "description": "Raw ThetaStar; chấm tròn: xuất phát; sao: đích; bản đồ occupancy gốc.",
@@ -45,7 +45,7 @@
       "height_in": 1.95,
       "sources": [],
       "number": 3,
-      "caption": "Sơ đồ footprint chữ nhật và khoảng cách bánh dùng trong mô hình PSTMO. O là gốc biểu diễn footprint, x hướng về phía trước. Track hiệu dụng của plugin động lực học được báo riêng trong Bảng II; sơ đồ không phải ảnh chụp robot thực."
+      "caption": "Sơ đồ vùng bao chữ nhật và khoảng cách bánh dùng trong mô hình PSTMO. O là gốc biểu diễn vùng bao, x hướng về phía trước. Khoảng cách bánh hiệu dụng của mô-đun động lực học được báo riêng trong Bảng II; sơ đồ không phải ảnh chụp robot thực."
     },
     "r01_paths": {
       "description": "R01, ThetaStar, năm đường đã lập; zoom chọn bằng quy tắc cố định.",
@@ -59,15 +59,15 @@
         "results/pstmo_execution_theta_star_20260802/warehouse_cross_aisles/cross_aisle_transfer_pstmo.json"
       ],
       "number": 5,
-      "caption": "R01 với ThetaStar: (a) đường đã lập trên toàn tuyến; (b) vùng phóng to. Cùng màu và kiểu nét được dùng xuyên suốt các tuyến. Đây là đường tham chiếu, không phải vết ground truth của robot."
+      "caption": "R01 với ThetaStar: (a) đường đã lập trên toàn tuyến; (b) vùng phóng to. Cùng màu và kiểu nét được dùng xuyên suốt các tuyến. Đây là đường tham chiếu, không phải quỹ đạo thực của robot."
     },
     "r01_metrics": {
-      "description": "R01, toàn bộ 25 trial; cột gạch/× là trial không đạt và không được gộp vào trung bình thành công.",
+      "description": "R01, toàn bộ 25 lượt; cột gạch/× là lượt không đạt và không được gộp vào trung bình thành công.",
       "width_in": 3.3791666666666664,
       "height_in": 3.38,
       "sources": [],
       "number": 6,
-      "caption": "R01: thời gian thực thi và RMSE của đủ năm phương án trên từng planner. Các cột là một lượt thực thi, không phải trung bình nhiều lần lặp; không vẽ thanh sai số."
+      "caption": "R01: thời gian thực thi và RMSE của đủ năm phương án trên từng bộ lập kế hoạch. Các cột là một lượt thực thi, không phải trung bình nhiều lần lặp; không vẽ thanh sai số."
     },
     "r02_paths": {
       "description": "R02, ThetaStar, năm đường đã lập; zoom chọn bằng quy tắc cố định.",
@@ -84,12 +84,12 @@
       "caption": "R02 với ThetaStar: đường tham chiếu toàn tuyến và vùng phóng to theo cùng quy tắc chọn vùng như R01. Trục tọa độ có đơn vị mét; tỷ lệ hiển thị toàn tuyến và vùng phóng to khác nhau."
     },
     "r02_metrics": {
-      "description": "R02, toàn bộ 25 trial; cột gạch/× là trial không đạt và không được gộp vào trung bình thành công.",
+      "description": "R02, toàn bộ 25 lượt; cột gạch/× là lượt không đạt và không được gộp vào trung bình thành công.",
       "width_in": 3.3791666666666664,
       "height_in": 3.38,
       "sources": [],
       "number": 8,
-      "caption": "R02: thời gian và RMSE theo planner. Sự khác biệt giữa hai hàng chỉ số cho phép nhận diện trường hợp nhanh hơn nhưng bám đường kém hơn; không suy ra ưu thế toàn diện từ một hàng duy nhất."
+      "caption": "R02: thời gian và RMSE theo bộ lập kế hoạch. Sự khác biệt giữa hai hàng chỉ số cho phép nhận diện trường hợp nhanh hơn nhưng bám đường kém hơn; không suy ra ưu thế toàn diện từ một hàng duy nhất."
     },
     "r03_paths": {
       "description": "R03, ThetaStar, năm đường đã lập; zoom chọn bằng quy tắc cố định.",
@@ -103,15 +103,15 @@
         "docs/warehouse_cross_aisles_5_routes/execution/south_u_transfer/south_u_transfer_thetastar_pstmo.json"
       ],
       "number": 9,
-      "caption": "R03 với ThetaStar: đường chữ U và vùng chuyển hướng được phóng to. Hình biểu diễn một planner cố định; trường hợp không đạt ở tuyến này thuộc SmacHybrid và được báo riêng."
+      "caption": "R03 với ThetaStar: đường chữ U và vùng chuyển hướng được phóng to. Hình biểu diễn một bộ lập kế hoạch cố định; trường hợp không đạt ở tuyến này thuộc SmacHybrid và được báo riêng."
     },
     "r03_metrics": {
-      "description": "R03, toàn bộ 25 trial; cột gạch/× là trial không đạt và không được gộp vào trung bình thành công.",
+      "description": "R03, toàn bộ 25 lượt; cột gạch/× là lượt không đạt và không được gộp vào trung bình thành công.",
       "width_in": 3.3791666666666664,
       "height_in": 3.38,
       "sources": [],
       "number": 10,
-      "caption": "R03: cột gạch và dấu × đánh dấu PSTMO/SmacHybrid không đạt. Giá trị ghi ở cột đó chỉ mô tả trace kết thúc; không được tính vào trung bình hoàn thành hoặc dùng để kết luận thời gian tốt hơn."
+      "caption": "R03: cột gạch và dấu × đánh dấu PSTMO/SmacHybrid không đạt. Giá trị ghi ở cột đó chỉ mô tả trạng thái kết thúc; không được tính vào trung bình hoàn thành hoặc dùng để kết luận thời gian tốt hơn."
     },
     "r04_paths": {
       "description": "R04, ThetaStar, năm đường đã lập; zoom chọn bằng quy tắc cố định.",
@@ -128,12 +128,12 @@
       "caption": "R04 với ThetaStar: toàn tuyến chéo ngược và vùng phóng to. Việc đảo chiều tiếp cận không làm tuyến này trở thành bản sao đối xứng của R02."
     },
     "r04_metrics": {
-      "description": "R04, toàn bộ 25 trial; cột gạch/× là trial không đạt và không được gộp vào trung bình thành công.",
+      "description": "R04, toàn bộ 25 lượt; cột gạch/× là lượt không đạt và không được gộp vào trung bình thành công.",
       "width_in": 3.3791666666666664,
       "height_in": 3.38,
       "sources": [],
       "number": 12,
-      "caption": "R04: thời gian và RMSE trên từng planner. Raw/ThetaStar được đánh dấu không đạt do hậu kiểm đích; các đường đã làm trơn đều hoàn thành trong ma trận một lượt này."
+      "caption": "R04: thời gian và RMSE trên từng bộ lập kế hoạch. Raw/ThetaStar được đánh dấu không đạt do hậu kiểm đích; các đường đã làm trơn đều hoàn thành trong ma trận một lượt này."
     },
     "r05_paths": {
       "description": "R05, ThetaStar, năm đường đã lập; zoom chọn bằng quy tắc cố định.",
@@ -150,12 +150,12 @@
       "caption": "R05 với ThetaStar: rẽ từ hành lang ngang vào lối lấy hàng. Hình sử dụng ma trận khảo sát một lượt; các thất bại của bộ lặp được báo riêng ở Mục III.H."
     },
     "r05_metrics": {
-      "description": "R05, toàn bộ 25 trial; cột gạch/× là trial không đạt và không được gộp vào trung bình thành công.",
+      "description": "R05, toàn bộ 25 lượt; cột gạch/× là lượt không đạt và không được gộp vào trung bình thành công.",
       "width_in": 3.3791666666666664,
       "height_in": 3.38,
       "sources": [],
       "number": 14,
-      "caption": "R05: kết quả một lượt cho từng tổ hợp planner–phương án. Tất cả các lượt trong hình đều đạt, nhưng điều đó chưa mô tả tính lặp lại của nhiệm vụ."
+      "caption": "R05: kết quả một lượt cho từng tổ hợp bộ lập kế hoạch–phương án. Tất cả các lượt trong hình đều đạt, nhưng điều đó chưa mô tả tính lặp lại của nhiệm vụ."
     },
     "matrix_delta": {
       "description": "PSTMO − Constrained; chỉ cặp cùng đạt; màu xanh là chênh lệch âm; không có CI từ ma trận một lượt.",
@@ -163,10 +163,10 @@
       "height_in": 3.75,
       "sources": [],
       "number": 15,
-      "caption": "Chênh lệch PSTMO − Constrained trong ma trận khảo sát. Mỗi ô là một cặp cùng tuyến và planner; màu xanh biểu thị chênh lệch âm. Dấu gạch là cặp không cùng đạt, không phải hiệu bằng không. Các số là một lượt, không kèm suy luận thống kê."
+      "caption": "Chênh lệch PSTMO − Constrained trong ma trận khảo sát. Mỗi ô là một cặp cùng tuyến và bộ lập kế hoạch; màu xanh biểu thị chênh lệch âm. Dấu gạch là cặp không cùng đạt, không phải hiệu bằng không. Các số là một lượt, không kèm suy luận thống kê."
     },
     "execution_trace": {
-      "description": "R02/ThetaStar, ma trận khảo sát: path và trace ground truth gốc; không lọc đường ω(t).",
+      "description": "R02/ThetaStar, ma trận khảo sát: đường tham chiếu và quỹ đạo thực; không lọc đường ω(t).",
       "width_in": 3.3791666666666664,
       "height_in": 3.5,
       "sources": [
@@ -174,33 +174,33 @@
         "docs/warehouse_cross_aisles_5_routes/execution/wide_diagonal_transfer/wide_diagonal_transfer_thetastar_pstmo.json"
       ],
       "number": 16,
-      "caption": "R02/ThetaStar trong ma trận khảo sát: trên là path (nét đứt) và ground truth (GT, nét liền) tại vùng rẽ; dưới là vận tốc góc ground truth theo thời gian tương đối từ trace. Mỗi phương án có mốc thời gian riêng; không căn chỉnh các đỉnh tín hiệu hậu nghiệm."
+      "caption": "R02/ThetaStar trong ma trận khảo sát: trên là đường tham chiếu (nét đứt) và quỹ đạo thực từ mô phỏng (nét liền) tại vùng rẽ; dưới là vận tốc góc thực theo thời gian tương đối. Mỗi phương án có mốc thời gian riêng; không căn chỉnh các đỉnh tín hiệu sau khi quan sát kết quả."
     },
     "repeat_blocks": {
-      "description": "25 hiệu ứng trung bình trong khối; thứ tự planner A*, Dijkstra, Theta*, Smac2D, Hybrid; không phải 125 quan sát độc lập.",
+      "description": "25 hiệu ứng trung bình trong khối; thứ tự bộ lập kế hoạch A*, Dijkstra, Theta*, Smac2D, Hybrid; không phải 125 quan sát độc lập.",
       "width_in": 3.3791666666666664,
       "height_in": 4.0,
       "sources": [
         "results/pstmo_journal_repeatability_20261011/analysis/block_differences.csv"
       ],
       "number": 17,
-      "caption": "Hiệu ứng của 25 khối trong bộ lặp. Trong mỗi nhóm tuyến, thứ tự là NavFnAStar, NavFnDijkstra, ThetaStar, Smac2D và SmacHybrid. Mỗi điểm là trung bình chênh lệch trên các repetition cùng đạt; đường đứt là trung bình đều của 25 điểm."
+      "caption": "Hiệu ứng của 25 khối trong bộ lặp. Trong mỗi nhóm tuyến, thứ tự là NavFnAStar, NavFnDijkstra, ThetaStar, Smac2D và SmacHybrid. Mỗi điểm là trung bình chênh lệch trên các lần lặp cùng đạt; đường đứt là trung bình đều của 25 điểm."
     },
     "tradeoffs": {
-      "description": "Mỗi điểm là một khối route–planner của cohort lặp; chênh lệch PSTMO − Constrained.",
+      "description": "Mỗi điểm là một khối tuyến–bộ lập kế hoạch của bộ lặp; chênh lệch PSTMO − Constrained.",
       "width_in": 3.3791666666666664,
       "height_in": 3.7,
       "sources": [],
       "number": 18,
-      "caption": "Đánh đổi trong bộ lặp, mỗi điểm là một khối tuyến–planner. Trên: chênh lệch E đường lập và khoảng hở; dưới: chênh lệch sai số đích và thời gian thực thi. Mọi chênh lệch đều là PSTMO − Constrained."
+      "caption": "Đánh đổi trong bộ lặp, mỗi điểm là một khối tuyến–bộ lập kế hoạch. Trên: chênh lệch Eκ,ref và khoảng hở; dưới: chênh lệch sai số đích và thời gian thực thi. Mọi chênh lệch đều là PSTMO − Constrained."
     },
     "endpoints": {
-      "description": "Toàn bộ 250 trial; điểm nằm dưới ngưỡng vị trí vẫn phải đạt action, yaw và điều kiện dừng.",
+      "description": "Toàn bộ 250 lượt; điểm nằm dưới ngưỡng vị trí vẫn phải thỏa điều kiện tác vụ, hướng và trạng thái dừng.",
       "width_in": 3.3791666666666664,
       "height_in": 2.6,
       "sources": [],
       "number": 19,
-      "caption": "Sai số vị trí cuối của toàn bộ 250 lượt, bao gồm không đạt. Trục đứng dùng thang log để đồng thời hiển thị sai số cỡ centimét và các abort còn cách đích xa. Ngưỡng vị trí 0,10 m chỉ là một phần của tiêu chí hoàn thành."
+      "caption": "Sai số vị trí cuối của toàn bộ 250 lượt, bao gồm không đạt. Trục đứng dùng thang log để đồng thời hiển thị sai số cỡ centimét và các lượt dừng trước đích. Ngưỡng vị trí 0,10 m chỉ là một phần của tiêu chí hoàn thành."
     }
   },
   "source_sha256": {
@@ -341,10 +341,10 @@
     "tools/analyze_journal_repeatability.py": "dfc402996f5698f99afd7511d697422df2905bd17715c053bb3a48df894569f0",
     "src/vacuum_robot_gazebo/maps/warehouse_cross_aisles.pgm": "2c4cccd29f8c22eb45921e36fe374a8be44ac63214ad4bf18b502bd0cd65ef3b",
     "src/vacuum_robot_gazebo/maps/warehouse_cross_aisles.yaml": "ab8dee1690030d5693fc1d17260f3e68f8c73ff388d4266c7cd0d987c62a904f",
-    "Viet_bao/journal/ver3/manuscript.md": "64b53d1ea2c1bb93fe887017d05371bc2506615d5ce1fe5c8b76b23340b49865",
+    "Viet_bao/journal/ver3/manuscript.md": "a8aeebe838e37812f47d54e3b448393b4fa8730641496386ba120d4cf8079ea8",
     "Viet_bao/final_bao_ICEEIS/IEEE Xplore conference-template-a4.docx": "b35944f6ac6bb7f358c6ad646e23cdbe3c9b8d878ea1a729a25a1c9ba3623f5b",
-    "tools/build_journal_sections_v3.py": "0c2f87690b6b160a00827a407fe5d6ae587afd476da228db3578ca8c6f9e4399"
+    "tools/build_journal_sections_v3.py": "063e6453b635f486d7ce1d324a2dda74dd7090514481559faec54a8ff0a8dd74"
   },
-  "docx_sha256": "170ceed5eaf91f07a40f5d7d581a0e6c4621914efa9527b630ec1c71f37f11cc",
+  "docx_sha256": "1339162f089a8353c8c4f05154fcb23d757b408f992aa0b2cc2dbec1959f6691",
   "scope": "Sections II and III only; inherited IEEE conference A4 template, not venue-specific journal acceptance certification."
 }

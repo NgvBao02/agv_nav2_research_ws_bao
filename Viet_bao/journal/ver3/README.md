@@ -11,6 +11,13 @@ dàn ý. Các phiên bản dàn ý cũ và dữ liệu thực nghiệm không b�
 - [Script dựng bản thảo](../../../tools/build_journal_sections_v3.py).
 - [Script kiểm tra](../../../tools/verify_journal_sections_v3.py).
 
+Văn bản nộp bài dùng ký hiệu khoa học thay cho tên trường trong mã nguồn:
+`Eκ,ref` cho năng lượng độ cong của đường tham chiếu và `Eκ,exec` cho năng
+lượng độ cong của quỹ đạo thực. Tên biến, tên chế độ nội bộ, mã phiên bản dài
+và mã trạng thái của log không xuất hiện trong phần trình bày chính. Thông tin
+định danh chi tiết vẫn được giữ trong dữ liệu nguồn và `provenance.json` để
+phục vụ tái lập kết quả.
+
 ## Bố cục và phạm vi
 
 Bản render kiểm tra gồm 15 trang A4 hai cột. Phần II chiếm khoảng 2,2 trang;
