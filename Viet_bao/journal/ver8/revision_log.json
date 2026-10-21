@@ -1,0 +1,215 @@
+[
+  {
+    "operation": "replace",
+    "source_block": 22,
+    "before": "Thời gian của các phương án được tính trên cùng đoạn xử lý góc, với cùng giới hạn vận tốc đầu và cuối có thể đạt được. Khi quay tại chỗ khả thi, phương án chuyển tiếp chỉ được xem xét nếu thỏa công thức 6. Trong đó, Tmin là thời gian ngắn nhất của các chuyển tiếp khả thi, Tp là thời gian của phương án quay tại chỗ và δT là mức giảm thời gian tối thiểu yêu cầu. Chuyển tiếp được chọn phải nằm trong khoảng thời gian cho phép so với Tmin và vẫn nhanh hơn phương án quay tại chỗ ít nhất δT.",
+    "after": "Thời gian của các phương án được tính trên cùng đoạn xử lý góc, với cùng giới hạn vận tốc đầu và cuối có thể đạt được. Gọi Tmin là thời gian ngắn nhất của các chuyển tiếp khả thi, Tp là thời gian quay tại chỗ trên đoạn này và δT là mức giảm thời gian tối thiểu yêu cầu. Khi quay tại chỗ khả thi, nhánh chuyển tiếp chỉ được mở nếu thỏa công thức 5."
+  },
+  {
+    "operation": "move",
+    "source_block": 25,
+    "text": "@equation T_{\\min}+\\delta_T<T_p.",
+    "before_prefix": "Hàm chi phí trong công thức"
+  },
+  {
+    "operation": "insert",
+    "before": "",
+    "after": "Trong nhánh này, thời gian của chuyển tiếp được giữ không vượt Tmin cộng khoảng thời gian cho phép đã cấu hình và không lớn hơn Tp − δT, bỏ qua dung sai số học. Nếu quay tại chỗ không khả thi, chỉ áp dụng giới hạn so với Tmin."
+  },
+  {
+    "operation": "inline",
+    "source_block": 23,
+    "before": "Hàm chi phí trong công thức 5 dùng để lựa chọn phương án tại góc. Gọi cmax là chi phí bản đồ lớn nhất tại các mẫu tâm và ωpeak là trị tuyệt đối vận tốc góc lớn nhất. Các thành phần chuẩn hóa là ρc = min(1, cmax/252), ρω = min(1, ωpeak/ωmax) và ρE = Eκ/(Eκ + Escale), lần lượt tương ứng với chi phí vật cản, vận tốc góc và tích phân bình phương độ cong. Ba trọng số có tổng bằng một. Phương án quay tại chỗ nhận chi phí 1 nếu có chuyển tiếp đáp ứng điều kiện thời gian, và 0 nếu không có.",
+    "after": "Hàm chi phí trong công thức 6 dùng để lựa chọn phương án tại góc. Gọi cmax là chi phí bản đồ lớn nhất tại các mẫu tâm và ωpeak là trị tuyệt đối vận tốc góc lớn nhất. Các thành phần chuẩn hóa là ρc = min(1, cmax/252), ρω = min(1, ωpeak/ωmax) và ρE = Eκ/(Eκ + Escale), lần lượt tương ứng với chi phí vật cản, vận tốc góc và tích phân bình phương độ cong. Ba trọng số có tổng bằng một. Phương án quay tại chỗ nhận chi phí 1 nếu có chuyển tiếp đáp ứng điều kiện thời gian, và 0 nếu không có."
+  },
+  {
+    "operation": "replace",
+    "source_block": 26,
+    "before": "Nếu quay tại chỗ không khả thi, thuật toán vẫn xét chuyển tiếp đáp ứng các điều kiện còn lại. Ngược lại, nếu không có chuyển tiếp đáp ứng yêu cầu, thuật toán sử dụng phương án quay tại chỗ khả thi. Chuỗi chuyển động có thể kết hợp cả hai phương án; đường sau khi ghép tiếp tục được kiểm tra trước khi chuyển tới bộ điều khiển.",
+    "after": "Nếu không có chuyển tiếp đáp ứng yêu cầu, thuật toán sử dụng phương án quay tại chỗ khả thi. Chuỗi được chọn có thể kết hợp hai dạng chuyển động và được kiểm tra lại sau khi ghép."
+  },
+  {
+    "operation": "replace",
+    "source_block": 43,
+    "before": "@note Ký hiệu δT là mức giảm thời gian tối thiểu đối với phương án quay tại chỗ; khoảng thời gian cho phép so với Tmin còn bị giới hạn bởi điều kiện này. Khoảng cách lấy mẫu đường đầu ra khác khoảng cách lấy mẫu kiểm tra đường cong. Khoảng dự phòng trên cạnh chung 0,05 m được suy ra từ cấu hình và độ phân giải bản đồ.",
+    "after": "@note Ký hiệu δT là mức giảm thời gian tối thiểu so với quay tại chỗ. Khoảng thời gian cho phép so với Tmin được chặn thêm bởi điều kiện tại Mục II-D. Khoảng cách lấy mẫu đường đầu ra khác khoảng cách kiểm tra đường cong; khoảng dự phòng 0,05 m được suy ra từ cấu hình và độ phân giải bản đồ."
+  },
+  {
+    "operation": "inline",
+    "source_block": 57,
+    "before": "Ma trận khảo sát gồm 125 lượt, tương ứng 5 tuyến × 5 bộ lập kế hoạch × 5 phương án. Mỗi tổ hợp được thực thi một lần. R01 sử dụng dữ liệu ngày 02–03/08/2026; R02–R05 thuộc đợt bổ sung sau đó. Hình và chỉ số được lấy từ cùng bản ghi thực thi. Mã kiểm tra của đường gốc được đối chiếu trong từng nhóm để xác nhận các phương án nhận cùng đầu vào hình học.",
+    "after": "Ma trận khảo sát gồm 125 lượt, tương ứng 5 tuyến × 5 bộ lập kế hoạch × 5 phương án. Mỗi tổ hợp được thực thi một lần. Hình và chỉ số được lấy từ cùng bản ghi thực thi. Mã kiểm tra của đường gốc được đối chiếu trong từng nhóm để xác nhận các phương án nhận cùng đầu vào hình học."
+  },
+  {
+    "operation": "replace",
+    "source_block": 50,
+    "before": "Năm tuyến khảo sát các dạng chuyển hướng trên cùng một bố trí vật cản. Các tuyến dùng chung độ phân giải bản đồ và một số đoạn hành lang. R04 khác R02 cả điểm đích và cách tiếp cận, nên không tạo thành cặp đối xứng hoàn toàn. R05 có quãng đường ngắn nhưng tập trung chuyển hướng và tiếp cận đích trong một vùng nhỏ.",
+    "after": "Năm tuyến khảo sát các dạng chuyển hướng trên cùng một bố trí vật cản: R01 xét chuyển lối tại giao cắt; R02 xét hành trình dài với các đoạn gần thẳng; R03 xét chuỗi góc liên tiếp; R04 bổ sung chiều tiếp cận và chuỗi chuyển hướng khác; R05 tập trung chuyển hướng và tiếp cận đích trên tuyến ngắn. Các tuyến dùng chung một số hành lang. R04 khác R02 cả điểm đầu, điểm đích và hình học đường, nên không tạo thành thí nghiệm tách riêng ảnh hưởng của chiều tiếp cận."
+  },
+  {
+    "operation": "replace",
+    "source_block": 53,
+    "before": "Năm phương án xử lý gồm đường gốc, Simple, Savitzky–Golay, Constrained và PSTMO. Đường gốc giữ nguyên đầu ra của bộ lập kế hoạch. Simple làm mượt lặp; Savitzky–Golay, viết tắt SG trong bảng và hình, dựa trên bộ lọc bình phương tối thiểu cục bộ [2]. Constrained tối ưu số các thành phần chất lượng đường [3]. Bảng IV trình bày cấu hình từng phương án.",
+    "after": "Năm phương án gồm đường gốc, Simple, Savitzky–Golay, Constrained và PSTMO. Đường gốc giữ nguyên đầu ra của bộ lập kế hoạch để đối chiếu thay đổi do hậu xử lý. Simple làm mượt lặp; Savitzky–Golay, viết tắt SG trong bảng và hình, dùng bộ lọc bình phương tối thiểu cục bộ [2]; Constrained tối ưu số các thành phần chất lượng đường [3]. Ba đối chứng làm mượt cho phép so sánh các cách xử lý khác nhau dưới cùng bộ điều khiển. Bảng IV trình bày cấu hình từng phương án."
+  },
+  {
+    "operation": "insert",
+    "before": "",
+    "after": "Một lượt cho mỗi tổ hợp chưa xác định được biến thiên khi thực thi lại cùng nhiệm vụ. Vì vậy, bộ kiểm chứng lặp đánh giá mức độ duy trì của chênh lệch hiệu năng khi giữ cố định đầu vào và cấu hình. Constrained cung cấp đối chứng tối ưu số trong cùng Nav2 để đối chiếu với cách xây dựng và lựa chọn chuỗi chuyển tiếp của PSTMO. Phạm vi lặp chỉ gồm hai phương án này, không thay thế so sánh đủ năm phương án hoặc xác lập ưu thế so với các đối chứng còn lại."
+  },
+  {
+    "operation": "remove",
+    "source_block": 213,
+    "before": "Mỗi tổ hợp trong ma trận khảo sát chỉ được thực thi một lần, nên chưa xác định được biến thiên khi lặp cùng nhiệm vụ. Bộ kiểm chứng 250 lượt giữ cố định đầu vào và cấu hình để đánh giá mức độ duy trì của chênh lệch hiệu năng. Constrained được dùng làm đối chứng tối ưu số trong cùng Nav2, đối chiếu với cách xây dựng và lựa chọn chuỗi chuyển tiếp của PSTMO. Đây không phải đối chứng mạnh nhất trên mọi chỉ số: Simple cũng cạnh tranh về thời gian trong ma trận năm phương án. Vì bộ lặp chỉ có PSTMO–Constrained, suy luận thống kê chỉ áp dụng cho hai cấu hình này, không xác lập ưu thế so với các phương án còn lại.",
+    "after": ""
+  },
+  {
+    "operation": "rewrite_measurement_section",
+    "source_blocks": [
+      65,
+      66,
+      67,
+      68,
+      69,
+      70,
+      71,
+      72,
+      73,
+      74,
+      75
+    ],
+    "before": [
+      "Thời gian thực thi T được đo bằng đồng hồ mô phỏng, gồm thời gian điều hướng và thời gian chờ robot dừng. Thời lượng hậu xử lý do tác vụ làm mượt Nav2 trả về, được tính bằng đồng hồ của nút phần mềm [4]. Khi dùng thời gian mô phỏng, đại lượng này không phải thời gian CPU hoặc thời gian thực độc lập của máy tính.",
+      "Sai số bám đường là khoảng cách nhỏ nhất từ vị trí robot xₖ đến các đoạn của đường tham chiếu P. Với N vị trí, căn trung bình bình phương sai số, viết tắt RMSE, được xác định trong công thức 8. Mỗi phương án được đánh giá theo đường tham chiếu riêng. Vì vậy, RMSE phản ánh khả năng bám đường tham chiếu, không phải sai số định vị.",
+      "@equation e_{\\mathrm{RMSE}}=\\sqrt{\\frac{1}{N}\\sum_{k=1}^{N}\\operatorname{dist}(x_k,P)^2}.",
+      "Giá trị xấp xỉ của tích phân bình phương độ cong được tính từ các bộ ba điểm liên tiếp. Với độ dài ba cạnh a, b, c và diện tích tam giác có dấu A, độ cong mẫu bằng 4A/(abc). Mỗi giá trị κ² được nhân với nửa tổng chiều dài hai cạnh kề rồi cộng trên toàn đường. Các bộ ba suy biến được bỏ qua theo ngưỡng số học. Chỉ số phụ thuộc cách lấy mẫu, đặc biệt khi đường có các đoạn rất ngắn.",
+      "Quỹ đạo thực thi được lấy mẫu lại theo chiều dài cung với bước 0,05 m. Sau đó, phép trung bình trượt đối xứng sử dụng hai mẫu ở mỗi phía để làm mượt dữ liệu, đồng thời giữ hai đầu đường. Cùng quy trình được áp dụng trước khi tính RMSE và tích phân bình phương độ cong cho mọi phương án. RMSE vì vậy được báo trên quỹ đạo đã xử lý.",
+      "Ký hiệu Eκ,ref chỉ tích phân bình phương độ cong của đường tham chiếu; Eκ,exec chỉ tích phân bình phương độ cong của quỹ đạo thực thi đã xử lý trong mô phỏng. Các giá trị báo cáo là xấp xỉ từ dữ liệu rời rạc theo quy trình lấy mẫu tương ứng. Hồ sơ còn giữ chỉ số của phần tịnh tiến để phân biệt với các tư thế quay tại chỗ. Mức giảm Eκ,ref không mặc nhiên dẫn đến mức giảm tương ứng của Eκ,exec.",
+      "Khoảng hở c là khoảng cách nhỏ nhất giữa đường bao đã định hướng và vật cản trên bản đồ tĩnh. Phép đo khoảng hở nội suy tư thế với bước tịnh tiến 0,05 m và bước hướng 5°. Đường bao được lấy mẫu với bước không quá 0,025 m. Trường khoảng cách được hiệu chỉnh nửa đường chéo ô. Ô chưa biết và ô có mức chiếm chỗ từ 65 trở lên được xem là vật cản. Độ phân giải bản đồ giới hạn cách diễn giải những chênh lệch khoảng hở rất nhỏ.",
+      "Các chỉ số bổ sung gồm sai số đích, quãng đường thực thi, phân vị 95% của trị tuyệt đối độ giật tịnh tiến và thời lượng hậu xử lý. Hệ thống cũng ghi số lần bộ giám sát va chạm can thiệp và số mẫu đường bao va chạm. Độ giật là đạo hàm của gia tốc theo thời gian; trong nghiên cứu này, đại lượng đó được ước lượng từ chuỗi vận tốc mô phỏng bằng sai phân và phụ thuộc nhịp lấy mẫu. Nghiên cứu chưa đo điện năng, rung tải hàng hoặc lực tiếp xúc.",
+      "Chiều dài L được tính bằng tổng khoảng cách giữa các điểm đường tham chiếu; D là tổng quãng đường từ các vị trí robot trước bước xử lý quỹ đạo. Sai số cực đại emax dùng cùng phép đo khoảng cách như RMSE. Sai số cuối ep và eψ lần lượt là khoảng cách tới vị trí đích và trị tuyệt đối sai lệch hướng đã quy về [0; π]. Các chỉ số hình học được báo trên toàn bộ 25 đường của mỗi phương án; các trung bình thực thi dùng tập lượt đạt và ghi rõ mẫu số.",
+      "Độ cong cực đại κmax là cực đại trị tuyệt đối độ cong ước lượng trên các điểm đầu ra chưa lấy mẫu lại. Để kiểm tra ảnh hưởng lấy mẫu, phần tịnh tiến được tách tại các tư thế quay tại chỗ và lấy mẫu lại với bước 0,05 m, cho các chỉ số κt,max và Eκ,t. Dấu quay tại chỗ được nhận diện khi dịch chuyển không quá 0,0001 m và thay đổi hướng ít nhất 5°. Đây là dấu trong đường tham chiếu, không phải số lần robot thực sự xoay trong quá trình điều khiển.",
+      "Toàn bộ 125 bản ghi có đủ chỉ số quỹ đạo thực thi, độ giật và chuỗi trạng thái. Các chỉ số bổ sung được trích cùng nguồn với thời gian và RMSE. Vận tốc bánh tương đương được suy từ v ± bω/2 với b = 0,2548 m; gia tốc ngang được tính bằng |vω|. Gia tốc và độ giật dùng sai phân với bước thời gian hợp lệ từ 0,0001 đến 0,5 s. Cực đại của các tín hiệu chỉ mô tả những mẫu đã ghi, chưa chứng minh ràng buộc liên tục giữa các mẫu."
+    ],
+    "after": [
+      "Toàn bộ 125 bản ghi có đủ đường tham chiếu, quỹ đạo thực thi, độ giật và chuỗi trạng thái. Các chỉ số của cùng lượt được trích từ cùng bản ghi. Quỹ đạo thực thi được lấy mẫu lại theo chiều dài cung với bước 0,05 m, rồi làm mượt bằng trung bình trượt đối xứng với hai mẫu mỗi phía, giữ hai đầu đường. Quy trình này được áp dụng thống nhất trước khi tính RMSE và tích phân bình phương độ cong của quỹ đạo thực thi.",
+      "Chiều dài đường tham chiếu L là tổng khoảng cách giữa các điểm đầu ra. Quãng đường thực thi D được tính từ các vị trí robot trước bước xử lý quỹ đạo. Ký hiệu Eκ,ref và Eκ,exec lần lượt chỉ tích phân bình phương độ cong của đường tham chiếu và quỹ đạo thực thi đã xử lý. Mức giảm Eκ,ref không mặc nhiên dẫn đến mức giảm tương ứng của Eκ,exec.",
+      "Giá trị xấp xỉ của tích phân bình phương độ cong được tính từ các bộ ba điểm liên tiếp. Với độ dài ba cạnh a, b, c và diện tích tam giác có dấu A, độ cong mẫu bằng 4A/(abc). Mỗi giá trị κ² được nhân với nửa tổng chiều dài hai cạnh kề rồi cộng trên toàn đường; các bộ ba suy biến được bỏ qua theo ngưỡng số học. Độ cong cực đại κmax là cực đại trị tuyệt đối độ cong ước lượng trên các điểm đầu ra chưa lấy mẫu lại. Các chỉ số này phụ thuộc mật độ điểm.",
+      "Để kiểm tra ảnh hưởng lấy mẫu, phần tịnh tiến của đường tham chiếu được tách tại các tư thế quay tại chỗ và lấy mẫu lại với bước 0,05 m, cho các chỉ số κt,max và Eκ,t. Dấu quay tại chỗ được nhận diện khi dịch chuyển không quá 0,0001 m và thay đổi hướng ít nhất 5°. Đây là dấu trong đường tham chiếu, không phải số lần robot thực sự xoay khi điều khiển.",
+      "Sai số bám đường là khoảng cách nhỏ nhất từ vị trí xₖ trên quỹ đạo thực thi đã xử lý đến các đoạn của đường tham chiếu P. Với N vị trí, căn trung bình bình phương sai số, viết tắt RMSE, được xác định trong công thức 8. Mỗi phương án dùng đường tham chiếu riêng; RMSE phản ánh khả năng bám đường, không phải sai số định vị.",
+      "@equation e_{\\mathrm{RMSE}}=\\sqrt{\\frac{1}{N}\\sum_{k=1}^{N}\\operatorname{dist}(x_k,P)^2}.",
+      "Sai số bám cực đại emax dùng cùng phép đo khoảng cách và quỹ đạo đã xử lý như RMSE. Sai số cuối ep và eψ lần lượt là khoảng cách tới vị trí đích và trị tuyệt đối sai lệch hướng đã quy về [0; π], tính từ trạng thái cuối của mô phỏng. Sai số cuối phản ánh kết quả dừng tại đích, khác với sai số bám trên hành trình.",
+      "Thời gian thực thi T được đo bằng đồng hồ mô phỏng, gồm thời gian điều hướng và thời gian chờ robot dừng. Thời lượng hậu xử lý do tác vụ làm mượt Nav2 trả về, được tính bằng đồng hồ của nút phần mềm [4]. Khi dùng thời gian mô phỏng, đại lượng này không phải thời gian CPU hoặc thời gian thực độc lập của máy tính.",
+      "Khoảng hở c là khoảng cách nhỏ nhất giữa đường bao đã định hướng và vật cản trên bản đồ tĩnh. Phép đo trên đường tham chiếu nội suy tư thế với bước tịnh tiến 0,05 m và bước hướng 5°. Đường bao được lấy mẫu với bước không quá 0,025 m; trường khoảng cách được hiệu chỉnh nửa đường chéo ô. Ô chưa biết và ô có mức chiếm chỗ từ 65 trở lên được xem là vật cản. Độ phân giải bản đồ giới hạn cách diễn giải những chênh lệch khoảng hở rất nhỏ.",
+      "Phân vị 95% của trị tuyệt đối độ giật tịnh tiến mô tả biến thiên gia tốc. Độ giật được ước lượng từ chuỗi vận tốc mô phỏng bằng sai phân và phụ thuộc nhịp lấy mẫu. Vận tốc bánh tương đương được suy từ v ± bω/2 với b = 0,2548 m; gia tốc ngang là |vω|. Gia tốc và độ giật dùng bước thời gian hợp lệ từ 0,0001 đến 0,5 s. Cực đại chỉ mô tả các mẫu đã ghi, chưa chứng minh ràng buộc liên tục giữa các mẫu. Hệ thống còn ghi số lần giám sát va chạm can thiệp và số mẫu đường bao va chạm; chưa đo điện năng, rung tải hàng hoặc lực tiếp xúc.",
+      "Các chỉ số hình học dùng toàn bộ 25 đường của mỗi phương án; trung bình thực thi dùng tập lượt đạt và ghi rõ mẫu số. So sánh ghép cặp chỉ dùng các lượt cùng đầu vào mà cả hai phương án đạt. Trong phân tích bộ lặp, thời gian, RMSE và Eκ,exec là ba chỉ số chính được hiệu chỉnh đa kiểm định; các chỉ số còn lại bổ sung thông tin về đánh đổi. Phương pháp thống kê được trình bày tại Mục III-H."
+    ]
+  },
+  {
+    "operation": "replace",
+    "source_block": 83,
+    "before": "### 2) Thời gian thực thi và tích phân bình phương độ cong",
+    "after": "### 2) Hình học đường và kết quả thực thi"
+  },
+  {
+    "operation": "replace",
+    "source_block": 131,
+    "before": "### 3) So sánh với Simple và giới hạn của chỉ số đường tham chiếu",
+    "after": "### 3) So sánh các phương án và đánh đổi"
+  },
+  {
+    "operation": "move",
+    "source_block": 106,
+    "text": "@figure r02_metrics R02: thời gian và RMSE theo bộ lập kế hoạch. Sự khác biệt giữa hai hàng chỉ số cho phép nhận diện trường hợp nhanh hơn nhưng bám đường kém hơn; không suy ra ưu thế toàn diện từ một hàng duy nhất.",
+    "before_prefix": "So sánh theo bộ lập kế hoạch cho thấy PSTMO nhanh hơn Constrained ở bốn trong năm cặp."
+  },
+  {
+    "operation": "replace",
+    "source_block": 138,
+    "before": "R04 nối (−4,6; 2,8) m với (2,0; −2,8) m và kết thúc ở hướng −π/2. So với R02, robot tiếp cận hành lang ngang từ phía đối diện và đi tới điểm đích khác. Tuyến này khảo sát ảnh hưởng của thứ tự các đoạn chuyển hướng. Các chuyển tiếp phải phù hợp với tiếp tuyến đầu–cuối và khoảng trống theo chiều di chuyển.",
+    "after": "R04 nối (−4,6; 2,8) m với (2,0; −2,8) m và kết thúc ở hướng −π/2. Tuyến này bổ sung trường hợp tiếp cận hành lang theo chiều khác, với chuỗi chuyển hướng và tư thế đích khác R02. Kết quả mô tả toàn bộ nhiệm vụ, không tách riêng ảnh hưởng của thứ tự các góc rẽ."
+  },
+  {
+    "operation": "move",
+    "source_block": 152,
+    "text": "So sánh theo bộ lập kế hoạch cho thấy PSTMO nhanh hơn Constrained ở bốn cặp; với Smac Hybrid, thời gian tăng 0,05 s. RMSE thấp hơn Constrained ở cả năm cặp. So với Savitzky–Golay, PSTMO cũng giảm cả thời gian và RMSE ở năm cặp. So với Simple, PSTMO chỉ nhanh hơn ở hai cặp nhưng có RMSE thấp hơn ở bốn cặp. Trung bình toàn tuyến cần được đọc cùng phân bố theo bộ lập kế hoạch.",
+    "before_prefix": "### 3) Trường hợp sát ngưỡng"
+  },
+  {
+    "operation": "remove",
+    "source_block": 174,
+    "before": "Bộ kiểm chứng lặp ghi nhận một số lượt kết thúc trước đích ngay trên R05. Vì chưa đo chi phí phục hồi, thời gian trên các lượt đạt không đại diện cho thời gian chu kỳ vận hành có tính đến thử lại.",
+    "after": ""
+  },
+  {
+    "operation": "replace",
+    "source_block": 170,
+    "before": "### 3) Khoảng hở và chuyển tiếp sang kiểm chứng lặp",
+    "after": "### 3) Khoảng hở và độ chính xác cuối"
+  },
+  {
+    "operation": "inline",
+    "source_block": 115,
+    "before": "Sai số vị trí cuối trung bình của năm phương án theo thứ tự trên là 37,1; 36,4; 37,5; 42,4; 37,0 mm; sai số hướng tương ứng là 0,086; 0,081; 0,083; 0,074; 0,083 rad, chỉ tính các lượt đạt. PSTMO gần Simple về sai số vị trí nhưng có sai số hướng lớn hơn Constrained. Kết quả dừng không bù cho RMSE cao hơn: lợi ích chính trên R02 là thời gian trung bình, không phải độ chính xác bám đường.",
+    "after": "Sai số vị trí cuối trung bình của năm phương án theo thứ tự trên là 37,1; 36,4; 37,5; 42,4; 37,0 mm; sai số hướng tương ứng là 0,086; 0,081; 0,083; 0,074; 0,083 rad, chỉ tính các lượt đạt. PSTMO gần Simple về sai số vị trí nhưng có sai số hướng lớn hơn Constrained. Sai số cuối và RMSE phản ánh hai khía cạnh khác nhau. Trên R02, thời gian trung bình giảm nhưng sai số bám đường trung bình tăng."
+  },
+  {
+    "operation": "inline",
+    "source_block": 175,
+    "before": "Sai số vị trí cuối trung bình của năm phương án theo thứ tự trên là 40,3; 45,6; 38,3; 44,8; 46,5 mm; sai số hướng tương ứng là 0,081; 0,079; 0,077; 0,063; 0,063 rad, chỉ tính các lượt đạt. PSTMO có sai số vị trí cao nhất; sai số hướng gần Constrained ở độ chính xác báo cáo. Lợi ích thời gian và bám đường tại R05 vì vậy không đồng nghĩa định vị cuối tốt hơn; độ tin cậy cần được đối chiếu thêm với bộ lặp.",
+    "after": "Sai số vị trí cuối trung bình của năm phương án theo thứ tự trên là 40,3; 45,6; 38,3; 44,8; 46,5 mm; sai số hướng tương ứng là 0,081; 0,079; 0,077; 0,063; 0,063 rad, chỉ tính các lượt đạt. PSTMO có sai số vị trí cao nhất; sai số hướng gần Constrained ở độ chính xác báo cáo. Lợi ích thời gian và bám đường tại R05 vì vậy không đồng nghĩa sai số vị trí cuối nhỏ hơn; độ tin cậy cần được đối chiếu thêm với bộ lặp."
+  },
+  {
+    "operation": "replace",
+    "source_block": 182,
+    "before": "Bảng XVI ghép PSTMO với từng đối chứng cùng tuyến và bộ lập kế hoạch, chỉ giữ cặp cùng hoàn thành. Có 23 cặp với đường gốc và 24 cặp với mỗi phương án làm mượt. PSTMO giảm cả ba chỉ số trung bình trên các cặp này; mức giảm thời gian nhỏ nhất khi so với Simple.",
+    "after": "Bảng XVI ghép PSTMO với từng đối chứng cùng tuyến và bộ lập kế hoạch, chỉ giữ cặp cùng hoàn thành. Có 23 cặp với đường gốc và 24 cặp với mỗi phương án làm mượt. PSTMO giảm thời gian, RMSE và Eκ,exec trung bình trên các cặp này; mức giảm thời gian nhỏ nhất khi so với Simple."
+  },
+  {
+    "operation": "replace",
+    "source_block": 186,
+    "before": "Hình 15 cho thấy chênh lệch thời gian và RMSE có thể đổi dấu giữa các đầu vào dù trung bình âm. Phân tích theo tuyến tại Mục III-B–F xác định những trường hợp này. Mức giảm độ cong tham chiếu còn cần được xem xét theo mật độ điểm.",
+    "after": "Hình 15 cho thấy chênh lệch thời gian và RMSE có thể đổi dấu giữa các đầu vào dù trung bình âm. Hàng cuối của hình dùng Eκ,ref trên đủ 25 cặp đường, khác với Eκ,exec trên các cặp cùng đạt trong Bảng XVI. Mục III-B–F phân tích theo tuyến; phần tiếp theo kiểm tra ảnh hưởng mật độ điểm tới chỉ số độ cong tham chiếu."
+  },
+  {
+    "operation": "insert",
+    "before": "",
+    "after": "Hình 16 minh họa tín hiệu của R02 với Theta*, bộ lập kế hoạch cũng được dùng trong các hình đường tham chiếu theo tuyến. Trường hợp này giúp đối chiếu đường tham chiếu, chuyển động thực thi và vận tốc góc trong cùng lượt; không được dùng để ước lượng hiệu năng chung của năm tuyến."
+  },
+  {
+    "operation": "replace",
+    "source_block": 201,
+    "before": "Hình 16 cho thấy các phương án đều xuất hiện đoạn vận tốc góc dương gần 0,25 rad/s, nhưng thời điểm và khoảng duy trì khác nhau. Trong khoảng 34–40 s, khoảng từ mẫu đầu đến mẫu cuối có ω > 0,24 rad/s là 2,56 s với PSTMO, 2,56 s với Simple và 3,10 s với Constrained. Biên độ gần nhau không có nghĩa thời gian toàn nhiệm vụ bằng nhau. Ở lượt R02/Theta* này, PSTMO hoàn thành trong 55,764 s, nhanh hơn Constrained 0,939 s nhưng chậm hơn Simple 0,636 s. Vùng quỹ đạo phóng to chỉ biểu diễn một phần hành trình, không ứng với toàn bộ đồ thị thời gian. RPP tắt điều tiết vận tốc theo độ cong và chi phí; các tín hiệu này chưa tách được nguyên nhân của chênh lệch thời gian.",
+    "after": "Các tín hiệu trong Hình 16 đều có đoạn vận tốc góc dương gần 0,25 rad/s, nhưng diễn biến theo thời gian khác nhau. Ở lượt R02/Theta* này, PSTMO hoàn thành trong 55,764 s, nhanh hơn Constrained 0,939 s nhưng chậm hơn Simple 0,636 s. Vùng quỹ đạo phóng to chỉ biểu diễn một phần hành trình, còn đồ thị vận tốc bao quát cả lượt. Biên độ vận tốc góc gần nhau chưa giải thích chênh lệch thời gian toàn nhiệm vụ; các tín hiệu không tách được tác động riêng của hình học đường và bộ điều khiển."
+  },
+  {
+    "operation": "replace",
+    "source_block": 212,
+    "before": "### 1) Thiết kế và phương pháp phân tích",
+    "after": "### 1) Phương pháp phân tích thống kê"
+  },
+  {
+    "operation": "move",
+    "source_block": 235,
+    "text": "@figure endpoints Sai số vị trí cuối của toàn bộ 250 lượt kiểm chứng lặp. Trục đứng dùng thang log để hiển thị đồng thời sai số cỡ centimét và các lượt kết thúc xa đích. Ngưỡng 0,10 m chỉ là một phần của tiêu chí hoàn thành; các lượt thuộc ma trận 125 lượt không nằm trong hình này.",
+    "before_prefix": "### 3) Phạm vi kết luận"
+  },
+  {
+    "operation": "replace",
+    "source_block": 239,
+    "before": "Nghiên cứu đánh giá năm dạng tuyến trên một bản đồ tĩnh, một robot mô phỏng và một cấu hình RPP. R01 của ma trận khảo sát được thu ở đợt khác R02–R05; dữ liệu một lượt chỉ hỗ trợ so sánh mô tả. Bộ lặp dùng cấu hình cố định nhưng chỉ có PSTMO và Constrained. Thứ tự chạy chưa được xác nhận ngẫu nhiên hóa; bốn tiến trình có miền truyền thông riêng vẫn dùng chung tài nguyên máy tính. Các giới hạn này đặc biệt ảnh hưởng cách diễn giải thời lượng xử lý và khả năng suy rộng.",
+    "after": "Khảo sát dùng một bản đồ tĩnh, một robot mô phỏng và một cấu hình RPP. R01 được thu ở đợt khác R02–R05; bộ lặp chỉ gồm PSTMO và Constrained. Chưa xác nhận thứ tự chạy được ngẫu nhiên hóa; bốn tiến trình dùng chung tài nguyên máy tính dù có miền truyền thông riêng. Các điều kiện này hạn chế khả năng suy rộng và cách diễn giải thời lượng xử lý."
+  },
+  {
+    "operation": "replace",
+    "source_block": 240,
+    "before": "Constrained được đánh giá với trọng số độ cong bằng không. Các phương án chưa được tinh chỉnh theo cùng ngân sách đánh giá tham số trên tập hiệu chỉnh tách biệt, nên kết quả đại diện cho các cấu hình đã báo. Phân tích cặp cùng đạt còn có thể thiên lệch về các nhiệm vụ dễ hoàn thành; tỷ lệ thành công và từng trường hợp không đạt phải được đọc cùng các chỉ số liên tục.",
+    "after": "Kết quả chỉ đại diện cho các cấu hình ở Mục III-A, chưa có tinh chỉnh với cùng ngân sách đánh giá tham số trên tập hiệu chỉnh tách biệt. Phân tích cặp cùng đạt có thể thiên lệch về các nhiệm vụ dễ hoàn thành; vì vậy phải đọc cùng tỷ lệ thành công và các trường hợp không đạt."
+  },
+  {
+    "operation": "empty_section_marker_spacing",
+    "line_pt": 1,
+    "body_font_or_spacing_changed": false,
+    "empty_terminal_section_removed": true
+  }
+]

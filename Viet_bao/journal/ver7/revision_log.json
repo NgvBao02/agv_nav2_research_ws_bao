@@ -1,0 +1,206 @@
+[
+  {
+    "before": "Sau khi ghép, PSTMO kiểm tra vị trí đầu–cuối, giới hạn chuyển động, đường bao tại các mối nối và hướng cuối. Đường chỉ được chấp nhận khi vượt qua toàn bộ kiểm tra. Bảng I trình bày cấu hình khảo sát. Đường được chuyển tới bộ điều khiển Regulated Pure Pursuit, viết tắt RPP [1]. RPP tạo lệnh vận tốc khi bám đường; thời gian dự đoán tại góc và thời gian thực thi có phản hồi điều khiển được đánh giá riêng.",
+    "after": "Sau khi truy vết, các đoạn thẳng, chuyển tiếp và tư thế quay tại chỗ được ghép theo thứ tự đường đi. PSTMO kiểm tra vị trí đầu–cuối, giới hạn chuyển động, đường bao tại các mối nối và hướng cuối. Thuật toán từ chối đường nếu thiếu phương án khả thi, không có chuỗi tương thích hoặc đầu ra không vượt qua toàn bộ kiểm tra."
+  },
+  {
+    "before": "## F. Trình tự thực hiện và điều kiện chấp nhận",
+    "after": ""
+  },
+  {
+    "before": "Sau khi nhận dữ liệu hình học và giới hạn chuyển động, PSTMO tiền xử lý đường, xác định các góc và kiểm tra khả năng quay tại chỗ. Với hai chiều dài cắt, thuật toán xây dựng đường cong, kiểm tra hình dạng và va chạm, rồi tính vận tốc và thời gian di chuyển dọc đoạn. Các phương án đáp ứng điều kiện thời gian được đánh giá bằng hàm chi phí và đưa vào bài toán quy hoạch động.",
+    "after": ""
+  },
+  {
+    "before": "Quy hoạch động liên kết các trạng thái tương thích và truy vết chuỗi có tổng chi phí nhỏ nhất. Các đoạn thẳng, chuyển tiếp và tư thế quay tại chỗ được ghép theo thứ tự đường đi. Bước cuối kiểm tra toàn bộ đầu ra và bảo toàn tư thế đích. Thuật toán từ chối đường nếu thiếu trạng thái khả thi, không có chuỗi tương thích hoặc không đáp ứng phép kiểm tra đầu ra.",
+    "after": ""
+  },
+  {
+    "before": "Ba bước xây dựng phương án, lựa chọn chuỗi và kiểm tra đầu ra có vai trò khác nhau. Bước đầu xác định các đường cong và phương án quay tại chỗ khả thi. Quy hoạch động chọn chuỗi có tổng chi phí nhỏ nhất trong tập này. Phép kiểm tra cuối xác nhận đường ghép đáp ứng các điều kiện đầu ra đã định trước khi đánh giá chuyển động qua bộ điều khiển.",
+    "after": ""
+  },
+  {
+    "before": "Hai chiều dài cắt và phép tìm kiếm phân cấp giới hạn số đường cong cần đánh giá nhưng có thể bỏ sót hình dạng khả thi khác. Hàm chi phí J cũng chưa mô tả đầy đủ thời gian thực thi khi có phản hồi điều khiển. Phần III đánh giá chuỗi được chọn bằng thời gian thực thi, sai số bám đường và tỷ lệ hoàn thành nhiệm vụ.",
+    "after": ""
+  },
+  {
+    "before": "",
+    "after": "Hai chiều dài cắt và phép tìm kiếm phân cấp giới hạn số đường cong cần đánh giá nhưng có thể bỏ sót hình dạng khả thi khác. Tính tối ưu chỉ áp dụng cho tập phương án đã xây dựng; đường được chấp nhận chưa bảo đảm robot hoàn thành nhiệm vụ khi thực thi. Phần III đánh giá riêng kết quả chuyển động dưới bộ điều khiển."
+  },
+  {
+    "before": "Thử nghiệm sử dụng robot vi sai trong môi trường mô phỏng có các dãy vật cản song song và hành lang giao cắt. Hệ thống gồm ROS 2 Jazzy, Nav2 và Gazebo. Sau hậu xử lý, đường toàn cục được dùng làm tham chiếu cho RPP. Lệnh vận tốc được xử lý qua bộ làm mượt vận tốc trước khi robot thực thi; bộ giám sát va chạm hoạt động trong cùng hệ điều hướng. Trong mỗi nhóm tuyến–bộ lập kế hoạch, các phương án dùng chung bản đồ, robot, bộ điều khiển và tiêu chí đích.",
+    "after": "Thử nghiệm sử dụng robot vi sai trong ROS 2 Jazzy, Nav2 và Gazebo. Đường sau hậu xử lý làm tham chiếu cho bộ điều khiển Regulated Pure Pursuit, viết tắt RPP [1]. Lệnh vận tốc đi qua bộ làm mượt vận tốc trước khi robot thực thi; bộ giám sát va chạm hoạt động trong cùng hệ điều hướng. Trong mỗi nhóm tuyến–bộ lập kế hoạch, các phương án dùng chung bản đồ, robot, bộ điều khiển và tiêu chí đích."
+  },
+  {
+    "before": "",
+    "after": "### 2) Cấu hình PSTMO và tích hợp trong hệ điều hướng"
+  },
+  {
+    "before": "",
+    "after": "Bảng I trình bày các giá trị cấu hình PSTMO dùng trong khảo sát. Sau các phép kiểm tra đầu ra ở Mục II-E, đường được chuyển tới RPP để tạo lệnh vận tốc bám đường. Thời gian dự đoán tại góc dùng để lựa chọn chuyển tiếp; thời gian thực thi đo toàn nhiệm vụ có phản hồi điều khiển. Hai đại lượng không được dùng thay thế cho nhau."
+  },
+  {
+    "before": "### 6) Chỉ số đo và cách diễn giải",
+    "after": "### 7) Chỉ số đo và cách diễn giải"
+  },
+  {
+    "before": "### 5) Tiêu chí hoàn thành và xử lý lỗi",
+    "after": "### 6) Tiêu chí hoàn thành và xử lý lỗi"
+  },
+  {
+    "before": "### 4) Hai bộ dữ liệu và kiểm soát đầu vào",
+    "after": "### 5) Hai bộ dữ liệu và kiểm soát đầu vào"
+  },
+  {
+    "before": "### 3) Bộ lập kế hoạch và các phương án đối chứng",
+    "after": "### 4) Bộ lập kế hoạch và các phương án đối chứng"
+  },
+  {
+    "before": "### 2) Bản đồ và năm bài toán di chuyển",
+    "after": "### 3) Bản đồ và năm bài toán di chuyển"
+  },
+  {
+    "before": "R01 chuyển từ hành lang phía dưới tại x = −2 m sang hành lang phía trên tại x = 2 m. Robot đổi hướng qua hành lang ngang trước khi tiếp tục dọc các dãy vật cản. Tuyến này khảo sát các mối nối giữa đoạn thẳng và vùng rẽ. Trên đường tìm kiếm theo lưới, nhiều đoạn ngắn có thể tạo biến thiên độ cong cục bộ dù vẫn nằm trong cùng hành lang.",
+    "after": "R01 chuyển từ hành lang phía dưới tại x = −2 m sang hành lang phía trên tại x = 2 m qua hành lang ngang. Tuyến này khảo sát các mối nối giữa đoạn thẳng và vùng rẽ, nơi đường theo lưới có thể chứa nhiều đoạn ngắn với độ cong cục bộ lớn."
+  },
+  {
+    "before": "Hình 5 so sánh năm đường tham chiếu khi sử dụng Theta*. Bộ lập kế hoạch này được giữ thống nhất trong các hình quỹ đạo R01–R05. Vùng phóng to được chọn tại điểm trên đường PSTMO có khoảng cách lớn nhất tới các đỉnh đường gốc. Quy tắc cố định giúp quan sát sự khác biệt cục bộ giữa các phương án trên cùng hệ tọa độ.",
+    "after": "Hình 5 so sánh năm đường tham chiếu của Theta*, bộ lập kế hoạch dùng thống nhất trong các hình R01–R05. Vùng phóng to được chọn tại điểm trên đường PSTMO cách xa nhất các đỉnh đường gốc. Đây là quy tắc minh họa khác biệt hình học, không phải lựa chọn theo mức cải thiện thực thi."
+  },
+  {
+    "before": "Thời lượng hậu xử lý của PSTMO ở R01 khoảng 0,102 s, trong khi Constrained là 0,026 s. Mức tăng này cần được xem cùng lợi ích thời gian thực thi. Hai đại lượng có phạm vi đo riêng theo Mục III-A, nên chưa xác định đầy đủ độ trễ toàn hệ thống. Kết quả R01 cho thấy khả năng giảm thời gian nhiệm vụ đi cùng khoảng hở nhỏ hơn và thời lượng hậu xử lý dài hơn.",
+    "after": "Thời lượng hậu xử lý của PSTMO ở R01 khoảng 0,102 s, so với 0,026 s của Constrained. Lợi ích thời gian thực thi đi kèm chi phí hậu xử lý cao hơn. Hai đại lượng có phạm vi đo riêng theo Mục III-A, nên không lấy hiệu trực tiếp để xác định mức giảm độ trễ toàn hệ thống."
+  },
+  {
+    "before": "R02 nối (−4,7; −2,8) m với (4,7; 2,8) m qua hành lang ngang. So với R01, tuyến trải trên phạm vi bản đồ rộng hơn và gồm các đoạn gần thẳng dài hơn. Tuyến này khảo sát hiệu quả hậu xử lý khi vùng chuyển hướng chỉ chiếm một phần đường đi. Vì thời gian còn phụ thuộc các đoạn thẳng và tiếp cận đích, mức giảm Eκ,ref cần được đối chiếu với thời gian toàn nhiệm vụ.",
+    "after": "R02 nối (−4,7; −2,8) m với (4,7; 2,8) m qua hành lang ngang, gồm các đoạn gần thẳng dài hơn R01. Tuyến này khảo sát hiệu quả hậu xử lý khi chuyển hướng chỉ chiếm một phần hành trình; thời gian toàn nhiệm vụ còn bao gồm di chuyển thẳng và tiếp cận đích."
+  },
+  {
+    "before": "Hình 7 cho thấy các phương án đi qua cùng hệ hành lang và khác nhau chủ yếu ở vùng chuyển hướng. Trong hình toàn tuyến, nhiều đường gần như chồng lên nhau. Vùng phóng to thể hiện độ lệch cục bộ theo đơn vị mét, cùng vị trí vật cản xung quanh. Bảng VII tổng hợp kết quả của cả năm bộ lập kế hoạch.",
+    "after": "Hình 7 cho thấy các đường gần chồng lên nhau trên toàn tuyến nhưng tách nhau tại vùng chuyển hướng. Vì khác biệt hình học tập trung cục bộ, Bảng VII và Hình 8 được dùng để đối chiếu với kết quả thực thi trên cả năm bộ lập kế hoạch."
+  },
+  {
+    "before": "R02 biểu hiện rõ đánh đổi giữa tốc độ hoàn thành và độ bám đường. Hình dạng tham chiếu thay đổi cùng đáp ứng của bộ điều khiển, nên dữ liệu chưa tách được đóng góp riêng của từng yếu tố. Kết quả thích hợp để lựa chọn ưu tiên theo yêu cầu nhiệm vụ. Một đánh giá chỉ dùng thời gian hoặc Eκ,ref sẽ bỏ qua RMSE cao hơn của PSTMO trên tuyến này.",
+    "after": "Tại R02, PSTMO giảm thời gian trung bình nhưng tăng RMSE so với cả bốn đối chứng. Do đó, kết quả chưa hỗ trợ lựa chọn PSTMO nếu yêu cầu ưu tiên là sai số bám đường trung bình nhỏ nhất. Dữ liệu chưa tách được ảnh hưởng riêng của hình dạng đường và đáp ứng điều khiển."
+  },
+  {
+    "before": "Hình 9 thể hiện đường chữ U và vùng chuyển hướng khi sử dụng Theta*. Đây là tình huống phù hợp để khảo sát khả năng ghép các chuyển tiếp của toàn bộ PSTMO. Các lượt hiện có đều dùng đầy đủ thuật toán. Việc xác định riêng đóng góp của quy hoạch động cần thêm thí nghiệm loại bỏ thành phần, được nêu tại Mục III-I.",
+    "after": "Hình 9 minh họa việc ghép các chuyển tiếp liên tiếp trên đường chữ U của Theta*. Kết quả thuộc toàn bộ PSTMO; chưa thể quy riêng cho quy hoạch động vì chưa có thí nghiệm loại bỏ thành phần."
+  },
+  {
+    "before": "Khoảng hở nhỏ nhất trung bình của PSTMO là 18,8 cm, so với Constrained 21,4 cm. Cùng với lượt không đạt, kết quả này đặt ra hai điều kiện riêng cho triển khai: đủ khoảng cách vật cản và dừng trong dung sai đích. Kiểm tra hình học ở đầu ra PSTMO không thay thế đánh giá chuyển động thực. Kết quả thử nghiệm lặp tại Mục III-H được dùng để xem xét thêm tính lặp lại của hiệu năng.",
+    "after": "Khoảng hở nhỏ nhất trung bình của PSTMO là 18,8 cm, so với Constrained 21,4 cm. Lượt không đạt dung sai đích cho thấy kiểm tra hình học không thay thế đánh giá chuyển động thực. Khả năng duy trì hiệu năng khi lặp được xét riêng tại Mục III-H."
+  },
+  {
+    "before": "Hình 11 cho thấy khác biệt cục bộ giữa năm đường tham chiếu khi sử dụng Theta*. Kết quả với bốn bộ lập kế hoạch còn lại được thể hiện trong Bảng XI và Hình 12. Các đường gần nhau trên hình toàn tuyến vẫn có thể tạo thời gian và RMSE khác nhau. Vì vậy, nhận xét hình học được đối chiếu với cả hai chỉ số thực thi.",
+    "after": "Hình 11 thể hiện khác biệt cục bộ của năm đường tham chiếu với Theta*. Bảng XI và Hình 12 mở rộng đối chiếu sang cả năm bộ lập kế hoạch, nhằm kiểm tra liệu khác biệt nhỏ trên hình toàn tuyến có đi kèm thay đổi thời gian và RMSE hay không."
+  },
+  {
+    "before": "Hai trường hợp sát ngưỡng ở R03 và R04 cho thấy cần báo sai số liên tục bên cạnh tỷ lệ hoàn thành. Đường tham chiếu bảo toàn vị trí đích, nhưng robot còn chịu ảnh hưởng của bám đường, tiếp cận và dừng. Dữ liệu hiện tại xác định được kết quả cuối; chưa đủ để quy mức vượt ngưỡng cho một thành phần điều khiển riêng.",
+    "after": "Hai trường hợp sát ngưỡng ở R03 và R04 cho thấy cần báo sai số liên tục bên cạnh tỷ lệ hoàn thành. Dữ liệu xác định được mức vượt dung sai nhưng chưa đủ để quy nguyên nhân cho hình dạng đường hoặc một thành phần điều khiển riêng."
+  },
+  {
+    "before": "Hình 13 thể hiện năm đường tham chiếu và vùng khác biệt hình học theo quy tắc chọn vùng tại R01. Bảng XIII tổng hợp kết quả trên năm bộ lập kế hoạch. Toàn bộ 25 lượt khảo sát đều đạt, tạo tập so sánh đầy đủ ở R05. Kết quả kiểm chứng lặp của cùng tuyến được trình bày riêng ở Mục III-H.",
+    "after": "Hình 13 minh họa đường tham chiếu theo quy tắc chọn vùng tại R01; Bảng XIII và Hình 14 đối chiếu cả năm bộ lập kế hoạch. Toàn bộ 25 lượt khảo sát R05 đều đạt, nhưng kết quả này không thay thế kiểm chứng lặp tại Mục III-H."
+  },
+  {
+    "before": "Việc hoàn thành 25 lượt khảo sát chưa xác định tỷ lệ thành công khi chạy lặp lại. Bộ kiểm chứng tiếp theo ghi nhận một số lượt kết thúc trước đích ngay trên R05. Đối với nhiệm vụ ngắn, chi phí phục hồi một lượt thất bại có thể ảnh hưởng đáng kể thời gian chu kỳ. Nghiên cứu chưa đo chi phí này, nên thời gian trung bình trên các lượt đạt cần được báo cùng tỷ lệ hoàn thành.",
+    "after": "Bộ kiểm chứng lặp ghi nhận một số lượt kết thúc trước đích ngay trên R05. Vì chưa đo chi phí phục hồi, thời gian trên các lượt đạt không đại diện cho thời gian chu kỳ vận hành có tính đến thử lại."
+  },
+  {
+    "before": "Bảng XVII cho thấy số điểm đầu ra của PSTMO lớn hơn các đối chứng. Sau khi thống nhất bước lấy mẫu phần tịnh tiến, Eκ,t của PSTMO vẫn thấp hơn ở mức trung bình. Phép so sánh này không khẳng định các đường gấp khúc có độ cong liên tục theo nghĩa giải tích.",
+    "after": "Trong Bảng XVII, Eκ,t của PSTMO sau lấy mẫu lại vẫn thấp nhất: 2,96 m⁻¹, so với Simple 6,01 m⁻¹ và Constrained 19,76 m⁻¹. Thứ hạng trung bình được duy trì dù đã thống nhất bước lấy mẫu; kết quả rời rạc này không chứng minh tính liên tục độ cong của đường gấp khúc."
+  },
+  {
+    "before": "PSTMO có sai số bám đường cực đại trung bình thấp hơn bốn đối chứng, nhưng sai số cuối không giảm theo cùng thứ tự. Độ chính xác dừng còn phụ thuộc cách tiếp cận đích, ngưỡng bộ kiểm tra đích và quá trình giảm tốc sau khi tác vụ hoàn tất.",
+    "after": "Trong Bảng XVIII, PSTMO có độ giật phân vị 95% trung bình thấp nhất, nhưng sai số vị trí cuối 57,3 mm vẫn lớn hơn đường gốc và Savitzky–Golay, cùng đạt 55,4 mm. Sai số hướng 0,069 rad thấp hơn ba đối chứng nhưng cao hơn Constrained, 0,067 rad. Các trung bình dùng tập lượt đạt riêng; thứ hạng bám đường không chuyển nguyên sang độ chính xác dừng."
+  },
+  {
+    "before": "Bảng XX cho thấy PSTMO có thời lượng hậu xử lý cao nhất. Giá trị bằng không của Savitzky–Golay được ghi theo đồng hồ mô phỏng, không chứng minh chi phí tính toán bằng không. Các phép đo này chưa phải thời gian CPU hoặc độ trễ trên phần cứng độc lập.",
+    "after": "Bảng XX ghi nhận thời lượng hậu xử lý trung bình 98,04 ms với PSTMO, 26,88 ms với Constrained và 1,32 ms với Simple. PSTMO có chi phí thời gian xử lý cao nhất trong phép đo này, nên cần cân nhắc khi yêu cầu cập nhật đường thường xuyên. Giá trị 0,00 ms của Savitzky–Golay theo đồng hồ mô phỏng không chứng minh chi phí tính toán bằng không; các số liệu chưa phải thời gian CPU."
+  },
+  {
+    "before": "Bộ kiểm chứng riêng gồm 250 lượt: năm tuyến, năm bộ lập kế hoạch, hai phương án PSTMO–Constrained và năm lần lặp. Constrained là đối chứng tối ưu số có thể tích hợp trong cùng hệ Nav2. Kết luận thống kê trong mục này chỉ áp dụng cho hai phương án với cấu hình đã nêu; so sánh năm phương án vẫn dựa trên ma trận mô tả ở Mục III-B–G.",
+    "after": "Mỗi tổ hợp trong ma trận khảo sát chỉ được thực thi một lần, nên chưa xác định được biến thiên khi lặp cùng nhiệm vụ. Bộ kiểm chứng 250 lượt giữ cố định đầu vào và cấu hình để đánh giá mức độ duy trì của chênh lệch hiệu năng. Constrained được dùng làm đối chứng tối ưu số trong cùng Nav2, đối chiếu với cách xây dựng và lựa chọn chuỗi chuyển tiếp của PSTMO. Đây không phải đối chứng mạnh nhất trên mọi chỉ số: Simple cũng cạnh tranh về thời gian trong ma trận năm phương án. Vì bộ lặp chỉ có PSTMO–Constrained, suy luận thống kê chỉ áp dụng cho hai cấu hình này, không xác lập ưu thế so với các phương án còn lại."
+  },
+  {
+    "before": "Khoảng tin cậy 95% dùng bootstrap trên 25 nhóm với 20.000 lần lấy mẫu lại [5]. Kiểm định hạng có dấu Wilcoxon hai phía áp dụng cho db; các hiệu không quá 10⁻¹² về trị tuyệt đối được xem là bằng không [6]. Ba giá trị p của thời gian, RMSE và Eκ,exec được hiệu chỉnh Holm [7]. Các nhóm còn chia sẻ tuyến, bộ lập kế hoạch và bản đồ, nên kết quả suy luận được giới hạn trong thiết kế đã khảo sát. Đây là lặp thực thi với đầu vào cố định, chưa phải thử nghiệm nhiều mức nhiễu hay nhiều điều kiện ngẫu nhiên.",
+    "after": "Khoảng tin cậy 95% dùng bootstrap trên 25 nhóm với 20.000 lần lấy mẫu lại [5]. Kiểm định Wilcoxon hạng có dấu hai phía áp dụng cho db, coi các hiệu có trị tuyệt đối không quá 10⁻¹² là bằng không [6]. Giá trị p của thời gian, RMSE và Eκ,exec được hiệu chỉnh Holm [7]. Các nhóm còn chia sẻ tuyến, bộ lập kế hoạch và bản đồ; suy luận chỉ áp dụng cho thiết kế lặp với đầu vào cố định, không đại diện cho nhiều mức nhiễu hoặc điều kiện ngẫu nhiên."
+  },
+  {
+    "before": "PSTMO giảm thời gian trung bình theo nhóm 2,857 s, RMSE 2,985 mm và Eκ,exec 1,038 m⁻¹. Khoảng tin cậy của cả ba chênh lệch đều nằm dưới không; số nhóm có chỉ số giảm lần lượt là 24/25, 19/25 và 24/25. Không dùng trung bình gộp 118 cặp thay Δ vì số cặp cùng đạt khác nhau giữa các nhóm.",
+    "after": "PSTMO giảm thời gian trung bình theo nhóm 2,857 s, RMSE 2,985 mm và Eκ,exec 1,038 m⁻¹. Khoảng tin cậy 95% của cả ba chênh lệch đều nằm dưới không; các giá trị p sau hiệu chỉnh Holm đều nhỏ hơn 0,05. Kết quả hỗ trợ mức cải thiện trung bình trong thiết kế khảo sát, không bảo đảm mọi lần thực thi đều tốt hơn. Số nhóm có chỉ số giảm lần lượt là 24/25, 19/25 và 24/25, cho thấy lợi ích RMSE ít nhất quán hơn hai chỉ số còn lại."
+  },
+  {
+    "before": "Hình 17 cho thấy RMSE tăng ở nhiều nhóm hơn hai chỉ số còn lại. PSTMO có lợi ích trung bình nhưng không cải thiện đồng thời mọi đầu vào. Bảng XXII bổ sung quãng đường, độ giật, sai số đích, khoảng hở và thời lượng hậu xử lý để đánh giá những mặt bất lợi cùng với ba chỉ số chính.",
+    "after": "Hình 17 cho thấy RMSE tăng ở một số đầu vào dù chênh lệch chung âm. Vì số cặp cùng đạt khác nhau giữa các nhóm, trung bình đều theo công thức 9 tránh để nhóm có nhiều lượt đạt hơn chi phối kết quả. Bảng XXII đối chiếu các chỉ số bổ sung để xác định những đánh đổi đi kèm."
+  },
+  {
+    "before": "Khoảng hở giảm trung bình 35,161 mm, sai số vị trí cuối tăng 3,380 mm và thời lượng hậu xử lý tăng 71,220 ms. Vì vậy, lợi ích thời gian và bám đường cần được cân nhắc cùng yêu cầu khoảng hở và dung sai đích. Mức giảm độ giật 0,078 m/s³ chưa xác định độ rung tải hàng hay điện năng tiêu thụ, do nghiên cứu chưa đo các đại lượng đó.",
+    "after": "Bảng XXII ghi nhận quãng đường giảm 0,089 m và Eκ,ref giảm 23,202 m⁻¹, đồng thời khoảng hở giảm 35,161 mm, sai số vị trí cuối tăng 3,380 mm và thời lượng hậu xử lý tăng 71,220 ms. Lợi ích hình học và thời gian vì vậy đi kèm bất lợi về khoảng cách vật cản và độ chính xác dừng. Các khoảng tin cậy bổ sung không chứa không nhưng chưa được hiệu chỉnh đa kiểm định như ba chỉ số chính. Mức giảm độ giật 0,078 m/s³ chỉ mô tả biến thiên gia tốc, không xác định độ rung tải hàng hoặc điện năng tiêu thụ."
+  },
+  {
+    "before": "Sai số vị trí cuối trung bình của năm phương án theo thứ tự trên là 35,7; 36,1; 37,0; 33,6; 32,5 mm; sai số hướng tương ứng là 0,075; 0,083; 0,072; 0,076; 0,079 rad, chỉ tính các lượt đạt.",
+    "after": "Sai số vị trí cuối trung bình của năm phương án theo thứ tự trên là 35,7; 36,1; 37,0; 33,6; 32,5 mm; sai số hướng tương ứng là 0,075; 0,083; 0,072; 0,076; 0,079 rad, chỉ tính các lượt đạt. PSTMO có sai số vị trí thấp nhất nhưng sai số hướng không thấp nhất. R01 vì vậy cho thấy lợi ích về thời gian, bám đường và vị trí dừng, đi kèm khoảng hở nhỏ hơn; chưa có ưu thế đồng thời trên mọi tiêu chí."
+  },
+  {
+    "before": "Sai số vị trí cuối trung bình của năm phương án theo thứ tự trên là 37,1; 36,4; 37,5; 42,4; 37,0 mm; sai số hướng tương ứng là 0,086; 0,081; 0,083; 0,074; 0,083 rad, chỉ tính các lượt đạt.",
+    "after": "Sai số vị trí cuối trung bình của năm phương án theo thứ tự trên là 37,1; 36,4; 37,5; 42,4; 37,0 mm; sai số hướng tương ứng là 0,086; 0,081; 0,083; 0,074; 0,083 rad, chỉ tính các lượt đạt. PSTMO gần Simple về sai số vị trí nhưng có sai số hướng lớn hơn Constrained. Kết quả dừng không bù cho RMSE cao hơn: lợi ích chính trên R02 là thời gian trung bình, không phải độ chính xác bám đường."
+  },
+  {
+    "before": "Sai số vị trí cuối trung bình của năm phương án theo thứ tự trên là 86,8; 86,5; 82,3; 83,3; 89,6 mm; sai số hướng tương ứng là 0,080; 0,069; 0,056; 0,056; 0,039 rad, chỉ tính các lượt đạt.",
+    "after": "Sai số vị trí cuối trung bình của năm phương án theo thứ tự trên là 86,8; 86,5; 82,3; 83,3; 89,6 mm; sai số hướng tương ứng là 0,080; 0,069; 0,056; 0,056; 0,039 rad, chỉ tính các lượt đạt. Trên tập lượt đạt riêng, PSTMO có sai số hướng thấp nhất nhưng sai số vị trí cao nhất. Cùng với lượt vượt dung sai, kết quả R03 cho thấy lợi ích thời gian cần được cân nhắc với yêu cầu dừng chính xác, thay vì chỉ dựa vào độ cong."
+  },
+  {
+    "before": "Sai số vị trí cuối trung bình của năm phương án theo thứ tự trên là 82,6; 85,2; 81,8; 85,6; 87,4 mm; sai số hướng tương ứng là 0,075; 0,066; 0,065; 0,067; 0,076 rad, chỉ tính các lượt đạt.",
+    "after": "Sai số vị trí cuối trung bình của năm phương án theo thứ tự trên là 82,6; 85,2; 81,8; 85,6; 87,4 mm; sai số hướng tương ứng là 0,075; 0,066; 0,065; 0,067; 0,076 rad, chỉ tính các lượt đạt. PSTMO có cả hai sai số cuối lớn nhất trên tập lượt đạt riêng. R04 cho thấy giảm thời gian và sai số bám đường không bảo đảm cải thiện độ chính xác dừng, dù cả năm lượt PSTMO đều hoàn thành."
+  },
+  {
+    "before": "Sai số vị trí cuối trung bình của năm phương án theo thứ tự trên là 40,3; 45,6; 38,3; 44,8; 46,5 mm; sai số hướng tương ứng là 0,081; 0,079; 0,077; 0,063; 0,063 rad, chỉ tính các lượt đạt.",
+    "after": "Sai số vị trí cuối trung bình của năm phương án theo thứ tự trên là 40,3; 45,6; 38,3; 44,8; 46,5 mm; sai số hướng tương ứng là 0,081; 0,079; 0,077; 0,063; 0,063 rad, chỉ tính các lượt đạt. PSTMO có sai số vị trí cao nhất; sai số hướng gần Constrained ở độ chính xác báo cáo. Lợi ích thời gian và bám đường tại R05 vì vậy không đồng nghĩa định vị cuối tốt hơn; độ tin cậy cần được đối chiếu thêm với bộ lặp."
+  },
+  {
+    "before": "Theo thứ tự đường gốc, Simple, Savitzky–Golay, Constrained và PSTMO, Eκ,exec lần lượt là 2,659; 2,208; 2,517; 2,673; 1,613 m⁻¹; phân vị 95% của trị tuyệt đối độ giật lần lượt là 2,521; 2,428; 2,404; 2,471; 2,485 m/s³. PSTMO giảm sai số cực đại cùng với RMSE, nhưng độ giật không thấp nhất. Vì vậy, lợi ích về hình dạng quỹ đạo không đồng nghĩa giảm đồng thời mọi biến thiên theo thời gian.",
+    "after": "Theo thứ tự đường gốc, Simple, Savitzky–Golay, Constrained và PSTMO, Eκ,exec lần lượt là 2,659; 2,208; 2,517; 2,673; 1,613 m⁻¹; phân vị 95% của trị tuyệt đối độ giật lần lượt là 2,521; 2,428; 2,404; 2,471; 2,485 m/s³. PSTMO có Eκ,exec thấp nhất nhưng độ giật cao hơn cả ba đối chứng làm mượt. Như vậy, cải thiện hình học thực thi chưa đi kèm giảm tương ứng biến thiên gia tốc."
+  },
+  {
+    "before": "Theo thứ tự đường gốc, Simple, Savitzky–Golay, Constrained và PSTMO, Eκ,exec lần lượt là 2,976; 2,020; 2,761; 2,913; 1,536 m⁻¹; phân vị 95% của trị tuyệt đối độ giật lần lượt là 2,349; 2,157; 2,294; 2,276; 2,120 m/s³. PSTMO có RMSE cao nhất ở tuyến này, trong khi sai số cực đại thấp hơn đường gốc và Constrained nhưng cao hơn Simple. Hai chỉ số sai số mô tả hai khía cạnh khác nhau: độ lệch duy trì dọc đường và độ lệch lớn nhất tại một vị trí.",
+    "after": "Theo thứ tự đường gốc, Simple, Savitzky–Golay, Constrained và PSTMO, Eκ,exec lần lượt là 2,976; 2,020; 2,761; 2,913; 1,536 m⁻¹; phân vị 95% của trị tuyệt đối độ giật lần lượt là 2,349; 2,157; 2,294; 2,276; 2,120 m/s³. PSTMO có Eκ,exec và độ giật thấp nhất, trong khi RMSE cao nhất. Các chỉ số phản ánh những khía cạnh khác nhau; chuyển động có độ giật thấp hơn vẫn có thể lệch xa đường tham chiếu hơn."
+  },
+  {
+    "before": "Theo thứ tự đường gốc, Simple, Savitzky–Golay, Constrained và PSTMO, Eκ,exec lần lượt là 4,511; 4,037; 4,577; 4,659; 4,023 m⁻¹; phân vị 95% của trị tuyệt đối độ giật lần lượt là 2,533; 2,530; 2,421; 2,418; 2,540 m/s³. Độ cong cực đại của PSTMO lớn hơn Simple dù tích phân bình phương độ cong nhỏ hơn. Độ giật cũng cao hơn các đối chứng trong tập lượt đạt. Các kết quả này không hỗ trợ kết luận PSTMO luôn tạo chuyển động trơn hơn theo mọi tiêu chí.",
+    "after": "Theo thứ tự đường gốc, Simple, Savitzky–Golay, Constrained và PSTMO, Eκ,exec lần lượt là 4,511; 4,037; 4,577; 4,659; 4,023 m⁻¹; phân vị 95% của trị tuyệt đối độ giật lần lượt là 2,533; 2,530; 2,421; 2,418; 2,540 m/s³. Eκ,exec của PSTMO gần Simple, còn độ giật cao hơn các đối chứng trên tập lượt đạt riêng. Kết quả không hỗ trợ nhận định PSTMO cải thiện đồng thời hình học và biến thiên gia tốc tại R03."
+  },
+  {
+    "before": "Theo thứ tự đường gốc, Simple, Savitzky–Golay, Constrained và PSTMO, Eκ,exec lần lượt là 3,607; 2,681; 3,140; 3,283; 2,049 m⁻¹; phân vị 95% của trị tuyệt đối độ giật lần lượt là 2,374; 2,265; 2,335; 2,325; 2,271 m/s³. PSTMO giảm sai số bám đường cực đại so với cả bốn đối chứng, nhưng sai số vị trí cuối lớn hơn các phương án còn lại trong tập lượt đạt. Khả năng bám đường và độ chính xác dừng tại đích cần được đánh giá riêng.",
+    "after": "Theo thứ tự đường gốc, Simple, Savitzky–Golay, Constrained và PSTMO, Eκ,exec lần lượt là 3,607; 2,681; 3,140; 3,283; 2,049 m⁻¹; phân vị 95% của trị tuyệt đối độ giật lần lượt là 2,374; 2,265; 2,335; 2,325; 2,271 m/s³. PSTMO có Eκ,exec thấp nhất, nhưng độ giật 2,271 m/s³ nhỉnh hơn Simple, 2,265 m/s³. Chênh lệch nhỏ này chỉ là mô tả một lượt mỗi đầu vào, chưa xác định khác biệt có tính lặp lại."
+  },
+  {
+    "before": "Theo thứ tự đường gốc, Simple, Savitzky–Golay, Constrained và PSTMO, Eκ,exec lần lượt là 2,864; 2,117; 2,587; 2,545; 1,900 m⁻¹; phân vị 95% của trị tuyệt đối độ giật lần lượt là 2,364; 2,425; 2,432; 2,384; 2,331 m/s³. PSTMO có sai số cực đại và tích phân bình phương độ cong thực thi thấp nhất ở mức trung bình, nhưng sai số vị trí cuối cao nhất. Lợi ích trong đoạn di chuyển không bảo đảm cải thiện tương ứng khi dừng tại đích.",
+    "after": "Theo thứ tự đường gốc, Simple, Savitzky–Golay, Constrained và PSTMO, Eκ,exec lần lượt là 2,864; 2,117; 2,587; 2,545; 1,900 m⁻¹; phân vị 95% của trị tuyệt đối độ giật lần lượt là 2,364; 2,425; 2,432; 2,384; 2,331 m/s³. PSTMO có Eκ,exec và độ giật thấp nhất trên tuyến này. Khác R01 và R03, cải thiện hình học thực thi đi kèm giảm chỉ số biến thiên gia tốc, nhưng vẫn cần đánh giá riêng việc dừng tại đích."
+  },
+  {
+    "before": "",
+    "after": "Bảng VI cho thấy PSTMO có chiều dài tham chiếu và quãng đường thực thi thấp nhất. Độ cong cực đại 2,03 m⁻¹ thấp hơn cả bốn đối chứng; sai số bám cực đại 53,3 mm cũng thấp nhất. Các thay đổi này cùng xuất hiện, nên chưa thể quy riêng mức giảm thời gian cho độ cong."
+  },
+  {
+    "before": "",
+    "after": "Trong Bảng VIII, PSTMO có đường tham chiếu và quãng đường thực thi ngắn nhất. Tuy nhiên, sai số cực đại 51,5 mm vẫn cao hơn Simple, 49,1 mm. Vì vậy, đường ngắn hơn và độ cong cực đại thấp hơn chưa đồng nghĩa bám đường chính xác hơn."
+  },
+  {
+    "before": "",
+    "after": "Bảng X cho thấy chiều dài tham chiếu PSTMO ngắn nhất, nhưng độ cong cực đại 3,17 m⁻¹ cao hơn Simple, 2,89 m⁻¹. Quãng đường thực thi và sai số cực đại của PSTMO chỉ dùng bốn lượt đạt; chênh lệch với trung bình năm lượt của đối chứng cần được đọc cùng giới hạn mẫu này."
+  },
+  {
+    "before": "",
+    "after": "Bảng XII cho thấy PSTMO có chiều dài tham chiếu và độ cong cực đại thấp nhất. Trong bốn phương án làm mượt đều đạt 5/5 lượt, PSTMO cũng có quãng đường thực thi và sai số cực đại nhỏ nhất. Kết quả củng cố nhận xét về bám đường, nhưng chưa phản ánh độ chính xác cuối."
+  },
+  {
+    "before": "",
+    "after": "Trong Bảng XIV, PSTMO có đường tham chiếu, quãng đường thực thi và sai số cực đại thấp nhất trên cùng năm đầu vào. Tuy vậy, thời lượng xử lý 77,4 ms cao hơn Constrained, 22,2 ms, và Simple, 1,8 ms. Lợi ích khi di chuyển đi kèm chi phí hậu xử lý cao hơn."
+  },
+  {
+    "before": "Hình 16 đối chiếu hình dạng đường với đáp ứng góc mà không căn chỉnh các đỉnh tín hiệu. Do RPP tắt điều tiết vận tốc theo độ cong và chi phí, không thể dùng hai chức năng này để giải thích mức giảm thời gian. Các phương án cũng chịu cùng tần số điều khiển và giới hạn vận tốc.",
+    "after": "Hình 16 cho thấy các phương án đều xuất hiện đoạn vận tốc góc dương gần 0,25 rad/s, nhưng thời điểm và khoảng duy trì khác nhau. Trong khoảng 34–40 s, khoảng từ mẫu đầu đến mẫu cuối có ω > 0,24 rad/s là 2,56 s với PSTMO, 2,56 s với Simple và 3,10 s với Constrained. Biên độ gần nhau không có nghĩa thời gian toàn nhiệm vụ bằng nhau. Ở lượt R02/Theta* này, PSTMO hoàn thành trong 55,764 s, nhanh hơn Constrained 0,939 s nhưng chậm hơn Simple 0,636 s. Vùng quỹ đạo phóng to chỉ biểu diễn một phần hành trình, không ứng với toàn bộ đồ thị thời gian. RPP tắt điều tiết vận tốc theo độ cong và chi phí; các tín hiệu này chưa tách được nguyên nhân của chênh lệch thời gian."
+  }
+]

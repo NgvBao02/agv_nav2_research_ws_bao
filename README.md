@@ -239,8 +239,10 @@ ros2 launch vacuum_robot_gazebo check_urdf.launch.py
 - Bản viết phần II–III journal PSTMO, Word hai cột theo mẫu IEEE A4 có sẵn,
   biên tập văn phong và phân tích ghép cặp theo từng đối chứng, kèm hình dữ
   liệu và kiểm tra bố cục:
-  [`Viet_bao/journal/ver6/`](Viet_bao/journal/ver6/README.md), bổ sung chỉ số
-  so sánh đủ năm phương án trên năm tuyến từ dữ liệu đã có, kế thừa thuật
+  [`Viet_bao/journal/ver8/`](Viet_bao/journal/ver8/README.md), biên tập mạch
+  lập luận, lý do thiết kế thử nghiệm, thứ tự định nghĩa chỉ số và giới hạn
+  diễn giải từ [ver7](Viet_bao/journal/ver7/README.md). Giữ số liệu đủ năm phương án trên năm tuyến của
+  [ver6](Viet_bao/journal/ver6/README.md), kế thừa thuật
   ngữ và cách diễn đạt khoa học của [ver5](Viet_bao/journal/ver5/README.md)
   và [ver4](Viet_bao/journal/ver4/README.md).
   [Bản ver3 trước biên tập](Viet_bao/journal/ver3/README.md) được giữ nguyên.
