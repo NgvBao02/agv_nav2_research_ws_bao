@@ -247,6 +247,14 @@ ros2 launch vacuum_robot_gazebo check_urdf.launch.py
   ngữ và cách diễn đạt khoa học của [ver5](Viet_bao/journal/ver5/README.md)
   và [ver4](Viet_bao/journal/ver4/README.md).
   [Bản ver3 trước biên tập](Viet_bao/journal/ver3/README.md) được giữ nguyên.
+- Bản riêng tên bài, Abstract tiếng Việt, Introduction và Conclusion:
+  [`Viet_bao/journal/ver10/`](Viet_bao/journal/ver10/README.md), không chứa
+  phần II–III; kèm đối chiếu khẳng định, 21 nguồn trích dẫn và kiểm tra Word.
+  Đây là snapshot phần riêng với 21 nguồn, chưa phải bài đầy đủ.
+- Bản journal đầy đủ có Tóm tắt/Abstract, Introduction, phần II–III và Conclusion:
+  [`Viet_bao/journal/ver11/`](Viet_bao/journal/ver11/README.md), ánh xạ đủ
+  74 mục corpus sau đối chiếu nhận diện, danh mục chung 80 mục; giữ 23 bảng,
+  18 hình và chín công thức của ver9, kèm hồ sơ nguồn–vị trí trích dẫn.
 - Hồ sơ mô hình 3D và mô phỏng robot:
   [PDF](docs/BAO_CAO_MO_HINH_3D_STEP_URDF_GAZEBO_RVIZ2.pdf) và
   [hồ sơ kiểm chứng](docs/robot_3d_report/README.md).
