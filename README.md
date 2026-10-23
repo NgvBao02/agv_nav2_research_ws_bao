@@ -251,10 +251,17 @@ ros2 launch vacuum_robot_gazebo check_urdf.launch.py
   [`Viet_bao/journal/ver10/`](Viet_bao/journal/ver10/README.md), không chứa
   phần II–III; kèm đối chiếu khẳng định, 21 nguồn trích dẫn và kiểm tra Word.
   Đây là snapshot phần riêng với 21 nguồn, chưa phải bài đầy đủ.
-- Bản journal đầy đủ có Tóm tắt/Abstract, Introduction, phần II–III và Conclusion:
+- Bản journal đầy đủ có Tóm tắt tiếng Việt, Introduction, phần II–III và Conclusion
+  (tác giả đã bỏ Abstract tiếng Anh):
   [`Viet_bao/journal/ver11/`](Viet_bao/journal/ver11/README.md), ánh xạ đủ
   74 mục corpus sau đối chiếu nhận diện, danh mục chung 80 mục; giữ 23 bảng,
   18 hình và chín công thức của ver9, kèm hồ sơ nguồn–vị trí trích dẫn.
+- Bản journal hiệu đính khoa học từ Word ver11 thực tế:
+  [`Viet_bao/journal/ver12/`](Viet_bao/journal/ver12/README.md), 21 trang,
+  54 tài liệu tham khảo được chọn theo vai trò; viết lại Introduction,
+  làm rõ II-D/E và Kết luận, giữ nguyên III ngoài số citation.
+  Chỉ có Tóm tắt và từ khóa tiếng Việt; bảo toàn 23 bảng, 18 hình,
+  chín công thức, kèm báo cáo đối chiếu và kiểm chứng từng trang.
 - Hồ sơ mô hình 3D và mô phỏng robot:
   [PDF](docs/BAO_CAO_MO_HINH_3D_STEP_URDF_GAZEBO_RVIZ2.pdf) và
   [hồ sơ kiểm chứng](docs/robot_3d_report/README.md).
