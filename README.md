@@ -276,5 +276,7 @@ ros2 launch vacuum_robot_gazebo check_urdf.launch.py
   [bài báo REV-ECIT 2026](<Viet_bao/bao_Rev_ecit_2026/ver2/REV ECIT2026 PSTMO.pdf>) và
   [bài báo ICEEIS 2026](Viet_bao/final_bao_ICEEIS/final/ieee/ICEEIS2026_PSTMO_final.pdf).
 - [`results/README.md`](results/README.md) phân loại dataset hiện hành, snapshot
-  lịch sử, ablation và pilot; [`REFERENCES/`](REFERENCES/) chứa tài liệu tham
-  khảo được lưu cùng repo.
+  lịch sử, ablation và pilot; [`REFERENCES/`](REFERENCES/README.md) chứa thư viện
+  nguồn. Bộ [`REFERENCES/VER12/`](REFERENCES/VER12/README.md) đánh số 54 mục theo
+  bài journal ver12 (44 PDF, bốn HTML và sáu phiếu URL), kèm ánh xạ về corpus
+  74 tài liệu gốc được bảo toàn.
