@@ -2,7 +2,7 @@
 
 54 mục dưới đây đúng thứ tự và nguyên văn danh mục trong Word ver12. Số [n] là số trích dẫn trong bài; mã Rxxx là khóa nguồn ổn định, không phải số trích dẫn mới.
 
-48 mục có tài liệu cục bộ (44 PDF, 4 HTML). Sáu mục có phiếu trích dẫn và URL, chưa có toàn văn/snapshot cục bộ. Các liên kết trong VER12 là symlink tương đối về tệp gốc; khi di chuyển cần giữ cả thư mục REFERENCES.
+48 mục có tài liệu cục bộ (44 PDF, 4 HTML). Sáu mục có phiếu trích dẫn và URL, chưa có toàn văn/snapshot cục bộ. Tài liệu trong VER12 là các tệp thật, có thể copy hoặc nén riêng để gửi.
 
 | Số ver12 | Khóa | Trích dẫn | Tệp theo số mới | Mã corpus cũ | Vị trí dẫn |
 |---:|---|---|---|---:|---|

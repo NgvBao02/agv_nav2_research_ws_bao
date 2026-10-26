@@ -39,7 +39,7 @@ nó trên toàn `src/`; mở thêm phạm vi khi kết quả vượt ra ngoài p
 | World/map                                                   | `src/vacuum_robot_gazebo/worlds/` và `maps/` cùng basename                                                                               |
 | Kết quả dùng để báo cáo                              | `results/README.md`, rồi README/aggregate của đúng cohort                                                                                |
 | Cách dựng báo cáo                                       | README hồ sơ tương ứng và script trong`tools/`                                                                                         |
-| Thư viện nguồn theo journal ver12                       | `REFERENCES/README.md`, `REFERENCES/TAI_LIEU_THAM_KHAO_VER12.md` và `tools/sync_references_ver12.py`; số trong `REFERENCES/VER12/` theo bài, mã tệp ở cấp cha theo corpus lịch sử |
+| Thư viện nguồn theo journal ver12                       | `REFERENCES/README.md`, `REFERENCES/TAI_LIEU_THAM_KHAO_VER12.md` và `tools/sync_references_ver12.py`; `REFERENCES/VER12/` chứa tệp thực đánh số theo bài; `--archive` sinh ZIP độc lập cục bộ (không lưu Git); mã tệp ở cấp cha theo corpus lịch sử |
 | Cohort journal lặp                                         | `tools/run_journal_repeatability_study.py`, `tools/analyze_journal_repeatability.py` và `results/pstmo_journal_repeatability_20261011/` |
 
 ## Luồng chạy chính

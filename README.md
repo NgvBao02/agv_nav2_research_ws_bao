@@ -278,5 +278,6 @@ ros2 launch vacuum_robot_gazebo check_urdf.launch.py
 - [`results/README.md`](results/README.md) phân loại dataset hiện hành, snapshot
   lịch sử, ablation và pilot; [`REFERENCES/`](REFERENCES/README.md) chứa thư viện
   nguồn. Bộ [`REFERENCES/VER12/`](REFERENCES/VER12/README.md) đánh số 54 mục theo
-  bài journal ver12 (44 PDF, bốn HTML và sáu phiếu URL), kèm ánh xạ về corpus
-  74 tài liệu gốc được bảo toàn.
+  bài journal ver12 (44 PDF thực, bốn HTML và sáu phiếu URL), kèm ánh xạ về corpus
+  74 tài liệu gốc được bảo toàn. [Hướng dẫn đóng gói ZIP để gửi](REFERENCES/README.md)
+  tạo bản độc lập với thư mục nguồn; ZIP được sinh cục bộ và không lưu trong Git.
